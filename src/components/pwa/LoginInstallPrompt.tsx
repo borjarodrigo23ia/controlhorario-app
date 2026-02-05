@@ -58,7 +58,7 @@ export default function LoginInstallPrompt() {
 
                             <button
                                 onClick={() => setShowModal(true)}
-                                className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 active:scale-95 group/btn border border-red-500/30 hover:border-red-500"
+                                className="flex items-center gap-2 bg-black text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 active:bg-red-600 active:text-white active:scale-95 group/btn border border-black"
                             >
                                 <span>Ver guía de instalación</span>
                                 <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
