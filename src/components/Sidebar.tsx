@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Home, Clock, BadgeCheck, LayoutDashboard, Users, CalendarClock, LayoutGrid, MapPinHouse, Settings } from 'lucide-react';
+import { Home, Clock, BadgeCheck, LayoutDashboard, Users, CalendarClock, LayoutGrid, MapPinHouse, Settings, Palmtree } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 
@@ -12,6 +12,7 @@ export default function Sidebar() {
     const navItems = [
         { name: 'Fichajes', icon: Clock, href: '/fichajes' },
         { name: 'Historial', icon: user?.admin ? CalendarClock : LayoutGrid, href: '/fichajes/historial' },
+        ...(!user?.admin ? [{ name: 'Vacaciones', icon: Palmtree, href: '/vacations' }] : []),
         ...(user?.admin ? [
             { name: 'Admin Dashboard', icon: LayoutDashboard, href: '/admin' },
             { name: 'Empleados', icon: Users, href: '/admin/users' },

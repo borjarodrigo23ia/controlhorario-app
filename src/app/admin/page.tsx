@@ -3,7 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import Sidebar from '@/components/Sidebar';
 import MobileNav from '@/components/MobileNav';
-import { Users, BadgeCheck, Settings, LayoutDashboard, CalendarClock, ChevronRight, MapPinHouse, CalendarRange } from 'lucide-react';
+import { Users, BadgeCheck, Settings, LayoutDashboard, CalendarClock, ChevronRight, MapPinHouse, CalendarRange, Palmtree } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 export default function AdminPage() {
@@ -19,6 +19,7 @@ export default function AdminPage() {
         { title: 'Centros de Trabajo', icon: MapPinHouse, href: '/admin/centers', desc: 'Configurar geolocalización y ubicaciones', color: 'blue' },
         { title: 'Historial Global', icon: CalendarClock, href: '/admin/fichajes', desc: 'Consulta los registros de todos los usuarios', color: 'indigo' },
         { title: 'Solicitudes', icon: BadgeCheck, href: '/admin/corrections', desc: 'Aprobar cambios de jornada', color: 'primary' },
+        { title: 'Gestión de Vacaciones', icon: Palmtree, href: '/admin/vacations', desc: 'Aprobar/rechazar días libres', color: 'green' },
         { title: 'Gestión de Jornadas', icon: CalendarRange, href: '/admin/jornadas', desc: 'Asignar jornadas a trabajadores', color: 'orange' },
     ];
 

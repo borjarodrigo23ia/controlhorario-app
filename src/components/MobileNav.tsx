@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Clock, LayoutDashboard, User, LayoutGrid, CalendarClock } from 'lucide-react';
+import { Clock, LayoutDashboard, User, LayoutGrid, CalendarClock, Palmtree } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
 
@@ -16,6 +16,7 @@ export default function MobileNav() {
         ...(user?.admin ? [
             { name: 'Gestión', icon: LayoutDashboard, href: '/admin' },
         ] : []),
+        ...(!user?.admin ? [{ name: 'Vacaciones', icon: Palmtree, href: '/vacations' }] : []),
         { name: 'Usuario', icon: User, href: '/usuario' }
     ];
 
