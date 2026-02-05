@@ -45,7 +45,7 @@ export default function AdminPage() {
 
                             <div className="relative flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.2rem] bg-primary/5 text-primary border border-primary/5 transition-all duration-500 group-hover:bg-primary group-hover:text-white group-hover:scale-110 group-hover:rotate-3 shadow-sm">
+                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.2rem] bg-primary/5 text-primary border border-primary/5 transition-all duration-500 group-hover:bg-primary group-hover:text-black group-hover:scale-110 group-hover:rotate-3 shadow-sm">
                                         <c.icon size={24} strokeWidth={2.2} />
                                     </div>
 
@@ -59,7 +59,7 @@ export default function AdminPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-300 transition-all duration-500 group-hover:bg-primary group-hover:text-white group-hover:rotate-45">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-300 transition-all duration-500 group-hover:bg-primary group-hover:text-black group-hover:rotate-45">
                                     <ChevronRight size={18} />
                                 </div>
                             </div>

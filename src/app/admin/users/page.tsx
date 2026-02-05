@@ -168,9 +168,9 @@ export default function AdminUsersPage() {
                                         {/* Status Icon Wrapper */}
                                         <div className={cn(
                                             "flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] transition-all duration-500 border group-hover:scale-110 group-hover:rotate-3 shadow-sm",
-                                            user.workStatus === 'working' ? 'bg-green-50 text-green-600 border-green-100 group-hover:bg-green-500 group-hover:text-white' :
-                                                user.workStatus === 'paused' ? 'bg-yellow-50 text-yellow-600 border-yellow-100 group-hover:bg-yellow-500 group-hover:text-white' :
-                                                    'bg-gray-50 text-gray-400 border-gray-100 group-hover:bg-gray-500 group-hover:text-white'
+                                            user.workStatus === 'working' ? 'bg-green-50 text-green-600 border-green-100 group-hover:bg-green-500 group-hover:text-black' :
+                                                user.workStatus === 'paused' ? 'bg-yellow-50 text-yellow-600 border-yellow-100 group-hover:bg-yellow-500 group-hover:text-black' :
+                                                    'bg-gray-50 text-gray-400 border-gray-100 group-hover:bg-gray-500 group-hover:text-black'
                                         )}>
                                             {user.workStatus === 'working' ? <CirclePower size={20} strokeWidth={2.5} /> :
                                                 user.workStatus === 'paused' ? <Coffee size={20} strokeWidth={2.5} /> :
@@ -202,7 +202,7 @@ export default function AdminUsersPage() {
                                         </div>
                                     </div>
 
-                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-300 transition-all duration-500 group-hover:bg-primary group-hover:text-white group-hover:rotate-45">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-300 transition-all duration-500 group-hover:bg-primary group-hover:text-black group-hover:rotate-45">
                                         <ChevronRight size={16} />
                                     </div>
                                 </div>

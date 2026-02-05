@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Clock, Calendar as CalendarIcon, Save, X, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Clock, Calendar as CalendarIcon, Save, X, AlertCircle, Users, LayoutGrid } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 
 interface Shift {
     id: number;
@@ -113,16 +114,21 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h3 className="text-lg font-bold text-gray-900">Jornadas Laborales</h3>
-                    <p className="text-sm text-gray-500">Configura los horarios habituales del empleado</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-col md:flex-row md:items-baseline md:gap-3">
+                    <h3 className="text-lg font-bold text-[#121726] flex items-center gap-2">
+                        <CalendarIcon size={20} className="text-primary" />
+                        <span>Jornadas Laborales</span>
+                    </h3>
+                    <p className="text-xs font-semibold text-gray-400 opacity-70">
+                        Horarios habituales del empleado
+                    </p>
                 </div>
                 <button
                     onClick={() => setIsCreating(true)}
-                    className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-800 transition-colors"
+                    className="flex items-center gap-2 bg-black text-white px-4 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-wider hover:bg-zinc-800 transition-all active:scale-95 shrink-0"
                 >
-                    <Plus size={16} />
+                    <Plus size={14} strokeWidth={3} />
                     <span>Nueva Jornada</span>
                 </button>
             </div>
@@ -183,30 +189,29 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                         </div>
 
                         <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Tipo</label>
-                                    <select
-                                        className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm font-semibold"
-                                        value={newShift.tipo_jornada}
-                                        onChange={e => setNewShift({ ...newShift, tipo_jornada: e.target.value as any })}
-                                    >
-                                        <option value="partida">Partida</option>
-                                        <option value="intensiva">Intensiva</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Turno</label>
-                                    <select
-                                        className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm font-semibold"
-                                        value={newShift.tipo_turno}
-                                        onChange={e => setNewShift({ ...newShift, tipo_turno: e.target.value as any })}
-                                    >
-                                        <option value="fijo">Fijo</option>
-                                        <option value="rotativo">Rotativo</option>
-                                    </select>
-                                </div>
-                            </div>
+                            <SegmentedControl
+                                label="Tipo de Jornada"
+                                icon={LayoutGrid}
+                                options={[
+                                    { id: 'partida', label: 'Partida' },
+                                    { id: 'intensiva', label: 'Intensiva' }
+                                ]}
+                                value={newShift.tipo_jornada || 'partida'}
+                                onChange={val => setNewShift({ ...newShift, tipo_jornada: val as any })}
+                                className="bg-gray-50/50 border-none p-4"
+                            />
+
+                            <SegmentedControl
+                                label="Turno"
+                                icon={Users}
+                                options={[
+                                    { id: 'fijo', label: 'Fijo' },
+                                    { id: 'rotativo', label: 'Rotativo' }
+                                ]}
+                                value={newShift.tipo_turno || 'fijo'}
+                                onChange={val => setNewShift({ ...newShift, tipo_turno: val as any })}
+                                className="bg-gray-50/50 border-none p-4"
+                            />
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>

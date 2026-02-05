@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Share, PlusSquare, MoreVertical, Smartphone, MonitorSmartphone } from 'lucide-react';
+import { X, Share, PlusSquare, MoreVertical, Smartphone, MonitorSmartphone, Ellipsis } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface InstallGuideModalProps {
@@ -79,8 +79,8 @@ export default function InstallGuideModal({ isOpen, onClose }: InstallGuideModal
                                     <span className="font-bold">1</span>
                                 </div>
                                 <div className="pt-2 pb-6">
-                                    <p className="text-gray-700 font-medium mb-1 leading-none">Pulsa el botón "Compartir"</p>
-                                    <p className="text-sm text-gray-500 mt-2 leading-tight">Busca el icono <Share size={14} className="inline mx-1" /> en la barra inferior de Safari.</p>
+                                    <p className="text-gray-700 font-medium mb-1 leading-none">Pulsa los puntos suspensivos <Ellipsis size={18} className="inline-flex mb-1" /></p>
+                                    <p className="text-sm text-gray-500 mt-2 leading-tight">Si no ves el botón compartir, pulsa los puntos <Ellipsis size={14} className="inline mx-1" /> para ver más opciones.</p>
                                 </div>
                             </div>
 
@@ -93,15 +93,26 @@ export default function InstallGuideModal({ isOpen, onClose }: InstallGuideModal
                                     <span className="font-bold">2</span>
                                 </div>
                                 <div className="pt-2 pb-6">
+                                    <p className="text-gray-700 font-medium mb-1 leading-none">Pulsa el botón "Compartir"</p>
+                                    <p className="text-sm text-gray-500 mt-2 leading-tight">Busca el icono <Share size={14} className="inline mx-1" /> en el menú o en la barra inferior.</p>
+                                </div>
+                            </div>
+
+                            {/* Step 3 */}
+                            <div className="flex gap-4 relative z-10 pb-1">
+                                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center shrink-0 text-primary z-10 relative">
+                                    <span className="font-bold">3</span>
+                                </div>
+                                <div className="pt-2 pb-6">
                                     <p className="text-gray-700 font-medium mb-1 leading-none">Selecciona "Añadir a inicio"</p>
                                     <p className="text-sm text-gray-500 mt-2 leading-tight">Desliza hacia abajo y pulsa <PlusSquare size={14} className="inline mx-1" /> "Añadir a pantalla de inicio".</p>
                                 </div>
                             </div>
 
-                            {/* Step 3 */}
+                            {/* Step 4 */}
                             <div className="flex gap-4 relative z-10">
                                 <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center shrink-0 text-primary z-10 relative">
-                                    <span className="font-bold">3</span>
+                                    <span className="font-bold">4</span>
                                 </div>
                                 <div className="pt-2">
                                     <p className="text-gray-700 font-medium mb-1 leading-none">Confirma pulsando "Añadir"</p>

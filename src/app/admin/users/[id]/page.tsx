@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import MobileNav from '@/components/MobileNav';
 import Link from 'next/link';
-import { Save, ArrowLeft, Settings, User as UserIcon, MapPinned, MapPinCheck, Clock as ClockIcon, AlertCircle, ExternalLink, Check, CircleCheck } from 'lucide-react';
+import { Save, ArrowLeft, Settings, User as UserIcon, MapPinned, MapPinCheck, Clock as ClockIcon, AlertCircle, ExternalLink, Check, CircleCheck, Loader2 } from 'lucide-react';
 import ShiftConfigurator from '@/components/admin/ShiftConfigurator';
 import { toast } from 'react-hot-toast';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -33,6 +33,7 @@ export default function UserConfigPage({ params }: { params: Promise<{ id: strin
     const [config, setConfig] = useState<Record<string, string>>({});
     const [userData, setUserData] = useState<UserData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const [availableCenters, setAvailableCenters] = useState<Center[]>([]);
 
     useEffect(() => {
@@ -84,6 +85,7 @@ export default function UserConfigPage({ params }: { params: Promise<{ id: strin
     };
 
     const handleSave = async () => {
+        setIsSaving(true);
         const token = localStorage.getItem('dolibarr_token');
         const promisess = Object.keys(config).map(key =>
             fetch(`/api/users/${id}/config`, {
@@ -104,6 +106,8 @@ export default function UserConfigPage({ params }: { params: Promise<{ id: strin
             toast.success('Configuración guardada');
         } catch {
             toast.error('Error al guardar');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -174,7 +178,7 @@ export default function UserConfigPage({ params }: { params: Promise<{ id: strin
                                                 className="p-4 rounded-xl border bg-white border-gray-300 shadow-sm flex items-center justify-between cursor-pointer transition-all hover:bg-red-50 hover:border-red-200 group"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-black group-hover:bg-red-500 group-hover:text-white transition-colors">
+                                                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-black group-hover:bg-red-500 group-hover:text-black transition-colors">
                                                         <MapPinCheck size={16} />
                                                     </div>
                                                     <div>
@@ -244,11 +248,21 @@ export default function UserConfigPage({ params }: { params: Promise<{ id: strin
                         <div className="pt-4">
                             <button
                                 onClick={handleSave}
-                                className="w-full relative group overflow-hidden bg-black text-white p-5 rounded-[1.5rem] font-bold tracking-tight shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.15)] hover:-translate-y-1 active:scale-95"
+                                disabled={isSaving}
+                                className="w-full relative group overflow-hidden bg-black text-white p-5 rounded-[1.5rem] font-bold tracking-tight shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.15)] hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                             >
                                 <div className="relative z-10 flex items-center justify-center gap-3">
-                                    <Save size={20} strokeWidth={2.5} />
-                                    <span>Guardar Configuración</span>
+                                    {isSaving ? (
+                                        <>
+                                            <Loader2 size={20} className="animate-spin text-white/70" />
+                                            <span>Guardando...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save size={20} strokeWidth={2.5} />
+                                            <span>Guardar Configuración</span>
+                                        </>
+                                    )}
                                 </div>
                             </button>
                         </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { authService } from '@/services/auth';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
+import LoginInstallPrompt from '@/components/pwa/LoginInstallPrompt';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -322,6 +323,8 @@ export default function LoginPage() {
                 <div className="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-gray-200/50 dark:bg-zinc-800/20 blur-[100px]" />
                 <div className="absolute top-[40%] -left-[10%] w-[40%] h-[40%] rounded-full bg-gray-200/50 dark:bg-zinc-800/20 blur-[100px]" />
             </div>
+
+            <LoginInstallPrompt />
         </div>
     )
 }
