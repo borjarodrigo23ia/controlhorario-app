@@ -12,6 +12,7 @@ interface TimerCardProps {
     onSalir: () => void;
     onPausa: () => void;
     loading?: boolean;
+    isInitialLoad?: boolean;
 }
 
 export const TimerCard: React.FC<TimerCardProps> = ({
@@ -20,7 +21,8 @@ export const TimerCard: React.FC<TimerCardProps> = ({
     onEntrar,
     onSalir,
     onPausa,
-    loading
+    loading,
+    isInitialLoad = false
 }) => {
     const [currentTime, setCurrentTime] = useState<string>('');
 
@@ -129,7 +131,14 @@ export const TimerCard: React.FC<TimerCardProps> = ({
 
             {/* Actions Grid */}
             <div className="grid grid-rows-1 gap-3 md:gap-4">
-                {currentState === 'sin_iniciar' && (
+                {/* Loading Skeleton during initial load */}
+                {isInitialLoad && (
+                    <div className="animate-pulse">
+                        <div className="w-full h-16 md:h-20 bg-gray-200 rounded-2xl"></div>
+                    </div>
+                )}
+
+                {!isInitialLoad && currentState === 'sin_iniciar' && (
                     <button
                         onClick={onEntrar}
                         disabled={loading}
@@ -143,7 +152,7 @@ export const TimerCard: React.FC<TimerCardProps> = ({
                     </button>
                 )}
 
-                {currentState === 'trabajando' && (
+                {!isInitialLoad && currentState === 'trabajando' && (
                     <div className="grid grid-cols-2 gap-3 md:gap-4">
                         <button
                             onClick={onPausa}
@@ -162,7 +171,7 @@ export const TimerCard: React.FC<TimerCardProps> = ({
                     </div>
                 )}
 
-                {currentState === 'en_pausa' && (
+                {!isInitialLoad && currentState === 'en_pausa' && (
                     <div className="grid grid-cols-2 gap-3 md:gap-4">
                         <button
                             onClick={onPausa} // This toggles back to resume in parent logic

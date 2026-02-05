@@ -218,3 +218,58 @@
 .animate-slide-up {
     animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* ============================================
+   OPTIMIZACIONES MÓVILES
+   ========================================== */
+
+/* Eliminar highlight azul en tap (iOS/Android) */
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+/* Mejorar rendimiento de animaciones */
+button,
+a,
+.interactive {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+/* Safe areas para iOS (notch, home indicator) */
+@supports (padding: env(safe-area-inset-top)) {
+    body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+}
+
+/* Mejorar scroll suave en iOS */
+@supports (-webkit-overflow-scrolling: touch) {
+    .scroll-smooth {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Touch manipulation para mejor respuesta */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"] {
+    touch-action: manipulation;
+}
+
+/* Clase utility para feedback táctil premium */
+.tap-feedback {
+    transition: transform 100ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tap-feedback:active {
+    transform: scale(0.97);
+}

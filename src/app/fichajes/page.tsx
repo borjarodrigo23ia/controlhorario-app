@@ -21,6 +21,7 @@ export default function FichajesPage() {
         currentState,
         workCycles,
         loading,
+        isInitialLoad,
         registrarEntrada,
         registrarSalida,
         iniciarPausa,
@@ -90,6 +91,7 @@ export default function FichajesPage() {
                             onSalir={handleSalida}
                             onPausa={onPausaClick}
                             loading={loading}
+                            isInitialLoad={isInitialLoad}
                         />
                     </section>
 

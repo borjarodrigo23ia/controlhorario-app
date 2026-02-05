@@ -233,7 +233,7 @@ export default function UsuarioPage() {
                                             placeholder="+34"
                                         />
                                     ) : (
-                                        <p className="text-base font-bold text-slate-700 px-1">{user.user_mobile || 'No registrado'}</p>
+                                        <p className="text-base font-bold text-slate-700 px-1">{formData.user_mobile || 'No registrado'}</p>
                                     )}
                                 </div>
 

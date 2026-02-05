@@ -16,10 +16,19 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
     title: "Control Horario | Fichajes",
     description: "Sistema de control horario y gestión de jornadas",
+    manifest: "/manifest.json",
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: "black-translucent",
+        title: "Fichajes"
+    },
     icons: {
-        icon: "/favicon.png",
+        icon: [
+            { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+            { url: "/icon-512.png", sizes: "512x512", type: "image/png" }
+        ],
         shortcut: "/favicon.png",
-        apple: "/favicon.png",
+        apple: "/apple-touch-icon.png",
     },
 };
 

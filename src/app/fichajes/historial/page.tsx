@@ -53,14 +53,8 @@ export default function HistorialPage() {
         // 1. Group by date first
         const groups: Record<string, typeof workCycles> = {};
 
-        // Calculate default bounds for filtering if not provided
-        const now = new Date();
-        const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-        const monthEndObj = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        const monthEnd = `${monthEndObj.getFullYear()}-${String(monthEndObj.getMonth() + 1).padStart(2, '0')}-${String(monthEndObj.getDate()).padStart(2, '0')}`;
-
-        const effectiveStart = startDate || monthStart;
-        const effectiveEnd = endDate || monthEnd;
+        // Check if we should apply date filters
+        const shouldFilter = !!(startDate || endDate);
 
         workCycles.forEach(cycle => {
             if (!cycle.fecha) return;
@@ -68,9 +62,14 @@ export default function HistorialPage() {
             // Format for comparison and display grouping (YYYY-MM-DD)
             const dateKey = cycle.fecha.substring(0, 10);
 
-            // Apply filters (inclusive)
-            // If filters are empty, we only show current month
-            if (dateKey < effectiveStart || dateKey > effectiveEnd) return;
+            // Apply filters only if at least one filter is active
+            if (shouldFilter) {
+                // Use wide ranges as defaults if only one filter is set
+                const effectiveStart = startDate || '1900-01-01';
+                const effectiveEnd = endDate || '2099-12-31';
+
+                if (dateKey < effectiveStart || dateKey > effectiveEnd) return;
+            }
 
             if (!groups[dateKey]) {
                 groups[dateKey] = [];

@@ -25,6 +25,7 @@ export const useFichajes = (options?: UseFichajesOptions) => {
     // Estados principales
     const [fichajes, setFichajes] = useState<Fichaje[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState<FichajeFilter>({});
     const [currentState, setCurrentState] = useState<FichajeState>('sin_iniciar');
@@ -241,6 +242,7 @@ export const useFichajes = (options?: UseFichajesOptions) => {
             setError(err instanceof Error ? err.message : 'Error desconocido');
         } finally {
             setIsLoading(false);
+            setIsInitialLoad(false);
         }
     }, [targetFkUser, user?.admin, user]);
 
@@ -399,6 +401,7 @@ export const useFichajes = (options?: UseFichajesOptions) => {
         workCycles,
         activeCycle,
         loading: isLoading,
+        isInitialLoad,
         error,
         currentState,
         geolocationEnabled,
