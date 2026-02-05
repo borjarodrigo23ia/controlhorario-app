@@ -273,3 +273,8 @@ textarea,
 .tap-feedback:active {
     transform: scale(0.97);
 }
+
+/* Safe area específica para navegación móvil */
+.safe-area-bottom {
+    padding-bottom: max(2rem, env(safe-area-inset-bottom));
+}

@@ -20,7 +20,7 @@ export default function MobileNav() {
     ];
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-gray-100 px-2 py-3 md:hidden z-50 pb-safe">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 pt-4 pb-8 md:hidden z-50 safe-area-bottom shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
             <nav className="flex justify-around items-center max-w-md mx-auto">
                 {navItems.map((item) => {
                     let isActive = false;

@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useFichajes } from '@/hooks/useFichajes';
@@ -13,6 +12,7 @@ import MobileNav from '@/components/MobileNav';
 import { Settings, SquarePen, ClockFading } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { TimelineEvent } from '@/lib/fichajes-utils';
+import InstallPrompt from '@/components/pwa/InstallPrompt';
 
 export default function FichajesPage() {
     const { user } = useAuth();
@@ -72,6 +72,8 @@ export default function FichajesPage() {
                     icon={ClockFading}
                     badge="Dashboard"
                 >
+                    <InstallPrompt />
+
                     <button
                         onClick={() => handleEditFichaje()}
                         className="flex items-center gap-2 px-5 py-3 bg-white border border-gray-100 rounded-[1.4rem] text-gray-500 hover:text-primary hover:border-primary/20 transition-all shadow-sm group"
@@ -94,8 +96,6 @@ export default function FichajesPage() {
                             isInitialLoad={isInitialLoad}
                         />
                     </section>
-
-
 
                     <section className="w-full">
                         <TodayFichajes
