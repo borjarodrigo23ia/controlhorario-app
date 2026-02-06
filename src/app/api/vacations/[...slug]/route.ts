@@ -68,10 +68,22 @@ async function handleRequest(request: NextRequest, params: { slug: string[] }, m
             let errorMessage = 'Error en la petición a Dolibarr';
             try {
                 const errorJson = JSON.parse(errorText);
-                if (errorJson.error && errorJson.error.message) {
-                    errorMessage = errorJson.error.message;
+                // Dolibarr's RestException can return error in different formats
+                if (errorJson.error) {
+                    if (typeof errorJson.error === 'string') {
+                        errorMessage = errorJson.error;
+                    } else if (errorJson.error.message) {
+                        errorMessage = errorJson.error.message;
+                    }
+                } else if (errorJson.message) {
+                    errorMessage = errorJson.message;
                 }
-            } catch (e) { }
+            } catch (e) {
+                // If not JSON, use the text as-is if it's not too long
+                if (errorText.length < 200) {
+                    errorMessage = errorText;
+                }
+            }
 
             return NextResponse.json(
                 { error: errorMessage },

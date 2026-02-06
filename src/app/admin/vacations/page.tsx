@@ -3,6 +3,7 @@
 import React from 'react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import AdminVacationDashboard from '@/components/admin/AdminVacationDashboard';
+import VacationDaysBulkAssign from '@/components/admin/VacationDaysBulkAssign';
 import Sidebar from '@/components/Sidebar';
 import MobileNav from '@/components/MobileNav';
 import { Palmtree } from 'lucide-react';
@@ -25,6 +26,8 @@ export default function AdminVacationsPage() {
                         showBack
                         badge="Administración"
                     />
+
+                    <VacationDaysBulkAssign />
 
                     <AdminVacationDashboard />
                 </div>

@@ -167,6 +167,11 @@ TablaVacacionesYaExiste=La tabla de vacaciones ya existe
 TablaVacacionesCreada=Tabla de vacaciones creada correctamente
 ErrorEjecutandoSQL=Error ejecutando SQL
 ErrorLeyendoArchivoSQL=Error leyendo archivo SQL
+
+# Mensajes de error mejorados para usuarios
+NoTienesDiasDeVacacionesAsignadosParaElAnio=No tienes días de vacaciones asignados para el año %s. Por favor, contacta con administración.
+SolicitudExcedeDiasAsignados=No tienes suficientes días disponibles para el año %s. Solicitud requiere %d días pero solo tienes %d disponibles.
+ErrorSolapamientoVacaciones=Ya tienes una solicitud de vacaciones en esas fechas. Por favor, verifica tu historial.
 Volver=Volver
 
 # Script de prueba

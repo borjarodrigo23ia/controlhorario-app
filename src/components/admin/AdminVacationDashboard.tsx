@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useVacations, VacationRequest } from '@/hooks/useVacations';
-import { Check, X, Clock, Calendar, User, Search } from 'lucide-react';
+import { Search, Calendar, CheckCircle, XCircle, Clock, AlertCircle, Palmtree, HeartPulse, ContactRound, User, Check, X } from 'lucide-react';
 
 export default function AdminVacationDashboard() {
     const { fetchVacations, approveVacation, rejectVacation } = useVacations();
@@ -23,7 +23,7 @@ export default function AdminVacationDashboard() {
 
     const handleApprove = async (id: number) => {
         if (confirm('¿Aprobar solicitud?')) {
-            const result = await approveVacation(id, 'Aprobado desde panel admin');
+            const result = await approveVacation(id, 'Aprobado por administrador');
             if (result.success) loadRequests();
         }
     };
@@ -48,6 +48,32 @@ export default function AdminVacationDashboard() {
         return matchesStatus && matchesSearch;
     });
 
+    const getTypeBadge = (tipo: string) => {
+        switch (tipo) {
+            case 'enfermedad':
+                return (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400">
+                        <HeartPulse size={14} />
+                        Enfermedad
+                    </span>
+                );
+            case 'asuntos_propios':
+                return (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-400">
+                        <ContactRound size={14} />
+                        Asuntos Propios
+                    </span>
+                );
+            default:
+                return (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400">
+                        <Palmtree size={14} />
+                        Vacaciones
+                    </span>
+                );
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Filters */}
@@ -55,37 +81,37 @@ export default function AdminVacationDashboard() {
                 <div className="flex bg-gray-100 dark:bg-zinc-800 p-1 rounded-xl w-full md:w-auto">
                     <button
                         onClick={() => setFilterStatus('pendiente')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filterStatus === 'pendiente'
-                                ? 'bg-white dark:bg-black text-black dark:text-white shadow-sm'
-                                : 'text-gray-500 hover:text-black dark:hover:text-white'
-                            }`}
+                        className={`px - 4 py - 2 rounded - lg text - sm font - medium transition - all ${filterStatus === 'pendiente'
+                            ? 'bg-white dark:bg-black text-black dark:text-white shadow-sm'
+                            : 'text-gray-500 hover:text-black dark:hover:text-white'
+                            } `}
                     >
                         Pendientes
                     </button>
                     <button
                         onClick={() => setFilterStatus('aprobado')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filterStatus === 'aprobado'
-                                ? 'bg-white dark:bg-black text-black dark:text-white shadow-sm'
-                                : 'text-gray-500 hover:text-black dark:hover:text-white'
-                            }`}
+                        className={`px - 4 py - 2 rounded - lg text - sm font - medium transition - all ${filterStatus === 'aprobado'
+                            ? 'bg-white dark:bg-black text-black dark:text-white shadow-sm'
+                            : 'text-gray-500 hover:text-black dark:hover:text-white'
+                            } `}
                     >
                         Aprobados
                     </button>
                     <button
                         onClick={() => setFilterStatus('rechazado')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filterStatus === 'rechazado'
-                                ? 'bg-white dark:bg-black text-black dark:text-white shadow-sm'
-                                : 'text-gray-500 hover:text-black dark:hover:text-white'
-                            }`}
+                        className={`px - 4 py - 2 rounded - lg text - sm font - medium transition - all ${filterStatus === 'rechazado'
+                            ? 'bg-white dark:bg-black text-black dark:text-white shadow-sm'
+                            : 'text-gray-500 hover:text-black dark:hover:text-white'
+                            } `}
                     >
                         Rechazados
                     </button>
                     <button
                         onClick={() => setFilterStatus('all')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filterStatus === 'all'
-                                ? 'bg-white dark:bg-black text-black dark:text-white shadow-sm'
-                                : 'text-gray-500 hover:text-black dark:hover:text-white'
-                            }`}
+                        className={`px - 4 py - 2 rounded - lg text - sm font - medium transition - all ${filterStatus === 'all'
+                            ? 'bg-white dark:bg-black text-black dark:text-white shadow-sm'
+                            : 'text-gray-500 hover:text-black dark:hover:text-white'
+                            } `}
                     >
                         Todos
                     </button>
@@ -132,7 +158,8 @@ export default function AdminVacationDashboard() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-4 text-sm">
+                                <div className="flex items-center gap-4 text-sm flex-wrap">
+                                    {getTypeBadge(req.tipo)}
                                     <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-zinc-800/50 px-3 py-1.5 rounded-lg border border-gray-100 dark:border-zinc-800">
                                         <Calendar size={16} className="text-gray-400" />
                                         <span className="font-medium">{formatDate(req.fecha_inicio)}</span>
@@ -167,10 +194,10 @@ export default function AdminVacationDashboard() {
                                         </button>
                                     </>
                                 ) : (
-                                    <div className={`text-center py-2 rounded-xl font-bold text-sm ${req.estado === 'aprobado'
-                                            ? 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400'
-                                            : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400'
-                                        }`}>
+                                    <div className={`text - center py - 2 rounded - xl font - bold text - sm ${req.estado === 'aprobado'
+                                        ? 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400'
+                                        : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400'
+                                        } `}>
                                         {req.estado === 'aprobado' ? 'Aprobada' : 'Rechazada'}
                                     </div>
                                 )}

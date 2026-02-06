@@ -8,6 +8,7 @@ export interface VacationRequest {
     fecha_inicio: string; // YYYY-MM-DD
     fecha_fin: string; // YYYY-MM-DD
     estado: 'pendiente' | 'aprobado' | 'rechazado';
+    tipo: 'vacaciones' | 'enfermedad' | 'asuntos_propios';
     comentarios: string;
     aprobado_por: string | null;
     fecha_aprobacion: string | null;
@@ -60,7 +61,7 @@ export const useVacations = () => {
         }
     }, []);
 
-    const createVacation = useCallback(async (data: { fecha_inicio: string; fecha_fin: string; comentarios?: string }) => {
+    const createVacation = useCallback(async (data: { fecha_inicio: string; fecha_fin: string; comentarios?: string; tipo?: string }) => {
         const token = authService.getToken();
         if (!token || !user) return { success: false, message: 'No autenticado' };
         setLoading(true);
@@ -74,6 +75,7 @@ export const useVacations = () => {
                 },
                 body: JSON.stringify({
                     usuario: user.login,
+                    tipo: data.tipo || 'vacaciones',
                     ...data
                 })
             });
@@ -82,14 +84,18 @@ export const useVacations = () => {
 
             if (!response.ok) {
                 // If the proxy returns { error: "message" }, use it directly.
-                const errMsg = result.error?.message || result.error || 'Error al solicitar vacaciones';
+                let errMsg = result.error?.message || result.error || 'Error al solicitar vacaciones';
+                // Remove HTTP status prefixes like "Bad Request:", "Internal Server Error:", etc.
+                errMsg = errMsg.replace(/^(Bad Request|Internal Server Error|Not Found|Unauthorized):\s*/i, '');
                 throw new Error(errMsg);
             }
 
             return { success: true, message: 'Solicitud creada correctamente', id: result.id };
         } catch (err) {
             console.error('Error creating vacation:', err);
-            const msg = err instanceof Error ? err.message : 'Error desconocido';
+            let msg = err instanceof Error ? err.message : 'Error desconocido';
+            // Clean any HTTP status prefixes that might have slipped through
+            msg = msg.replace(/^(Bad Request|Internal Server Error|Not Found|Unauthorized):\s*/i, '');
             setError(msg);
             return { success: false, message: msg };
         } finally {

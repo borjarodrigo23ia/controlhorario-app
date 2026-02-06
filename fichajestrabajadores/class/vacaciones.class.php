@@ -74,6 +74,11 @@ class Vacaciones
     public $comentarios;
 
     /**
+     * @var string Tipo de ausencia
+     */
+    public $tipo;
+
+    /**
      * @var string Usuario que aprobó
      */
     public $aprobado_por;
@@ -105,9 +110,10 @@ class Vacaciones
      * @param string $fecha_inicio Fecha de inicio (YYYY-MM-DD)
      * @param string $fecha_fin Fecha de fin (YYYY-MM-DD)
      * @param string $comentarios Comentarios opcionales
+     * @param string $tipo Tipo de ausencia (vacaciones, enfermedad, asuntos_propios)
      * @return int ID de la solicitud creada o -1 si error
      */
-    public function registrarVacaciones($usuario, $fecha_inicio, $fecha_fin, $comentarios = '')
+    public function registrarVacaciones($usuario, $fecha_inicio, $fecha_fin, $comentarios = '', $tipo = 'vacaciones')
     {
         global $langs, $conf;
 
@@ -129,9 +135,9 @@ class Vacaciones
         // Verificar que la fecha fin es posterior a la fecha inicio
         $fecha_inicio_ts = strtotime($fecha_inicio);
         $fecha_fin_ts = strtotime($fecha_fin);
-        
+
         error_log("DEBUG: Timestamp inicio: $fecha_inicio_ts, Timestamp fin: $fecha_fin_ts");
-        
+
         if ($fecha_fin_ts < $fecha_inicio_ts) {
             error_log("ERROR: Fecha fin anterior a fecha inicio");
             $this->errors[] = $langs->trans("ErrorFechaFinAnterior");
@@ -156,7 +162,7 @@ class Vacaciones
             error_log("DEBUG: Resultado de verificación de solapamiento: " . $obj->total);
             if ($obj->total > 0) {
                 error_log("ERROR: Solapamiento detectado");
-                $this->errors[] = $langs->trans("ErrorSolapamientoVacaciones");
+                $this->errors[] = "Ya tienes una solicitud de vacaciones en esas fechas. Por favor, verifica tu historial.";
                 return -1;
             }
         } else {
@@ -193,7 +199,7 @@ class Vacaciones
                 }
 
                 // 2) Días asignados para este usuario y año (si no existe, 0)
-                $sqlAssigned = "SELECT dias FROM " . MAIN_DB_PREFIX . "fichajestrabajadores_vacaciones_dias WHERE fk_user = " . (int)$fk_user . " AND anio = " . (int)$year . " AND entity = " . (int)$conf->entity;
+                $sqlAssigned = "SELECT dias FROM " . MAIN_DB_PREFIX . "fichajestrabajadores_vacaciones_dias WHERE fk_user = " . (int) $fk_user . " AND anio = " . (int) $year . " AND entity = " . (int) $conf->entity;
                 $assignedDays = 0;
                 $resAssigned = $this->db->query($sqlAssigned);
                 if ($resAssigned && ($objAssign = $this->db->fetch_object($resAssigned))) {
@@ -211,17 +217,18 @@ class Vacaciones
                 $usedDays = 0;
                 $resUsed = $this->db->query($sqlUsed);
                 if ($resUsed && ($objUsed = $this->db->fetch_object($resUsed))) {
-                    $usedDays = (int) max(0, (int)$objUsed->usedDays);
+                    $usedDays = (int) max(0, (int) $objUsed->usedDays);
                 }
 
                 // Si no hay días asignados, o si se excede, bloquear
                 if ($assignedDays <= 0) {
-                    $this->errors[] = $langs->trans('NoTienesDiasDeVacacionesAsignadosParaElAnio', $year);
+                    $this->errors[] = "No tienes días de vacaciones asignados para el año $year. Por favor, contacta con administración.";
                     return -1;
                 }
 
                 if (($usedDays + $requestedDaysThisYear) > $assignedDays) {
-                    $this->errors[] = $langs->trans('SolicitudExcedeDiasAsignados', $year);
+                    $available = $assignedDays - $usedDays;
+                    $this->errors[] = "No tienes suficientes días disponibles para el año $year. Tienes $available días disponibles pero solicitas $requestedDaysThisYear días.";
                     return -1;
                 }
             }
@@ -229,12 +236,16 @@ class Vacaciones
 
         // Insertar la solicitud
         $sql = "INSERT INTO " . MAIN_DB_PREFIX . "fichajestrabajadores_vacaciones";
-        $sql .= " (usuario, fecha_inicio, fecha_fin, estado, comentarios, fecha_creacion)";
+        $sql .= " (usuario, fecha_inicio, fecha_fin, estado, tipo, comentarios, fecha_creacion)";
         $sql .= " VALUES";
         $sql .= " ('" . $this->db->escape($usuario) . "',";
         $sql .= " '" . $this->db->escape($fecha_inicio) . "',";
         $sql .= " '" . $this->db->escape($fecha_fin) . "',";
         $sql .= " 'pendiente',";
+        $sql .= " '" . $this->db->escape($tipo) . "',";
+        if (!empty($comentarios)) {
+            $comentarios = "- usuario: " . $comentarios;
+        }
         $sql .= " '" . $this->db->escape($comentarios) . "',";
         $sql .= " NOW())";
 
@@ -275,7 +286,7 @@ class Vacaciones
         // Verificar que la fecha fin es posterior a la fecha inicio
         $fecha_inicio_ts = strtotime($this->fecha_inicio);
         $fecha_fin_ts = strtotime($this->fecha_fin);
-        
+
         if ($fecha_fin_ts < $fecha_inicio_ts) {
             $this->errors[] = $langs->trans("ErrorFechaFinAnterior");
             return -1;
@@ -302,9 +313,10 @@ class Vacaciones
                 if ($rangeEnd >= $rangeStart) {
                     $requestedDaysThisYear = (int) floor(($rangeEnd - $rangeStart) / 86400) + 1;
                 }
-                if ($requestedDaysThisYear <= 0) continue;
+                if ($requestedDaysThisYear <= 0)
+                    continue;
 
-                $sqlAssigned = "SELECT dias FROM " . MAIN_DB_PREFIX . "fichajestrabajadores_vacaciones_dias WHERE fk_user = " . (int)$fk_user . " AND anio = " . (int)$year . " AND entity = " . (int)$conf->entity;
+                $sqlAssigned = "SELECT dias FROM " . MAIN_DB_PREFIX . "fichajestrabajadores_vacaciones_dias WHERE fk_user = " . (int) $fk_user . " AND anio = " . (int) $year . " AND entity = " . (int) $conf->entity;
                 $assignedDays = 0;
                 $resAssigned = $this->db->query($sqlAssigned);
                 if ($resAssigned && ($objAssign = $this->db->fetch_object($resAssigned))) {
@@ -320,7 +332,7 @@ class Vacaciones
                 $usedDays = 0;
                 $resUsed = $this->db->query($sqlUsed);
                 if ($resUsed && ($objUsed = $this->db->fetch_object($resUsed))) {
-                    $usedDays = (int) max(0, (int)$objUsed->usedDays);
+                    $usedDays = (int) max(0, (int) $objUsed->usedDays);
                 }
                 if ($assignedDays <= 0 || ($usedDays + $requestedDaysThisYear) > $assignedDays) {
                     $this->errors[] = $langs->trans('SolicitudExcedeDiasAsignados', $year);
@@ -331,12 +343,13 @@ class Vacaciones
 
         // Insertar la solicitud
         $sql = "INSERT INTO " . MAIN_DB_PREFIX . "fichajestrabajadores_vacaciones";
-        $sql .= " (usuario, fecha_inicio, fecha_fin, estado, comentarios, fecha_creacion)";
+        $sql .= " (usuario, fecha_inicio, fecha_fin, estado, tipo, comentarios, fecha_creacion)";
         $sql .= " VALUES";
         $sql .= " ('" . $this->db->escape($this->usuario) . "',";
         $sql .= " '" . $this->db->escape($this->fecha_inicio) . "',";
         $sql .= " '" . $this->db->escape($this->fecha_fin) . "',";
         $sql .= " '" . $this->db->escape($this->estado ? $this->estado : 'pendiente') . "',";
+        $sql .= " '" . $this->db->escape($this->tipo ? $this->tipo : 'vacaciones') . "',";
         $sql .= " '" . $this->db->escape($this->comentarios) . "',";
         $sql .= " NOW())";
 
@@ -394,7 +407,7 @@ class Vacaciones
     public function getVacacionesById($id)
     {
         $sql = "SELECT * FROM " . MAIN_DB_PREFIX . "fichajestrabajadores_vacaciones";
-        $sql .= " WHERE rowid = " . (int)$id;
+        $sql .= " WHERE rowid = " . (int) $id;
 
         $result = $this->db->query($sql);
         if ($result) {
@@ -415,7 +428,7 @@ class Vacaciones
     public function fetch($id)
     {
         $sql = "SELECT * FROM " . MAIN_DB_PREFIX . "fichajestrabajadores_vacaciones";
-        $sql .= " WHERE rowid = " . (int)$id;
+        $sql .= " WHERE rowid = " . (int) $id;
 
         $result = $this->db->query($sql);
         if ($result) {
@@ -426,6 +439,7 @@ class Vacaciones
                 $this->fecha_inicio = $obj->fecha_inicio;
                 $this->fecha_fin = $obj->fecha_fin;
                 $this->estado = $obj->estado;
+                $this->tipo = $obj->tipo;
                 $this->comentarios = $obj->comentarios;
                 $this->aprobado_por = $obj->aprobado_por;
                 $this->fecha_aprobacion = $obj->fecha_aprobacion;
@@ -454,7 +468,7 @@ class Vacaciones
 
         // Verificar que la solicitud existe y está pendiente
         $sql = "SELECT estado FROM " . MAIN_DB_PREFIX . "fichajestrabajadores_vacaciones";
-        $sql .= " WHERE rowid = " . (int)$id;
+        $sql .= " WHERE rowid = " . (int) $id;
 
         $result = $this->db->query($sql);
         if ($result) {
@@ -478,9 +492,9 @@ class Vacaciones
         $sql .= " aprobado_por = '" . $this->db->escape($supervisor) . "',";
         $sql .= " fecha_aprobacion = NOW()";
         if (!empty($comentarios)) {
-            $sql .= ", comentarios = CONCAT(comentarios, '\n\nAprobado por " . $this->db->escape($supervisor) . ": " . $this->db->escape($comentarios) . "')";
+            $sql .= ", comentarios = CONCAT(comentarios, '\n- administrador: " . $this->db->escape($comentarios) . " (Aprobado por " . $this->db->escape($supervisor) . ")')";
         }
-        $sql .= " WHERE rowid = " . (int)$id;
+        $sql .= " WHERE rowid = " . (int) $id;
 
         $result = $this->db->query($sql);
         if ($result) {
@@ -505,7 +519,7 @@ class Vacaciones
 
         // Verificar que la solicitud existe y está pendiente
         $sql = "SELECT estado FROM " . MAIN_DB_PREFIX . "fichajestrabajadores_vacaciones";
-        $sql .= " WHERE rowid = " . (int)$id;
+        $sql .= " WHERE rowid = " . (int) $id;
 
         $result = $this->db->query($sql);
         if ($result) {
@@ -529,9 +543,9 @@ class Vacaciones
         $sql .= " aprobado_por = '" . $this->db->escape($supervisor) . "',";
         $sql .= " fecha_aprobacion = NOW()";
         if (!empty($comentarios)) {
-            $sql .= ", comentarios = CONCAT(comentarios, '\n\nRechazado por " . $this->db->escape($supervisor) . ": " . $this->db->escape($comentarios) . "')";
+            $sql .= ", comentarios = CONCAT(comentarios, '\n- administrador: " . $this->db->escape($comentarios) . " (Rechazado por " . $this->db->escape($supervisor) . ")')";
         }
-        $sql .= " WHERE rowid = " . (int)$id;
+        $sql .= " WHERE rowid = " . (int) $id;
 
         $result = $this->db->query($sql);
         if ($result) {
@@ -557,7 +571,7 @@ class Vacaciones
 
         // Verificar que la solicitud existe y está pendiente
         $sql = "SELECT estado FROM " . MAIN_DB_PREFIX . "fichajestrabajadores_vacaciones";
-        $sql .= " WHERE rowid = " . (int)$id;
+        $sql .= " WHERE rowid = " . (int) $id;
 
         $result = $this->db->query($sql);
         if ($result) {
@@ -583,7 +597,7 @@ class Vacaciones
 
         $fecha_inicio_ts = strtotime($fecha_inicio);
         $fecha_fin_ts = strtotime($fecha_fin);
-        
+
         if ($fecha_fin_ts < $fecha_inicio_ts) {
             $this->errors[] = $langs->trans("ErrorFechaFinAnterior");
             return -1;
@@ -596,7 +610,7 @@ class Vacaciones
         if (!empty($comentarios)) {
             $sql .= ", comentarios = '" . $this->db->escape($comentarios) . "'";
         }
-        $sql .= " WHERE rowid = " . (int)$id;
+        $sql .= " WHERE rowid = " . (int) $id;
 
         $result = $this->db->query($sql);
         if ($result) {
@@ -619,7 +633,7 @@ class Vacaciones
 
         // Verificar que la solicitud existe y está pendiente
         $sql = "SELECT estado FROM " . MAIN_DB_PREFIX . "fichajestrabajadores_vacaciones";
-        $sql .= " WHERE rowid = " . (int)$id;
+        $sql .= " WHERE rowid = " . (int) $id;
 
         $result = $this->db->query($sql);
         if ($result) {
@@ -639,7 +653,7 @@ class Vacaciones
 
         // Eliminar la solicitud
         $sql = "DELETE FROM " . MAIN_DB_PREFIX . "fichajestrabajadores_vacaciones";
-        $sql .= " WHERE rowid = " . (int)$id;
+        $sql .= " WHERE rowid = " . (int) $id;
 
         $result = $this->db->query($sql);
         if ($result) {
@@ -649,4 +663,4 @@ class Vacaciones
             return -1;
         }
     }
-} 
+}

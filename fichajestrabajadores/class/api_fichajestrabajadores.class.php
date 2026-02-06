@@ -1022,15 +1022,20 @@ class FichajestrabajadoresApi extends DolibarrApi
         }
 
         $vacaciones = new Vacaciones($this->db);
+        $tipo = isset($request_data['tipo']) ? $request_data['tipo'] : 'vacaciones';
+
         $result = $vacaciones->registrarVacaciones(
             $request_data['usuario'],
             $request_data['fecha_inicio'],
             $request_data['fecha_fin'],
-            isset($request_data['comentarios']) ? $request_data['comentarios'] : ''
+            isset($request_data['comentarios']) ? $request_data['comentarios'] : '',
+            $tipo
         );
 
         if ($result < 0) {
-            throw new RestException(500, 'Error al crear la solicitud: ' . join(', ', $vacaciones->errors));
+            // Validation errors should return 400 Bad Request, not 500
+            $errorMsg = !empty($vacaciones->errors) ? join('. ', $vacaciones->errors) : 'Error al crear la solicitud';
+            throw new RestException(400, $errorMsg);
         }
 
         return array(
