@@ -49,34 +49,42 @@ export const useCorrections = () => {
         }
     }, []);
 
-    const approveCorrection = useCallback(async (id: string) => {
+    const approveCorrection = useCallback(async (id: string, note?: string) => {
         try {
             const token = localStorage.getItem('dolibarr_token');
             const res = await fetch(`/api/corrections/${id}/approve`, {
                 method: 'POST',
-                headers: { 'DOLAPIKEY': token || '' }
+                headers: {
+                    'DOLAPIKEY': token || '',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ note })
             });
             if (!res.ok) throw new Error();
-            toast.success('Aprobada');
+            toast.success('Solicitud aprobada correctamente');
             return true;
         } catch {
-            toast.error('Error rechazo');
+            toast.error('Error al aprobar la solicitud');
             return false;
         }
     }, []);
 
-    const rejectCorrection = useCallback(async (id: string) => {
+    const rejectCorrection = useCallback(async (id: string, note?: string) => {
         try {
             const token = localStorage.getItem('dolibarr_token');
             const res = await fetch(`/api/corrections/${id}/reject`, {
                 method: 'POST',
-                headers: { 'DOLAPIKEY': token || '' }
+                headers: {
+                    'DOLAPIKEY': token || '',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ note })
             });
             if (!res.ok) throw new Error();
-            toast.success('Rechazada');
+            toast.success('Solicitud rechazada correctamente');
             return true;
         } catch {
-            toast.error('Error rechazo');
+            toast.error('Error al rechazar la solicitud');
             return false;
         }
     }, []);

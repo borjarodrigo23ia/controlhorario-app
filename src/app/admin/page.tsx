@@ -1,13 +1,29 @@
 'use client';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import Sidebar from '@/components/Sidebar';
 import MobileNav from '@/components/MobileNav';
 import { Users, BadgeCheck, Settings, LayoutDashboard, CalendarClock, ChevronRight, MapPinHouse, CalendarRange, Palmtree } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { useCorrections } from '@/hooks/useCorrections';
+import { useVacations } from '@/hooks/useVacations';
 
 export default function AdminPage() {
     const { user } = useAuth();
+    const { corrections, fetchCorrections } = useCorrections();
+    const { fetchVacations } = useVacations();
+    const [pendingVacations, setPendingVacations] = useState(0);
+
+    useEffect(() => {
+        fetchCorrections(undefined, 'pendiente');
+
+        const loadVacations = async () => {
+            const data = await fetchVacations({ estado: 'pendiente' });
+            setPendingVacations(data ? data.length : 0);
+        };
+        loadVacations();
+    }, [fetchCorrections, fetchVacations]);
 
     // Simple protection
     if (user && !user.admin) {
@@ -18,8 +34,22 @@ export default function AdminPage() {
         { title: 'Usuarios', icon: Users, href: '/admin/users', desc: 'Gestionar configuración de empleados', color: 'primary' },
         { title: 'Centros de Trabajo', icon: MapPinHouse, href: '/admin/centers', desc: 'Configurar geolocalización y ubicaciones', color: 'blue' },
         { title: 'Historial Global', icon: CalendarClock, href: '/admin/fichajes', desc: 'Consulta los registros de todos los usuarios', color: 'indigo' },
-        { title: 'Solicitudes', icon: BadgeCheck, href: '/admin/corrections', desc: 'Aprobar cambios de jornada', color: 'primary' },
-        { title: 'Gestión de Vacaciones', icon: Palmtree, href: '/admin/vacations', desc: 'Aprobar/rechazar días libres', color: 'green' },
+        {
+            title: 'Solicitudes',
+            icon: BadgeCheck,
+            href: '/admin/corrections',
+            desc: 'Aprobar cambios de jornada',
+            color: 'primary',
+            badge: corrections.length
+        },
+        {
+            title: 'Gestión de Vacaciones',
+            icon: Palmtree,
+            href: '/admin/vacations',
+            desc: 'Aprobar/rechazar días libres',
+            color: 'green',
+            badge: pendingVacations
+        },
         { title: 'Gestión de Jornadas', icon: CalendarRange, href: '/admin/jornadas', desc: 'Asignar jornadas a trabajadores', color: 'orange' },
     ];
 
@@ -46,12 +76,18 @@ export default function AdminPage() {
 
                             <div className="relative flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.2rem] bg-primary/5 text-primary border border-primary/5 transition-all duration-500 group-hover:bg-primary group-hover:text-black group-hover:scale-110 group-hover:rotate-3 shadow-sm">
+                                    <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.2rem] bg-primary/5 text-primary border border-primary/5 transition-all duration-500 group-hover:bg-primary group-hover:text-black group-hover:scale-110 group-hover:rotate-3 shadow-sm">
                                         <c.icon size={24} strokeWidth={2.2} />
+                                        {/* Notification Badge */}
+                                        {c.badge !== undefined && c.badge > 0 && (
+                                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold min-w-[20px] h-[20px] flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                                                {c.badge}
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div>
-                                        <h3 className="text-lg font-bold text-[#121726] tracking-tight group-hover:text-primary transition-colors">
+                                        <h3 className="text-lg font-bold text-[#121726] tracking-tight group-hover:text-primary transition-colors flex items-center gap-2">
                                             {c.title}
                                         </h3>
                                         <p className="text-xs font-semibold text-gray-400 leading-relaxed opacity-80">

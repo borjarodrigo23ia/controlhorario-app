@@ -12,20 +12,21 @@ interface PendingChange {
 }
 
 export default function AdminChangeRequestModal() {
-    const { user, token } = useAuth();
+    const { user } = useAuth();
     const [pendingChanges, setPendingChanges] = useState<PendingChange[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
 
     useEffect(() => {
-        if (user && token) {
+        if (user) {
             fetchPendingChanges();
         }
-    }, [user, token]);
+    }, [user]);
 
     const fetchPendingChanges = async () => {
         try {
+            const token = localStorage.getItem('dolibarr_token');
             const res = await fetch('/api/fichajes/pending', {
                 headers: { 'DOLAPIKEY': token || '' }
             });
@@ -48,6 +49,7 @@ export default function AdminChangeRequestModal() {
         setLoading(true);
 
         try {
+            const token = localStorage.getItem('dolibarr_token');
             const res = await fetch(`/api/fichajes/${changeId}/${action}`, {
                 method: 'POST',
                 headers: { 'DOLAPIKEY': token || '' }

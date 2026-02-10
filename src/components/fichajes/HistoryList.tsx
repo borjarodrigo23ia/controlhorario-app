@@ -31,9 +31,8 @@ export const HistoryList: React.FC<HistoryListProps> = ({ cycles, loading, title
             if (!cycle.fecha) return;
 
             // STRICT GROUPING: Use string manipulation to avoid timezone shifts.
-            // Assuming cycle.fecha is "YYYY-MM-DD..." or similar ISO-like structure.
-            // We want the local representation as stored in the DB.
-            const dateKey = cycle.fecha.substring(0, 10); // "2024-01-25"
+            const fechaStr = String(cycle.fecha);
+            const dateKey = fechaStr.substring(0, 10); // "2024-01-25"
 
             // Basic validation
             if (dateKey.length < 10) return;
@@ -94,88 +93,133 @@ export const HistoryList: React.FC<HistoryListProps> = ({ cycles, loading, title
     }
 
     return (
-        <div className="w-full max-w-md mx-auto md:max-w-none space-y-8">
-            {monthlyGroups.map(({ monthKey, days }) => {
+        <div className="w-full max-w-md mx-auto md:max-w-none">
+            {monthlyGroups.map(({ monthKey, days }, index) => {
                 const isExpanded = expandedMonths[monthKey] ?? false;
                 const isCurrentMonth = monthKey === currentMonthKey;
 
-                if (isCurrentMonth) {
-                    return (
-                        <div key={monthKey} className="space-y-4 animate-fade-in">
-                            <div className="flex items-center gap-3 px-2">
-                                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
-                                    Este Mes ({formatMonth(monthKey)})
-                                </span>
-                                <div className="h-px flex-1 bg-primary/10"></div>
-                            </div>
-                            <div className="space-y-4">
-                                {days.map(({ dateKey, cycles: dayCycles }) => (
-                                    <DayHistoryCard
-                                        key={dateKey}
-                                        date={dateKey}
-                                        cycles={dayCycles}
-                                        isGlobal={isGlobal}
-                                        onEdit={onEdit}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    );
-                }
+                const colors = [
+                    { border: 'group-hover:border-emerald-200', gradient: 'from-emerald-500/40 to-transparent', text: 'text-emerald-600', bgIcon: 'bg-emerald-100/50' },
+                    { border: 'group-hover:border-blue-200', gradient: 'from-blue-500/40 to-transparent', text: 'text-blue-600', bgIcon: 'bg-blue-100/50' },
+                    { border: 'group-hover:border-amber-200', gradient: 'from-amber-500/40 to-transparent', text: 'text-amber-600', bgIcon: 'bg-amber-100/50' },
+                    { border: 'group-hover:border-rose-200', gradient: 'from-rose-500/40 to-transparent', text: 'text-rose-600', bgIcon: 'bg-rose-100/50' },
+                    { border: 'group-hover:border-violet-200', gradient: 'from-violet-500/40 to-transparent', text: 'text-violet-600', bgIcon: 'bg-violet-100/50' },
+                    { border: 'group-hover:border-indigo-200', gradient: 'from-indigo-500/40 to-transparent', text: 'text-indigo-600', bgIcon: 'bg-indigo-100/50' },
+                ];
+                const color = colors[index % colors.length];
 
                 return (
-                    <div key={monthKey} className="group flex flex-col gap-3">
-                        {/* Monthly Collapsible Header */}
-                        <button
-                            onClick={() => toggleMonth(monthKey)}
-                            className={cn(
-                                "flex items-center justify-between w-full px-5 py-4 rounded-2xl transition-all duration-300",
-                                "bg-white border border-gray-100 shadow-sm hover:shadow-md",
-                                isExpanded ? "border-primary/20" : "hover:border-gray-200"
-                            )}
-                        >
-                            <div className="flex items-center gap-4 text-left">
+                    <React.Fragment key={monthKey}>
+                        {index > 0 && (
+                            <div className="pt-10 mb-2 border-t border-gray-300 mx-2" />
+                        )}
+
+                        {isCurrentMonth ? (
+                            <div className="space-y-4 animate-fade-in relative pb-10">
                                 <div className={cn(
-                                    "w-12 h-12 flex items-center justify-center rounded-xl transition-colors font-bold text-xs tracking-wider",
-                                    "bg-gray-100 text-gray-700"
+                                    "flex items-center justify-between w-full px-5 py-5 rounded-2xl relative overflow-hidden",
+                                    "bg-white border border-gray-100 shadow-sm",
+                                    color.border
                                 )}>
-                                    {formatMonth(monthKey).substring(0, 3).toUpperCase()}
+                                    {/* Decorative Glow Effect */}
+                                    <div className={cn(
+                                        "absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl blur-2xl rounded-tl-full opacity-100 pointer-events-none z-0",
+                                        color.gradient
+                                    )} />
+
+                                    <div className="flex items-center gap-4 text-left relative z-10">
+                                        <div className={cn(
+                                            "w-12 h-12 flex items-center justify-center rounded-xl font-bold text-xs tracking-wider",
+                                            "bg-primary/10 text-primary"
+                                        )}>
+                                            {formatMonth(monthKey).substring(0, 3).toUpperCase()}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-bold text-primary">
+                                                Este Mes ({formatMonth(monthKey)})
+                                            </span>
+                                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                                                Tu actividad actual
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse mr-2 relative z-10" />
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className={cn(
-                                        "text-sm font-bold transition-colors",
-                                        isExpanded ? "text-primary" : "text-gray-900"
+
+                                <div className="space-y-4">
+                                    {days.map(({ dateKey, cycles: dayCycles }) => (
+                                        <DayHistoryCard
+                                            key={dateKey}
+                                            date={dateKey}
+                                            cycles={dayCycles}
+                                            isGlobal={isGlobal}
+                                            onEdit={onEdit}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="group flex flex-col gap-3 relative">
+                                {/* Monthly Collapsible Header */}
+                                <button
+                                    onClick={() => toggleMonth(monthKey)}
+                                    className={cn(
+                                        "flex items-center justify-between w-full px-5 py-5 rounded-2xl transition-all duration-300 relative overflow-hidden",
+                                        "bg-white border border-gray-100 shadow-sm hover:shadow-md",
+                                        isExpanded ? "border-primary/20" : "hover:border-gray-200",
+                                        !isExpanded && color.border
+                                    )}
+                                >
+                                    {/* Decorative Glow Effect */}
+                                    <div className={cn(
+                                        "absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl blur-2xl rounded-tl-full opacity-100 pointer-events-none transition-opacity duration-500 group-hover:opacity-100 z-0",
+                                        color.gradient
+                                    )} />
+
+                                    <div className="flex items-center gap-4 text-left relative z-10">
+                                        <div className={cn(
+                                            "w-12 h-12 flex items-center justify-center rounded-xl transition-colors font-bold text-xs tracking-wider",
+                                            isExpanded ? "bg-primary/10 text-primary" : cn("bg-gray-100 text-gray-700", !isExpanded && color.bgIcon, !isExpanded && color.text)
+                                        )}>
+                                            {formatMonth(monthKey).substring(0, 3).toUpperCase()}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className={cn(
+                                                "text-sm font-bold transition-colors",
+                                                isExpanded ? "text-primary" : "text-gray-900"
+                                            )}>
+                                                {formatMonth(monthKey)}
+                                            </span>
+                                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                                                {days.length} {days.length === 1 ? 'Día' : 'Días'} con registros
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className={cn(
+                                        "p-2 rounded-full transition-all duration-300 relative z-10",
+                                        isExpanded ? "rotate-180 bg-primary/10 text-primary" : "bg-gray-50 text-gray-300"
                                     )}>
-                                        {formatMonth(monthKey)}
-                                    </span>
-                                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
-                                        {days.length} {days.length === 1 ? 'Día' : 'Días'} con registros
-                                    </span>
-                                </div>
-                            </div>
+                                        <ChevronDown size={18} />
+                                    </div>
+                                </button>
 
-                            <div className={cn(
-                                "p-2 rounded-full transition-all duration-300",
-                                isExpanded ? "rotate-180 bg-primary/10 text-primary" : "bg-gray-50 text-gray-300"
-                            )}>
-                                <ChevronDown size={18} />
-                            </div>
-                        </button>
-
-                        {isExpanded && (
-                            <div className="flex flex-col gap-4 pl-4 md:pl-6 border-l-2 border-primary/10 ml-6 md:ml-8 py-2 animate-slide-up">
-                                {days.map(({ dateKey, cycles: dayCycles }) => (
-                                    <DayHistoryCard
-                                        key={dateKey}
-                                        date={dateKey}
-                                        cycles={dayCycles}
-                                        isGlobal={isGlobal}
-                                        onEdit={onEdit}
-                                    />
-                                ))}
+                                {isExpanded && (
+                                    <div className="flex flex-col gap-4 pl-4 md:pl-6 border-l-2 border-primary/10 ml-6 md:ml-8 py-2 animate-slide-up">
+                                        {days.map(({ dateKey, cycles: dayCycles }) => (
+                                            <DayHistoryCard
+                                                key={dateKey}
+                                                date={dateKey}
+                                                cycles={dayCycles}
+                                                isGlobal={isGlobal}
+                                                onEdit={onEdit}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
-                    </div>
+                    </React.Fragment>
                 );
             })}
         </div>

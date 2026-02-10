@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Home, Clock, BadgeCheck, LayoutDashboard, Users, CalendarClock, LayoutGrid, MapPinHouse, Settings, Palmtree } from 'lucide-react';
+import { Home, Clock, BadgeCheck, LayoutDashboard, Users, CalendarClock, LayoutGrid, MapPinHouse, Settings, Palmtree, X } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 
@@ -23,12 +23,17 @@ export default function Sidebar() {
     ];
 
     return (
-        <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-100 flex flex-col p-6 z-20">
-            <div className="mb-12">
-                <h1 className="text-xl font-bold text-gray-900 tracking-tight">Control Horario</h1>
+        <aside className="fixed left-0 top-0 h-screen w-64 glass-premium border-r border-white/20 flex flex-col p-6 z-20">
+            <div className="mb-12 px-2">
+                <h1 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                    <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white">
+                        <Clock size={20} />
+                    </div>
+                    <span>Control Horario</span>
+                </h1>
             </div>
 
-            <nav className="flex-1 space-y-2">
+            <nav className="flex-1 space-y-1.5">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href || (item.href !== '#' && pathname.startsWith(item.href));
 
@@ -36,12 +41,12 @@ export default function Sidebar() {
                         <Link
                             key={item.name}
                             href={item.href}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium ${isActive
-                                ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                            className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 font-bold text-sm tracking-tight ${isActive
+                                ? 'bg-black text-white shadow-lg shadow-black/10 scale-[1.02]'
+                                : 'text-gray-500 hover:bg-black/5 hover:text-gray-900'
                                 }`}
                         >
-                            <item.icon className="w-5 h-5" />
+                            <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-400'}`} />
                             <span>{item.name}</span>
                         </Link>
                     );
@@ -49,11 +54,14 @@ export default function Sidebar() {
             </nav>
 
             {/* Botón salir opcional en sidebar */}
-            <div className="mt-auto pt-6 border-t border-gray-100">
+            <div className="mt-auto pt-6 border-t border-gray-100/50">
                 <button
                     onClick={logout}
-                    className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-red-500 transition-colors w-full"
+                    className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-red-500 transition-all font-bold text-sm w-full hover:bg-red-50 rounded-2xl group"
                 >
+                    <div className="p-1.5 rounded-lg bg-gray-50 group-hover:bg-red-100 transition-colors">
+                        <X size={16} />
+                    </div>
                     <span>Cerrar sesión</span>
                 </button>
             </div>

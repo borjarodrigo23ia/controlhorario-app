@@ -456,7 +456,7 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                                                             <input
                                                                 type="time"
                                                                 step="60"
-                                                                className="w-full bg-white border border-gray-200 focus:border-black focus:ring-0 rounded-xl p-3 text-sm font-bold"
+                                                                className="w-full bg-white border border-gray-200 focus:border-black focus:ring-0 rounded-xl p-2.5 md:p-3 text-sm font-bold appearance-none"
                                                                 value={pausa.hora_inicio}
                                                                 onChange={(e) => {
                                                                     const pausas = [...(newShift.pausas || [])];
@@ -470,7 +470,7 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                                                             <input
                                                                 type="time"
                                                                 step="60"
-                                                                className="w-full bg-white border border-gray-200 focus:border-black focus:ring-0 rounded-xl p-3 text-sm font-bold"
+                                                                className="w-full bg-white border border-gray-200 focus:border-black focus:ring-0 rounded-xl p-2.5 md:p-3 text-sm font-bold appearance-none"
                                                                 value={pausa.hora_fin}
                                                                 onChange={(e) => {
                                                                     const pausas = [...(newShift.pausas || [])];
