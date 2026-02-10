@@ -122,7 +122,7 @@ export default function HistorialPage() {
         }
 
         return (
-            <div className="w-full pt-8 mt-6 border-t border-gray-100/80">
+            <div className="w-full pt-4 mt-2 border-t border-gray-100/80">
                 <div className="flex items-center justify-between w-full max-w-lg mx-auto text-gray-500 font-medium pb-2 transition-all duration-300">
                     <button
                         type="button"
