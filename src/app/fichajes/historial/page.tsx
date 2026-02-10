@@ -122,8 +122,8 @@ export default function HistorialPage() {
         }
 
         return (
-            <div className="fixed bottom-0 left-0 right-0 md:left-64 p-4 md:p-6 z-[60] mb-[74px] md:mb-0 pointer-events-none">
-                <div className="flex items-center justify-between w-full max-w-lg mx-auto text-gray-500 font-medium pointer-events-auto p-2 px-4 transition-all duration-300">
+            <div className="w-full py-10 mt-10 border-t border-gray-100 mb-20 md:mb-0">
+                <div className="flex items-center justify-between w-full max-w-lg mx-auto text-gray-500 font-medium p-2 px-4 transition-all duration-300">
                     <button
                         type="button"
                         aria-label="prev"
