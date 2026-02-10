@@ -22,11 +22,8 @@ export default function AdminChangeRequestModal() {
     const [loading, setLoading] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    // Skip modal entirely for administrators
-    if (user?.admin) return null;
-
     useEffect(() => {
-        if (user) {
+        if (user && !user.admin) {
             fetchPendingChanges();
         }
     }, [user]);
@@ -85,7 +82,7 @@ export default function AdminChangeRequestModal() {
         }
     };
 
-    if (!isOpen || pendingChanges.length === 0) return null;
+    if (!isOpen || pendingChanges.length === 0 || user?.admin) return null;
 
     const currentChange = pendingChanges[currentIndex];
     const isSalida = currentChange.tipo === 'salida';
