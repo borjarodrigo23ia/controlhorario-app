@@ -18,9 +18,10 @@ interface DateRangePickerProps {
     startDate: string; // YYYY-MM-DD
     endDate: string;   // YYYY-MM-DD
     onChange: (dates: { start: string; end: string }) => void;
+    vacations?: any[]; // Optional prop for highlighting absences
 }
 
-export const HistoryDateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, endDate, onChange }) => {
+export const HistoryDateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, endDate, onChange, vacations = [] }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeInput, setActiveInput] = useState<'start' | 'end' | null>(null);
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -129,14 +130,14 @@ export const HistoryDateRangePicker: React.FC<DateRangePickerProps> = ({ startDa
                         onClick={() => handleInputClick('start')}
                         value={startDate || ''}
                         className={cn(
-                            "block w-full ps-10 pe-3 py-2.5 bg-white border text-gray-900 text-sm rounded-xl cursor-pointer transition-all outline-none shadow-sm",
+                            "block w-full ps-8 md:ps-10 pe-2 md:pe-3 py-2 md:py-2.5 bg-white border text-gray-900 text-xs md:text-sm rounded-xl cursor-pointer transition-all outline-none shadow-sm",
                             activeInput === 'start' ? "border-primary ring-2 ring-primary/10 bg-white" : "border-gray-100 bg-neutral-secondary-medium hover:border-gray-200"
                         )}
                         placeholder="Fecha inicio"
                     />
                 </div>
 
-                <span className="mx-4 text-gray-400 font-medium">a</span>
+                <span className="mx-1.5 md:mx-4 text-gray-400 font-medium text-xs md:text-sm whitespace-nowrap">a</span>
 
                 {/* End input */}
                 <div className="relative group flex-1">
@@ -150,7 +151,7 @@ export const HistoryDateRangePicker: React.FC<DateRangePickerProps> = ({ startDa
                         onClick={() => handleInputClick('end')}
                         value={endDate || ''}
                         className={cn(
-                            "block w-full ps-10 pe-3 py-2.5 bg-white border text-gray-900 text-sm rounded-xl cursor-pointer transition-all outline-none shadow-sm",
+                            "block w-full ps-8 md:ps-10 pe-2 md:pe-3 py-2 md:py-2.5 bg-white border text-gray-900 text-xs md:text-sm rounded-xl cursor-pointer transition-all outline-none shadow-sm",
                             activeInput === 'end' ? "border-primary ring-2 ring-primary/10 bg-white" : "border-gray-100 bg-neutral-secondary-medium hover:border-gray-200"
                         )}
                         placeholder="Fecha fin"
@@ -161,7 +162,7 @@ export const HistoryDateRangePicker: React.FC<DateRangePickerProps> = ({ startDa
                 {(startDate || endDate) && (
                     <button
                         onClick={clearFilters}
-                        className="ml-4 p-2 text-red-500 hover:text-red-600 transition-colors"
+                        className="ml-2 md:ml-4 p-1.5 md:p-2 text-red-500 hover:text-red-600 transition-colors"
                         title="Limpiar filtros"
                     >
                         <BrushCleaning size={18} />
@@ -171,7 +172,7 @@ export const HistoryDateRangePicker: React.FC<DateRangePickerProps> = ({ startDa
 
             {/* Custom Calendar Dropdown */}
             {isOpen && (
-                <div className="absolute top-full left-0 mt-3 z-[110] bg-white border border-gray-100 rounded-[2rem] shadow-2xl p-6 animate-fade-in w-[320px]">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 lg:left-0 lg:translate-x-0 mt-3 z-[110] bg-white border border-gray-100 rounded-[2rem] shadow-2xl p-4 md:p-6 animate-fade-in w-[calc(100vw-32px)] max-w-[320px]">
                     {/* Header: Month/Year navigation */}
                     <div className="flex items-center justify-between mb-4">
                         <button
@@ -287,6 +288,7 @@ export const HistoryDateRangePicker: React.FC<DateRangePickerProps> = ({ startDa
                     {/* Days Grid */}
                     <div className="grid grid-cols-7 gap-1">
                         {calendarDays.map((day, i) => {
+                            const dateStr = format(day, 'yyyy-MM-dd');
                             const isSelectedStart = startDate ? isSameDay(day, parseISO(startDate)) : false;
                             const isSelectedEnd = endDate ? isSameDay(day, parseISO(endDate)) : false;
                             const isInRange = (startDate && endDate)
@@ -294,19 +296,43 @@ export const HistoryDateRangePicker: React.FC<DateRangePickerProps> = ({ startDa
                                 : false;
                             const isToday = isSameDay(day, new Date());
 
+                            // Check for absences in vacations array
+                            const dayAbsence = vacations.find(v => {
+                                const start = v.fecha_inicio;
+                                const end = v.fecha_fin;
+                                return dateStr >= start && dateStr <= end && v.estado !== 'rechazado';
+                            });
+
+                            const getSolidColor = (tipo: string) => {
+                                switch (tipo) {
+                                    case 'vacaciones': return '#9EE8FF';
+                                    case 'enfermedad': return '#EA9EFF';
+                                    case 'asuntos_propios': return '#FFCE8A';
+                                    default: return '#e4e4e7';
+                                }
+                            };
+
+                            const hasAbsence = dayAbsence && !isSelectedStart && !isSelectedEnd && !isToday;
+                            const showToday = isToday && !isSelectedStart && !isSelectedEnd;
+
                             return (
                                 <button
                                     key={i}
+                                    type="button"
                                     onClick={() => handleDateSelect(day)}
                                     className={cn(
-                                        "h-9 w-9 flex items-center justify-center rounded-full text-xs transition-all",
-                                        !isSameMonth(day, monthStart) ? "text-gray-200" : "text-gray-700 hover:bg-gray-100",
-                                        isToday && !isSelectedStart && !isSelectedEnd && "text-red-600 font-bold border border-red-100",
-                                        isInRange && !isSelectedStart && !isSelectedEnd && "bg-gray-50 text-black",
-                                        (isSelectedStart || isSelectedEnd) && "bg-black text-white font-bold shadow-md transform scale-110 z-10"
+                                        "relative h-9 w-9 flex items-center justify-center rounded-full text-xs font-semibold transition-all",
+                                        !isSameMonth(day, monthStart) ? "opacity-20" : "text-gray-700 hover:bg-gray-100",
+                                        isInRange && !isSelectedStart && !isSelectedEnd && !hasAbsence && !showToday && "bg-gray-100",
+                                        (isSelectedStart || isSelectedEnd) && "bg-black text-white font-bold shadow-md transform scale-110 z-10",
+                                        showToday && "bg-red-600 text-white shadow-lg shadow-red-200 z-10"
                                     )}
+                                    style={hasAbsence ? {
+                                        backgroundColor: getSolidColor(dayAbsence.tipo),
+                                        boxShadow: `0 4px 10px ${getSolidColor(dayAbsence.tipo)}80`
+                                    } : {}}
                                 >
-                                    {format(day, 'd')}
+                                    <span className="relative z-10">{format(day, 'd')}</span>
                                 </button>
                             );
                         })}

@@ -93,20 +93,25 @@ export const HistoryList: React.FC<HistoryListProps> = ({ cycles, loading, title
     }
 
     return (
-        <div className="w-full max-w-md mx-auto md:max-w-none">
+        <div className="w-full mx-auto md:max-w-none">
             {monthlyGroups.map(({ monthKey, days }, index) => {
                 const isExpanded = expandedMonths[monthKey] ?? false;
                 const isCurrentMonth = monthKey === currentMonthKey;
 
+                const [year, month] = monthKey.split('-').map(Number);
                 const colors = [
-                    { border: 'group-hover:border-emerald-200', gradient: 'from-emerald-500/40 to-transparent', text: 'text-emerald-600', bgIcon: 'bg-emerald-100/50' },
                     { border: 'group-hover:border-blue-200', gradient: 'from-blue-500/40 to-transparent', text: 'text-blue-600', bgIcon: 'bg-blue-100/50' },
                     { border: 'group-hover:border-amber-200', gradient: 'from-amber-500/40 to-transparent', text: 'text-amber-600', bgIcon: 'bg-amber-100/50' },
                     { border: 'group-hover:border-rose-200', gradient: 'from-rose-500/40 to-transparent', text: 'text-rose-600', bgIcon: 'bg-rose-100/50' },
                     { border: 'group-hover:border-violet-200', gradient: 'from-violet-500/40 to-transparent', text: 'text-violet-600', bgIcon: 'bg-violet-100/50' },
                     { border: 'group-hover:border-indigo-200', gradient: 'from-indigo-500/40 to-transparent', text: 'text-indigo-600', bgIcon: 'bg-indigo-100/50' },
                 ];
-                const color = colors[index % colors.length];
+
+                // If it's the current month, force Emerald (Green)
+                // Otherwise, use a color based on the month number to stay consistent across pages
+                const color = isCurrentMonth
+                    ? { border: 'group-hover:border-emerald-200', gradient: 'from-emerald-500/40 to-transparent', text: 'text-emerald-600', bgIcon: 'bg-emerald-100/50' }
+                    : colors[month % colors.length];
 
                 return (
                     <React.Fragment key={monthKey}>

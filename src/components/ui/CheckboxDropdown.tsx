@@ -54,7 +54,7 @@ export const CheckboxDropdown: React.FC<CheckboxDropdownProps> = ({
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
                     "group flex items-center justify-between transition-all duration-300 border focus:outline-none focus:ring-4 focus:ring-primary/10",
-                    compact ? "gap-2 px-5 py-3 rounded-xl" : "gap-6 px-10 py-3.5 rounded-2xl",
+                    compact ? "gap-2 px-3 md:px-5 py-2 md:py-3 rounded-xl" : "gap-6 px-10 py-3.5 rounded-2xl",
                     isOpen
                         ? "bg-white text-[#121726] border-primary shadow-lg ring-2 ring-primary/5"
                         : "bg-white text-gray-700 border-gray-200 shadow-sm hover:border-primary/30 hover:shadow-md active:scale-95"

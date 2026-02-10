@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, LucideIcon } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import NotificationBell from '@/components/NotificationBell';
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -81,7 +82,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                             )}
                         </div>
                     )}
-                    <h1 className="text-3xl md:text-4xl font-bold text-[#121726] tracking-tighter leading-none mb-1.5">
+                    <h1 className="text-2xl md:text-4xl font-bold text-[#121726] tracking-tighter leading-none mb-1.5">
                         {title}
                     </h1>
                     {subtitle && (
@@ -97,6 +98,16 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                     {children}
                 </div>
             )}
+
+            {/* Global Notification Bell - Absolutely positioned to match icon center */}
+            <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 z-40">
+                <NotificationBell />
+            </div>
+
+            {/* Mobile Notification Bell - Integrated in flow if no children handle it */}
+            <div className="lg:hidden absolute top-2 right-0 z-40">
+                <NotificationBell />
+            </div>
         </header>
     );
 };

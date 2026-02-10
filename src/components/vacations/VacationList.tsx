@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useVacations, VacationRequest } from '@/hooks/useVacations';
-import { CalendarCheck, CalendarX, Clock, Trash2, Palmtree, HeartPulse, ContactRound, Filter, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
+import { CalendarCheck, CalendarX, Clock, Trash2, Palmtree, HeartPulse, ContactRound, Filter, ChevronDown, ChevronUp, MessageSquare, CalendarClock } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { Skeleton } from '@/components/ui/Skeleton';
 
@@ -115,7 +115,7 @@ export default function VacationList({ refreshTrigger }: VacationListProps) {
             case 'rechazado':
                 return <CalendarX size={18} className="text-[#EF4444]" />;
             default:
-                return <Clock size={18} className="text-[#F59E0B]" />;
+                return <CalendarClock size={18} className="text-[#F59E0B]" />;
         }
     };
 
@@ -129,22 +129,22 @@ export default function VacationList({ refreshTrigger }: VacationListProps) {
         switch (tipo) {
             case 'enfermedad':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-600 border border-red-100">
-                        <HeartPulse size={14} />
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-[#EA9EFF] text-black border border-purple-200/50 shadow-sm shadow-purple-500/20">
+                        <HeartPulse size={14} className="text-black" />
                         Enfermedad
                     </span>
                 );
             case 'asuntos_propios':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-600 border border-purple-100">
-                        <ContactRound size={14} />
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-[#FFCE8A] text-black border border-amber-200/50 shadow-sm shadow-amber-500/20">
+                        <ContactRound size={14} className="text-black" />
                         Asuntos Propios
                     </span>
                 );
             default:
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-600 border border-blue-100">
-                        <Palmtree size={14} />
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-[#9EE8FF] text-black border border-blue-200/50 shadow-sm shadow-blue-500/20">
+                        <Palmtree size={14} className="text-black" />
                         Vacaciones
                     </span>
                 );
@@ -339,13 +339,27 @@ export default function VacationList({ refreshTrigger }: VacationListProps) {
                     // Can delete if pending OR rejected
                     const canDelete = vacation.estado === 'pendiente' || vacation.estado === 'rechazado';
 
+                    const statusGlowColors = {
+                        aprobado: '#10B981', // Emerald
+                        rechazado: '#EF4444', // Red
+                        pendiente: '#F59E0B'  // Amber
+                    };
+                    const glowColor = statusGlowColors[vacation.estado as keyof typeof statusGlowColors] || '#9ca3af';
+
                     return (
                         <div
                             key={vacation.rowid}
                             onClick={() => (hasComments || true) && toggleExpand(vacation.rowid)}
-                            className={`group relative bg-white rounded-2xl border transition-all cursor-pointer ${isExpanded ? 'border-primary/10 shadow-md' : 'border-gray-100 shadow-sm hover:shadow-md'
+                            className={`group overflow-hidden relative bg-white rounded-2xl border transition-all cursor-pointer ${isExpanded ? 'border-primary/10 shadow-md scale-[1.01]' : 'border-gray-100 shadow-sm hover:shadow-md hover:scale-[1.01]'
                                 }`}
                         >
+                            {/* Diagonal Glow Effect */}
+                            <div
+                                className={`absolute -bottom-6 -right-6 w-32 h-32 bg-gradient-to-tl from-transparent to-transparent blur-2xl rounded-tl-full pointer-events-none z-0 transition-opacity duration-300 ${isExpanded ? 'opacity-0' : 'opacity-60 group-hover:opacity-100'}`}
+                                style={{
+                                    background: `radial-gradient(circle at bottom right, ${glowColor}, transparent)`
+                                }}
+                            />
                             <div className="p-4">
                                 <div className="flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-3">
@@ -365,13 +379,13 @@ export default function VacationList({ refreshTrigger }: VacationListProps) {
                                         {canDelete && (
                                             <button
                                                 onClick={(e) => handleDelete(e, vacation.rowid)}
-                                                className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-lg"
+                                                className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 transition-all rounded-lg"
                                                 title="Eliminar solicitud"
                                             >
                                                 <Trash2 size={16} />
                                             </button>
                                         )}
-                                        <div className={`p-1.5 rounded-lg transition-colors ${isExpanded ? 'bg-primary/10 text-primary' : 'text-gray-300'}`}>
+                                        <div className={`p-1.5 rounded-lg transition-colors ${isExpanded ? 'bg-black/5 text-black' : 'text-black'}`}>
                                             {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                                         </div>
                                     </div>

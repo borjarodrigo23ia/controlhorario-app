@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useVacations, VacationRequest } from '@/hooks/useVacations';
 import { useAuth } from '@/context/AuthContext';
-import { Palmtree, HeartPulse, ContactRound, Calendar, Save, AlertCircle, Info } from 'lucide-react';
+import { Palmtree, HeartPulse, ContactRound, Calendar, Save, AlertCircle, Info, CalendarClock } from 'lucide-react';
 import { checkVacationOverlap } from '@/lib/vacation-logic';
+import { cn } from '@/lib/utils';
+import { HistoryDateRangePicker } from '@/components/fichajes/HistoryDateRangePicker';
 
 interface VacationRequestFormProps {
     onSuccess: () => void;
@@ -20,13 +22,12 @@ export default function VacationRequestForm({ onSuccess }: VacationRequestFormPr
 
     useEffect(() => {
         const loadExisting = async () => {
-            if (user?.login) {
-                const requests = await fetchVacations({ usuario: user.login });
-                setExistingRequests(requests);
-            }
+            // Fetch all vacations to show in the calendar picker
+            const requests = await fetchVacations();
+            setExistingRequests(requests);
         };
         loadExisting();
-    }, [user?.login, fetchVacations]);
+    }, [fetchVacations]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,8 +43,9 @@ export default function VacationRequestForm({ onSuccess }: VacationRequestFormPr
             return;
         }
 
-        // --- VALIDACIÓN DE SOLAPAMIENTO ---
-        const overlap = checkVacationOverlap(startDate, endDate, existingRequests);
+        // --- VALIDACIÓN DE SOLAPAMIENTO (Solo para el propio usuario) ---
+        const userRequests = existingRequests.filter(v => v.usuario === user?.login);
+        const overlap = checkVacationOverlap(startDate, endDate, userRequests);
         if (overlap) {
             setFormError(`Ya tienes una solicitud de ${overlap.tipo} que se solapa con estas fechas (${overlap.fecha_inicio} a ${overlap.fecha_fin})`);
             return;
@@ -88,39 +90,62 @@ export default function VacationRequestForm({ onSuccess }: VacationRequestFormPr
                         <button
                             type="button"
                             onClick={() => setSelectedType('vacaciones')}
-                            className={`flex-1 px-3 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${selectedType === 'vacaciones'
-                                ? 'bg-white text-black shadow-md shadow-gray-200'
-                                : 'text-gray-500 hover:text-gray-700'
-                                }`}
+                            className={cn(
+                                "relative overflow-hidden flex-1 px-3 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap border-2",
+                                selectedType === 'vacaciones'
+                                    ? "bg-[#9EE8FF] border-[#9EE8FF] text-blue-900 shadow-[0_8px_25px_rgba(158,232,255,0.5)] scale-[1.02]"
+                                    : "bg-white border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50/50"
+                            )}
                         >
-                            <Palmtree size={16} className="shrink-0" />
-                            <span className="hidden sm:inline">Vacaciones</span>
+                            {/* Permanent Diagonal Glow - More Visible */}
+                            <div className={cn(
+                                "absolute -bottom-4 -right-4 w-20 h-20 bg-gradient-to-tl from-[#9EE8FF] to-transparent blur-xl rounded-tl-full pointer-events-none z-0 transition-opacity duration-300",
+                                selectedType === 'vacaciones' ? "opacity-0" : "opacity-100"
+                            )} />
+
+                            <Palmtree size={16} className="relative z-10 shrink-0 text-black" />
+                            <span className="relative z-10 hidden sm:inline">Vacaciones</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => setSelectedType('enfermedad')}
-                            className={`flex-1 px-3 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${selectedType === 'enfermedad'
-                                ? 'bg-white text-black shadow-md shadow-gray-200'
-                                : 'text-gray-500 hover:text-gray-700'
-                                }`}
+                            className={cn(
+                                "relative overflow-hidden flex-1 px-3 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap border-2",
+                                selectedType === 'enfermedad'
+                                    ? "bg-[#EA9EFF] border-[#EA9EFF] text-purple-900 shadow-[0_8px_25px_rgba(234,158,255,0.5)] scale-[1.02]"
+                                    : "bg-white border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50/50"
+                            )}
                         >
-                            <HeartPulse size={16} className="shrink-0" />
-                            <span className="hidden sm:inline">Enfermedad</span>
+                            {/* Permanent Diagonal Glow - More Visible */}
+                            <div className={cn(
+                                "absolute -bottom-4 -right-4 w-20 h-20 bg-gradient-to-tl from-[#EA9EFF] to-transparent blur-xl rounded-tl-full pointer-events-none z-0 transition-opacity duration-300",
+                                selectedType === 'enfermedad' ? "opacity-0" : "opacity-100"
+                            )} />
+
+                            <HeartPulse size={16} className="relative z-10 shrink-0 text-black" />
+                            <span className="relative z-10 hidden sm:inline">Enfermedad</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => setSelectedType('asuntos_propios')}
-                            className={`flex-1 px-3 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${selectedType === 'asuntos_propios'
-                                ? 'bg-white text-black shadow-md shadow-gray-200'
-                                : 'text-gray-500 hover:text-gray-700'
-                                }`}
+                            className={cn(
+                                "relative overflow-hidden flex-1 px-3 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap border-2",
+                                selectedType === 'asuntos_propios'
+                                    ? "bg-[#FFCE8A] border-[#FFCE8A] text-amber-900 shadow-[0_8px_25px_rgba(255,206,138,0.5)] scale-[1.02]"
+                                    : "bg-white border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50/50"
+                            )}
                         >
-                            <ContactRound size={16} className="shrink-0" />
-                            <span className="hidden sm:inline">Asuntos</span>
+                            {/* Permanent Diagonal Glow - More Visible */}
+                            <div className={cn(
+                                "absolute -bottom-4 -right-4 w-20 h-20 bg-gradient-to-tl from-[#FFCE8A] to-transparent blur-xl rounded-tl-full pointer-events-none z-0 transition-opacity duration-300",
+                                selectedType === 'asuntos_propios' ? "opacity-0" : "opacity-100"
+                            )} />
+
+                            <ContactRound size={16} className="relative z-10 shrink-0 text-black" />
+                            <span className="relative z-10 hidden sm:inline">Asuntos</span>
                         </button>
                     </div>
 
-                    {/* Selected Type Indicator */}
                     <div className="text-center py-2">
                         <p className="text-sm font-medium text-gray-600">
                             Seleccionado: <span className="font-bold text-black">
@@ -132,37 +157,20 @@ export default function VacationRequestForm({ onSuccess }: VacationRequestFormPr
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6">
-                    <div className="space-y-3">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">
-                            Desde
-                        </label>
-                        <div className="relative group">
-                            <input
-                                type="date"
-                                lang="es-ES"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-gray-900 font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none group-hover:bg-gray-50/80"
-                                required
-                            />
-                        </div>
-                    </div>
-                    <div className="space-y-3">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">
-                            Hasta
-                        </label>
-                        <div className="relative group">
-                            <input
-                                type="date"
-                                lang="es-ES"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-gray-900 font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none group-hover:bg-gray-50/80"
-                                required
-                            />
-                        </div>
-                    </div>
+                {/* Date Range Selection - Using HistoryDateRangePicker Style */}
+                <div className="space-y-3">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">
+                        Período de Ausencia
+                    </label>
+                    <HistoryDateRangePicker
+                        startDate={startDate}
+                        endDate={endDate}
+                        vacations={existingRequests}
+                        onChange={(dates) => {
+                            setStartDate(dates.start);
+                            setEndDate(dates.end);
+                        }}
+                    />
                 </div>
 
                 <div className="space-y-3">

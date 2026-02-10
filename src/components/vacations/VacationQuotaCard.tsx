@@ -58,28 +58,39 @@ export default function VacationQuotaCard({ refreshTrigger }: VacationQuotaCardP
 
     // Determine colors based on remaining days
     const getStatusColors = (days: number) => {
-        if (days > 15) return { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100' };
-        if (days >= 7) return { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100' };
-        return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100' };
+        if (days > 15) return { text: 'text-emerald-500', border: 'border-emerald-100', shadow: 'shadow-emerald-500/10' };
+        if (days >= 7) return { text: 'text-amber-500', border: 'border-amber-100', shadow: 'shadow-amber-500/10' };
+        return { text: 'text-red-500', border: 'border-red-100', shadow: 'shadow-red-500/10' };
     };
 
     const status = getStatusColors(remainingDays);
 
     return (
-        <div className="bg-white rounded-[2rem] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 mb-6 transition-all hover:shadow-md">
-            <div className="flex items-center gap-4">
-                <div className={`${status.bg} px-4 py-2.5 rounded-2xl border ${status.border} min-w-[60px] text-center shadow-inner`}>
-                    <span className={`text-2xl font-black ${status.text} leading-none block`}>
+        <div className="bg-white rounded-[2.5rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/50 mb-6 transition-all hover:shadow-lg hover:scale-[1.01]">
+            <div className="flex items-center gap-6">
+                <div className={`bg-white px-5 py-3 rounded-2xl border ${status.border} min-w-[80px] text-center shadow-xl ${status.shadow}`}>
+                    <span className={`text-3xl font-black ${status.text} leading-none block`}>
                         {remainingDays}
                     </span>
                 </div>
                 <div>
-                    <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.1em] leading-none mb-1.5">
+                    <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.15em] leading-none mb-2">
                         Días Disponibles
                     </h4>
-                    <p className="text-[11px] font-medium text-gray-400">
-                        Restantes para el periodo {new Date().getFullYear()}
+                    <p className="text-sm font-bold text-[#121726]">
+                        Periodo {new Date().getFullYear()}
                     </p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                        <div className="flex h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                                className={`h-full ${remainingDays > 15 ? 'bg-emerald-500' : remainingDays >= 7 ? 'bg-amber-500' : 'bg-red-500'} transition-all duration-1000`}
+                                style={{ width: `${Math.min(100, (remainingDays / (assignedDays || 1)) * 100)}%` }}
+                            />
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">
+                            {consumedDays} / {assignedDays} consumidos
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>

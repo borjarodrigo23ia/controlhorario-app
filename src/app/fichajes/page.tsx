@@ -82,16 +82,18 @@ export default function FichajesPage() {
                     icon={ClockFading}
                     badge="Dashboard"
                 >
-                    <InstallPrompt />
+                    <div className="flex items-center gap-3">
+                        <InstallPrompt />
 
-                    <button
-                        onClick={() => handleEditFichaje()}
-                        className="flex items-center gap-2 px-5 py-3 bg-white border border-gray-100 rounded-[1.4rem] text-gray-500 hover:text-primary hover:border-primary/20 transition-all shadow-sm group"
-                        title="Fichaje Manual"
-                    >
-                        <SquarePen size={18} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-sm font-medium tracking-tight">Fichaje manual</span>
-                    </button>
+                        <button
+                            onClick={() => handleEditFichaje()}
+                            className="flex items-center gap-2 px-5 py-3 bg-white border border-gray-100 rounded-[1.4rem] text-gray-500 hover:text-primary hover:border-primary/20 transition-all shadow-sm group"
+                            title="Fichaje Manual"
+                        >
+                            <SquarePen size={18} className="group-hover:scale-110 transition-transform" />
+                            <span className="text-sm font-medium tracking-tight">Fichaje manual</span>
+                        </button>
+                    </div>
                 </PageHeader>
 
                 <div className="space-y-6 md:space-y-8 max-w-5xl">

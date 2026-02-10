@@ -2,21 +2,60 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Clock, LayoutDashboard, User, LayoutGrid, CalendarClock, Palmtree } from 'lucide-react';
-
+import { Clock, LayoutDashboard, User, CalendarClock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useCorrections } from '@/hooks/useCorrections';
+import { useVacations } from '@/hooks/useVacations';
+import { useEffect, useState } from 'react';
 
 export default function MobileNav() {
     const pathname = usePathname();
     const { user } = useAuth();
+    const { corrections, fetchCorrections } = useCorrections();
+    const { fetchVacations } = useVacations();
+    const [hasNotifications, setHasNotifications] = useState(false);
+
+    useEffect(() => {
+        const checkNotifications = async () => {
+            if (!user) return;
+
+            try {
+                if (user.admin) {
+                    // Admin: Check for pending tasks
+                    await fetchCorrections(undefined, 'pendiente');
+                    const pendingVacs = await fetchVacations({ estado: 'pendiente' });
+                    setHasNotifications(pendingVacs.length > 0 || corrections.length > 0);
+                } else {
+                    // User: Don't show notifications for now
+                    setHasNotifications(false);
+                }
+            } catch (e) {
+                console.error('Error checking notifications:', e);
+            }
+        };
+
+        checkNotifications();
+        // Check every 2 minutes
+        const interval = setInterval(checkNotifications, 120000);
+        return () => clearInterval(interval);
+    }, [user, fetchCorrections, fetchVacations]);
+
+    // Secondary effect to watch corrections state for admin
+    useEffect(() => {
+        if (user?.admin && corrections.length > 0) {
+            setHasNotifications(true);
+        }
+    }, [corrections, user]);
 
     const navItems = [
         { name: 'Fichajes', icon: Clock, href: '/fichajes' },
-        { name: 'Historial', icon: user?.admin ? CalendarClock : LayoutGrid, href: '/fichajes/historial' },
-        ...(user?.admin ? [
-            { name: 'Gestión', icon: LayoutDashboard, href: '/admin' },
-        ] : []),
-        ...(!user?.admin ? [{ name: 'Vacaciones', icon: Palmtree, href: '/vacations' }] : []),
+        { name: 'Historial', icon: CalendarClock, href: '/fichajes/historial' },
+        {
+            name: 'Gestión',
+            icon: LayoutDashboard,
+            href: user?.admin ? '/admin' : '/gestion',
+            showDot: hasNotifications
+        },
         { name: 'Usuario', icon: User, href: '/usuario' }
     ];
 
@@ -46,10 +85,15 @@ export default function MobileNav() {
                                 }`}
                             title={item.name}
                         >
-                            <item.icon
-                                className="w-6 h-6"
-                                strokeWidth={isActive ? 2.5 : 2}
-                            />
+                            <div className="relative">
+                                <item.icon
+                                    className="w-6 h-6"
+                                    strokeWidth={isActive ? 2.5 : 2}
+                                />
+                                {item.showDot && (
+                                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 border-2 border-white rounded-full shadow-sm" />
+                                )}
+                            </div>
                         </Link>
                     );
                 })}
