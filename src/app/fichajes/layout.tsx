@@ -10,7 +10,7 @@ export default function FichajesLayout({ children }: { children: React.ReactNode
                 <Sidebar />
             </div>
 
-            <main className="flex-1 ml-0 md:ml-64 p-6 md:p-12 pb-32">
+            <main className="flex-1 ml-0 md:ml-64 p-6 md:p-12 pb-24">
                 {children}
             </main>
             <MobileNav />

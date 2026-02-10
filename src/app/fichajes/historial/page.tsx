@@ -248,7 +248,7 @@ export default function HistorialPage() {
                             />
                         </div>
 
-                        <div className="mt-auto pb-10 md:pb-0">
+                        <div className="mt-auto pb-4 md:pb-0">
                             {renderPagination()}
                         </div>
                     </div>
