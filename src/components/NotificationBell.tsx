@@ -17,7 +17,7 @@ export default function NotificationBell() {
     const [loading, setLoading] = useState(false);
     const bellRef = useRef<HTMLDivElement>(null);
 
-    if (!user) return null;
+
 
     const loadNotifications = async () => {
         if (!user) return;
@@ -114,6 +114,8 @@ export default function NotificationBell() {
     }, []);
 
     const hasUnread = notifications.length > 0;
+
+    if (!user) return null;
 
     return (
         <>
