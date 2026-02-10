@@ -19,7 +19,6 @@ export const metadata: Metadata = {
     title: "Control Horario | Fichajes",
     description: "Sistema de control horario y gestión de jornadas",
     manifest: "/manifest.json",
-    themeColor: "#6366F1",
     appleWebApp: {
         capable: true,
         statusBarStyle: "black-translucent",
@@ -43,6 +42,7 @@ export const viewport: Viewport = {
     initialScale: 1,
     maximumScale: 1,
     userScalable: false,
+    themeColor: "#6366F1",
 };
 
 export default function RootLayout({
