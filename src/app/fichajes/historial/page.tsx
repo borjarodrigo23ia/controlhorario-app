@@ -2,8 +2,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useFichajes } from '@/hooks/useFichajes';
-import Sidebar from '@/components/Sidebar';
-import MobileNav from '@/components/MobileNav';
 import { HistoryList } from '@/components/fichajes/HistoryList';
 import { ArrowLeft, CalendarClock, History, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
@@ -185,95 +183,88 @@ export default function HistorialPage() {
     };
 
     return (
-        <div className="flex min-h-screen bg-[#FAFBFC]">
-            <div className="hidden md:block">
-                <Sidebar />
-            </div>
+        <>
+            <PageHeader
+                title="Historial Completo"
+                subtitle="Consulta todos tus registros de jornada anteriores"
+                icon={CalendarClock}
+                showBack
+                badge="Mi Actividad"
+            />
 
-            <main className="flex-1 ml-0 md:ml-64 p-6 md:p-12 pb-32">
-                <PageHeader
-                    title="Historial Completo"
-                    subtitle="Consulta todos tus registros de jornada anteriores"
-                    icon={CalendarClock}
-                    showBack
-                    badge="Mi Actividad"
-                />
-
-                <div className="max-w-5xl space-y-8">
-                    {/* Tab Switcher */}
-                    <div className="flex p-1.5 bg-gray-100/50 backdrop-blur-sm rounded-2xl w-full border border-gray-200/30">
-                        <button
-                            onClick={() => setActiveTab('activity')}
-                            className={cn(
-                                "flex-1 flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300",
-                                activeTab === 'activity'
-                                    ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
-                                    : "text-gray-400 hover:text-gray-600"
-                            )}
-                        >
-                            <ClipboardList size={16} />
-                            Actividad
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('audit')}
-                            className={cn(
-                                "flex-1 flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300",
-                                activeTab === 'audit'
-                                    ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
-                                    : "text-gray-400 hover:text-gray-600"
-                            )}
-                        >
-                            <History size={16} />
-                            Cambios
-                        </button>
-                    </div>
-
-                    {activeTab === 'activity' ? (
-                        <>
-                            {/* Filters - Exact Custom Component Design */}
-                            <div className="flex flex-col gap-4">
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none ml-1">
-                                    Filtrar por Rango de Fechas
-                                </span>
-
-                                <HistoryDateRangePicker
-                                    startDate={startDate}
-                                    endDate={endDate}
-                                    onChange={(dates) => {
-                                        setStartDate(dates.start);
-                                        setEndDate(dates.end);
-                                    }}
-                                />
-                            </div>
-
-                            <HistoryList
-                                cycles={paginatedCycles}
-                                loading={loading}
-                                title="Historial de Jornadas"
-                                onEdit={handleEdit}
-                            />
-
-                            {renderPagination()}
-                        </>
-                    ) : (
-                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <AuditHistoryList userId={user?.id} />
-                        </div>
-                    )}
+            <div className="max-w-5xl space-y-8">
+                {/* Tab Switcher */}
+                <div className="flex p-1.5 bg-gray-100/50 backdrop-blur-sm rounded-2xl w-full border border-gray-200/30">
+                    <button
+                        onClick={() => setActiveTab('activity')}
+                        className={cn(
+                            "flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300",
+                            activeTab === 'activity'
+                                ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+                                : "text-gray-400 hover:text-gray-600"
+                        )}
+                    >
+                        <ClipboardList size={16} />
+                        Actividad
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('audit')}
+                        className={cn(
+                            "flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300",
+                            activeTab === 'audit'
+                                ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+                                : "text-gray-400 hover:text-gray-600"
+                        )}
+                    >
+                        <History size={16} />
+                        Cambios
+                    </button>
                 </div>
 
-                <ManualFichajeModal
-                    isOpen={modalOpen}
-                    onClose={() => {
-                        setModalOpen(false);
-                        setTargetEvent(undefined);
-                    }}
-                    onSaved={refreshFichajes}
-                    initialDate={selectedDate}
-                    targetEvent={targetEvent}
-                />
-            </main>
-            <MobileNav />
-        </div>
+                {activeTab === 'activity' ? (
+                    <>
+                        {/* Filters - Exact Custom Component Design */}
+                        <div className="flex flex-col gap-4">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none ml-1">
+                                Filtrar por Rango de Fechas
+                            </span>
+
+                            <HistoryDateRangePicker
+                                startDate={startDate}
+                                endDate={endDate}
+                                onChange={(dates) => {
+                                    setStartDate(dates.start);
+                                    setEndDate(dates.end);
+                                }}
+                            />
+                        </div>
+
+                        <HistoryList
+                            cycles={paginatedCycles}
+                            loading={loading}
+                            title="Historial de Jornadas"
+                            onEdit={handleEdit}
+                        />
+
+                        {renderPagination()}
+                    </>
+                ) : (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <AuditHistoryList userId={user?.id} />
+                    </div>
+                )}
+            </div>
+
+            <ManualFichajeModal
+                isOpen={modalOpen}
+                onClose={() => {
+                    setModalOpen(false);
+                    setTargetEvent(undefined);
+                }}
+                onSaved={refreshFichajes}
+                initialDate={selectedDate}
+                targetEvent={targetEvent}
+            />
+        </>
     );
 }

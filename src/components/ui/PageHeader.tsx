@@ -39,7 +39,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             {/* Background Decorative Icon Wrapper - Isolated from children overflow */}
             {Icon && (
                 <div className="absolute inset-0 pointer-events-none select-none overflow-hidden rounded-[2.5rem]">
-                    <div className="absolute top-0 right-0 md:right-32 opacity-[0.02] -rotate-12 translate-x-1/4 -translate-y-1/4">
+                    <div className="absolute -top-10 -right-10 md:right-20 opacity-[0.02] -rotate-12">
                         <Icon size={240} strokeWidth={1} />
                     </div>
                 </div>
