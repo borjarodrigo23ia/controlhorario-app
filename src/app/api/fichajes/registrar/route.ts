@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
         // Build request_data object (not array) to match backend API expectations
         const requestData: any = {
             request_data: {
+                usuario: usuario,
                 observaciones: observaciones || ''
             }
         };
@@ -33,6 +34,14 @@ export async function POST(request: NextRequest) {
         if (latitud && longitud) {
             requestData.request_data.latitud = latitud;
             requestData.request_data.longitud = longitud;
+        }
+
+        // Add justification and location_warning if present
+        if (body.justification) {
+            requestData.request_data.justification = body.justification;
+        }
+        if (body.location_warning !== undefined) {
+            requestData.request_data.location_warning = body.location_warning ? 1 : 0;
         }
 
         switch (tipo) {

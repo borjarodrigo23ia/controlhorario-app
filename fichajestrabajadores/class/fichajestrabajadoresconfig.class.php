@@ -200,7 +200,8 @@ class FichajesTrabajadoresConfig
             'schedule_start_2',
             'schedule_end_2',
             // Work Centers
-            'work_centers_ids'
+            'work_centers_ids',
+            'work_center_id'
         );
     }
 

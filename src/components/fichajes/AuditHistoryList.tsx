@@ -75,7 +75,9 @@ export default function AuditHistoryList({ userId, limit }: AuditHistoryListProp
             'hora_entrada': 'Entrada',
             'hora_salida': 'Salida',
             'total_pausa': 'Total Pausa',
-            'total_trabajo': 'Total Trabajo'
+            'total_trabajo': 'Total Trabajo',
+            'location_warning': 'Alerta de Ubicación',
+            'justification': 'Justificación'
         };
         return labels[field] || field;
     };

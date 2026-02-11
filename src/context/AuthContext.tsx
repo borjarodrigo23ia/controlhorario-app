@@ -53,6 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                 if (res.ok) {
                     const userData = await res.json();
+                    console.log('[AuthContext] User data refreshed (FULL):', JSON.stringify(userData, null, 2));
+
                     setUser({
                         id: userData.id,
                         login: userData.login,
@@ -61,7 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         lastname: userData.lastname,
                         email: userData.email,
                         user_mobile: userData.user_mobile,
-                        admin: userData.admin === '1' || userData.admin === true
+                        admin: userData.admin === '1' || userData.admin === true,
+                        workplace_center_id: userData.workplace_center_id,
+                        work_centers_ids: userData.work_centers_ids
                     });
 
                     // Extend session by updating login time on successful refresh

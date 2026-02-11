@@ -12,6 +12,8 @@ import { parseDolibarrDate } from '@/lib/date-utils';
 import { getCurrentPosition } from '@/lib/geolocation';
 import { groupFichajesIntoCycles as groupFichajesIntoCyclesLogic } from '@/lib/fichajes-logic';
 import { offlineStore, QueuedFichaje } from '@/lib/offline-store';
+import { useCenters } from './useCenters';
+import { calculateDistance } from '@/lib/geolocation';
 
 export interface UseFichajesOptions {
     fkUser?: string | null;
@@ -24,6 +26,9 @@ export const useFichajes = (options?: UseFichajesOptions) => {
     const { enabled: logoutAfterClockEnabled } = useLogoutAfterClockConfig();
     const targetFkUser = options?.fkUser ?? null;
     const instanceIdRef = useRef<string>(`fichajes-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+
+    // Centers
+    const { centers, refreshCenters } = useCenters();
 
     // Estados principales
     const [fichajes, setFichajes] = useState<Fichaje[]>([]);
@@ -269,31 +274,143 @@ export const useFichajes = (options?: UseFichajesOptions) => {
     }, [fetchFichajes]);
 
     // Registrar fichaje usando el nuevo endpoint
-    const registrarFichaje = useCallback(async (tipo: FichajeTipo, observaciones?: string, coords?: { lat: string, lng: string }, geolocationEnabledParam?: boolean) => {
+    const registrarFichaje = useCallback(async (
+        tipo: FichajeTipo,
+        observaciones?: string,
+        coords?: { lat: string, lng: string },
+        geolocationEnabledParam?: boolean,
+        justification?: string // ADDED: Justification support
+    ) => {
         try {
             const isGeoEnabled = geolocationEnabledParam ?? geolocationEnabled;
             let finalCoords = coords;
 
             // CAPTURE GEOLOCATION IF ENABLED AND NOT PROVIDED
-            if (isGeoEnabled && !finalCoords) {
+            // 1. Obtener Geolocalización si es necesario
+            // Determinar si debemos intentar capturar la ubicación
+            // Se intenta si:
+            // a) Se pasa coords explícitamente (ej. mapa manual)
+            // b) La configuración lo requiere (geolocationEnabled)
+            // c) Opcionalmente podríamos intentarlo siempre si queremos "best effort"
+
+            const shouldCaptureLocation = geolocationEnabledParam !== undefined ? geolocationEnabledParam : geolocationEnabled;
+
+            console.log('[registrarFichaje] Iniciando. Tipo:', tipo);
+            console.log('[registrarFichaje] Configuración Geolocalización:', {
+                shouldCaptureLocation,
+                globalEnabled: geolocationEnabled,
+                paramEnabled: geolocationEnabledParam
+            });
+
+            if (coords) {
+                finalCoords = coords;
+                console.log('[registrarFichaje] Coordenadas proporcionadas manualmente:', finalCoords);
+            } else if (shouldCaptureLocation) {
                 try {
-                    // Notify user that geolocation is being used
+                    // Check permission state first if possible (optional)
+                    console.log('[registrarFichaje] Intentando capturar ubicación...');
                     toast.loading('Capturando ubicación...', {
                         icon: '📍',
                         duration: 3000
                     });
-                    finalCoords = await getCurrentPosition();
-                    // Success notification
+                    const position = await getCurrentPosition();
+                    finalCoords = {
+                        lat: position.lat,
+                        lng: position.lng
+                    };
                     toast.success('Ubicación capturada correctamente', {
                         icon: '✓',
                         duration: 2000
                     });
-                } catch (geoError) {
-                    console.error('Geolocation error:', geoError);
-                    toast.error('No se pudo obtener la ubicación. ' + (geoError instanceof Error ? geoError.message : ''));
-                    // User requested MANDATORY geolocation. If it fails, we should probably STOP?
-                    // "Geolocalización Obligatoria" -> Stop.
-                    throw new Error('La geolocalización es obligatoria pero no se pudo obtener.');
+                    console.log('[registrarFichaje] Ubicación capturada:', finalCoords);
+                } catch (error: any) {
+                    console.error('[registrarFichaje] Error capturando ubicación:', error);
+
+                    // Si es obligatorio, fallar
+                    if (shouldCaptureLocation) {
+                        let msg = 'Error al obtener ubicación.';
+                        if (error.code === 1) msg = 'Permiso de geolocalización denegado.';
+                        else if (error.code === 2) msg = 'Ubicación no disponible.';
+                        else if (error.code === 3) msg = 'Tiempo de espera agotado.';
+
+                        if (error.message) msg += ` (${error.message})`;
+
+                        toast.error(msg);
+                        // User requested MANDATORY geolocation. If it fails, we should probably STOP?
+                        // "Geolocalización Obligatoria" -> Stop.
+                        throw new Error('La geolocalización es obligatoria pero no se pudo obtener.');
+                    }
+                }
+            } else {
+                console.log('[registrarFichaje] Saltando captura de ubicación (No requerida)');
+            }
+
+
+            // --- CHECK LOCATION AGAINST CENTERS (SOFT-BLOCKING) ---
+            // Only check if we have coords, centers exist, and NO justification is provided yet.
+            console.log('DEBUG: Validating Location?', {
+                hasCoords: !!finalCoords,
+                centersCount: centers.length,
+                hasJustification: !!justification,
+                tipo,
+                coords: finalCoords
+            });
+
+            if (finalCoords && centers.length > 0 && !justification) {
+                const lat = parseFloat(finalCoords.lat);
+                const lng = parseFloat(finalCoords.lng);
+
+                let insideAny = false;
+                let minDistance = Infinity;
+                let closestCenterName = '';
+                let closestCenterLabel = '';
+
+                // FILTER CENTERS: If user has assigned center, ONLY check that one.
+                // Otherwise check all.
+                // NOTE: The backend returns 'work_centers_ids' (comma separated) and 'workplace_center_id' (legacy/singular).
+                // The Admin UI uses 'work_centers_ids'.
+                const workCentersIdsStr = (user as any)?.work_centers_ids;
+                const legacyCenterId = (user as any)?.workplace_center_id;
+
+                let assignedIds: string[] = [];
+
+                if (workCentersIdsStr) {
+                    assignedIds = workCentersIdsStr.split(',').filter(Boolean);
+                } else if (legacyCenterId) {
+                    assignedIds = [legacyCenterId.toString()];
+                }
+
+                const centersToCheck = assignedIds.length > 0
+                    ? centers.filter(c => assignedIds.includes(((c as any).rowid || c.id).toString()))
+                    : centers;
+
+                centersToCheck.forEach(center => {
+                    const dist = calculateDistance(lat, lng, center.latitude, center.longitude);
+                    if (dist <= center.radius) {
+                        insideAny = true;
+                    }
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        closestCenterLabel = center.label;
+                    }
+                });
+
+                if (!insideAny) {
+                    // Normalize message
+                    const centerName = centersToCheck.length === 1 ? centersToCheck[0].label : 'su centro de trabajo';
+
+                    // Start SOFT BLOCK
+
+                    // Start SOFT BLOCK
+                    // Instead of throwing, we return a special object or throw a specific error 
+                    // that the UI can catch to show the modal.
+                    /* eslint-disable-next-line no-throw-literal */
+                    throw {
+                        code: 'LOCATION_OUT_OF_RANGE',
+                        message: `Estás fuera del radio de fichaje de ${centerName}`,
+                        distance: minDistance,
+                        centerName: closestCenterLabel
+                    };
                 }
             }
 
@@ -320,6 +437,8 @@ export const useFichajes = (options?: UseFichajesOptions) => {
                 geolocationEnabled: isGeoEnabled,
                 ...(finalCoords && { latitud: finalCoords.lat, longitud: finalCoords.lng }),
                 usuario: user?.login,
+                justification: justification || undefined, // Send justification
+                location_warning: justification ? true : false // If justification exists, it implies warning
             };
 
             // ADDED: Token header
@@ -382,17 +501,17 @@ export const useFichajes = (options?: UseFichajesOptions) => {
     }, [geolocationEnabled, fetchFichajes, logoutAfterClockEnabled, logout, user]);
 
     // Funciones de conveniencia
-    const registrarEntrada = useCallback((observaciones?: string, coords?: { lat: string, lng: string }, geolocationEnabledParam?: boolean) =>
-        registrarFichaje('entrar', observaciones, coords, geolocationEnabledParam), [registrarFichaje]);
+    const registrarEntrada = useCallback((observaciones?: string, coords?: { lat: string, lng: string }, geolocationEnabledParam?: boolean, justification?: string) =>
+        registrarFichaje('entrar', observaciones, coords, geolocationEnabledParam, justification), [registrarFichaje]);
 
-    const registrarSalida = useCallback((observaciones?: string, coords?: { lat: string, lng: string }, geolocationEnabledParam?: boolean) =>
-        registrarFichaje('salir', observaciones, coords, geolocationEnabledParam), [registrarFichaje]);
+    const registrarSalida = useCallback((observaciones?: string, coords?: { lat: string, lng: string }, geolocationEnabledParam?: boolean, justification?: string) =>
+        registrarFichaje('salir', observaciones, coords, geolocationEnabledParam, justification), [registrarFichaje]);
 
-    const iniciarPausa = useCallback((observaciones?: string, coords?: { lat: string, lng: string }, geolocationEnabledParam?: boolean) =>
-        registrarFichaje('iniciar_pausa', observaciones, coords, geolocationEnabledParam), [registrarFichaje]);
+    const iniciarPausa = useCallback((observaciones?: string, coords?: { lat: string, lng: string }, geolocationEnabledParam?: boolean, justification?: string) =>
+        registrarFichaje('iniciar_pausa', observaciones, coords, geolocationEnabledParam, justification), [registrarFichaje]);
 
-    const terminarPausa = useCallback((observaciones?: string, coords?: { lat: string, lng: string }, geolocationEnabledParam?: boolean) =>
-        registrarFichaje('terminar_pausa', observaciones, coords, geolocationEnabledParam), [registrarFichaje]);
+    const terminarPausa = useCallback((observaciones?: string, coords?: { lat: string, lng: string }, geolocationEnabledParam?: boolean, justification?: string) =>
+        registrarFichaje('terminar_pausa', observaciones, coords, geolocationEnabledParam, justification), [registrarFichaje]);
 
     return {
         fichajes,
@@ -416,6 +535,8 @@ export const useFichajes = (options?: UseFichajesOptions) => {
         registrarEntrada,
         registrarSalida,
         iniciarPausa,
-        terminarPausa
+        terminarPausa,
+        centers, // Expose centers
+        refreshCenters
     };
 };

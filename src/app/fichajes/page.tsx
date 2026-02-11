@@ -14,6 +14,8 @@ import InstallPrompt from '@/components/pwa/InstallPrompt';
 import AdminChangeRequestModal from '@/components/fichajes/AdminChangeRequestModal';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/ui/RefreshIndicator';
+import { SoftBlockModal } from '@/components/fichajes/SoftBlockModal';
+import { toast } from 'react-hot-toast';
 
 export default function FichajesPage() {
     const { user } = useAuth();
@@ -36,6 +38,12 @@ export default function FichajesPage() {
     const [targetEvent, setTargetEvent] = useState<TimelineEvent | undefined>(undefined);
     const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
 
+    // Soft-Block Modal State
+    const [softBlockOpen, setSoftBlockOpen] = useState(false);
+    const [softBlockData, setSoftBlockData] = useState<{ distance: number, centerName: string } | null>(null);
+    const [pendingAction, setPendingAction] = useState<((justification: string) => Promise<void>) | null>(null);
+
+
     const { pullProgress, isRefreshing } = usePullToRefresh(async () => {
         await refreshFichajes();
     });
@@ -51,18 +59,68 @@ export default function FichajesPage() {
     };
 
     // Manejadores de acción (wrappers simples)
-    const handleEntrada = async () => {
-        try { await registrarEntrada(); } catch (e) { console.error(e); }
+    const handleFichajeError = (e: any, retryAction: (justification: string) => Promise<void>) => {
+        console.log('DEBUG: handleFichajeError called', e);
+        console.log('DEBUG: Error code:', e.code);
+        console.log('DEBUG: Is Location Out of Range?', e.code === 'LOCATION_OUT_OF_RANGE');
+
+        if (e.code === 'LOCATION_OUT_OF_RANGE') {
+            console.log('DEBUG: Setting soft block data');
+            setSoftBlockData({ distance: e.distance, centerName: e.centerName });
+            setPendingAction(() => retryAction); // Store the action to retry
+            setSoftBlockOpen(true);
+        } else {
+            const msg = e.message || 'Error desconocido';
+            if (!msg.includes('cancelado')) { // Ignorar cancelaciones si las hubiera
+                toast.error(msg);
+            }
+        }
     };
+
+    const handleSoftBlockConfirm = async (justification: string) => {
+        try {
+            setSoftBlockOpen(false);
+            if (pendingAction) {
+                await pendingAction(justification);
+            }
+            setSoftBlockData(null);
+            setPendingAction(null);
+        } catch (e) {
+            console.error(e);
+            toast.error('Error al fichar con justificación');
+        }
+    };
+
+    const handleEntrada = async () => {
+        try {
+            await registrarEntrada();
+        } catch (e: any) {
+            handleFichajeError(e, async (justification: string) => {
+                await registrarEntrada(undefined, undefined, undefined, justification);
+            });
+        }
+    };
+
     const handleSalida = async () => {
-        try { await registrarSalida(); } catch (e) { console.error(e); }
+        try {
+            await registrarSalida();
+        } catch (e: any) {
+            handleFichajeError(e, async (justification: string) => {
+                await registrarSalida(undefined, undefined, undefined, justification);
+            });
+        }
     };
 
     const onPausaClick = async () => {
-        if (currentState === 'en_pausa') {
-            await terminarPausa();
-        } else {
-            await iniciarPausa();
+        const action = currentState === 'en_pausa' ? 'terminar_pausa' : 'iniciar_pausa';
+        try {
+            if (action === 'terminar_pausa') await terminarPausa();
+            else await iniciarPausa();
+        } catch (e: any) {
+            handleFichajeError(e, async (justification: string) => {
+                if (action === 'terminar_pausa') await terminarPausa(undefined, undefined, undefined, justification);
+                else await iniciarPausa(undefined, undefined, undefined, justification);
+            });
         }
     };
 
@@ -130,6 +188,13 @@ export default function FichajesPage() {
                 onSaved={refreshFichajes}
                 initialDate={selectedDate}
                 targetEvent={targetEvent}
+            />
+            <SoftBlockModal
+                isOpen={softBlockOpen}
+                onClose={() => setSoftBlockOpen(false)}
+                onConfirm={handleSoftBlockConfirm}
+                distance={softBlockData?.distance}
+                centerName={softBlockData?.centerName}
             />
             <AdminChangeRequestModal />
         </>

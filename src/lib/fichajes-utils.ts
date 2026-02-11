@@ -15,6 +15,9 @@ export type TimelineEvent = {
     dateStr: string; // YYYY-MM-DD for editing
     observaciones?: string;
     estado_aceptacion?: string;
+    location_warning?: number;
+    early_entry_warning?: number;
+    justification?: string;
 };
 
 export const getDailyEvents = (cycles: WorkCycle[]): TimelineEvent[] => {
@@ -43,7 +46,10 @@ export const getDailyEvents = (cycles: WorkCycle[]): TimelineEvent[] => {
             cycleId,
             dateStr: cycleDateStr,
             observaciones: cycle.entrada.observaciones,
-            estado_aceptacion: cycle.entrada.estado_aceptacion
+            estado_aceptacion: cycle.entrada.estado_aceptacion,
+            location_warning: cycle.entrada.location_warning,
+            early_entry_warning: cycle.entrada.early_entry_warning,
+            justification: cycle.entrada.justification
         });
 
         // Pausas

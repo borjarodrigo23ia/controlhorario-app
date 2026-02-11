@@ -5,7 +5,7 @@ import { WorkCycle } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
-import { MapPinCheck, ChevronDown, ChevronUp, PencilLine, CheckCircle, XCircle, Clock as ClockIcon } from 'lucide-react';
+import { MapPinCheck, ChevronDown, ChevronUp, PencilLine, CheckCircle, XCircle, Clock as ClockIcon, MapPin } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { getDailyEvents, TimelineEvent } from '@/lib/fichajes-utils';
 
@@ -128,23 +128,36 @@ export const TodayFichajes: React.FC<TodayFichajesProps> = ({ cycles, loading, o
                                             </div>
 
                                             <div className="flex items-center gap-1">
-                                                {event.location && event.lat && event.lng && (
+                                                {event.location_warning === 1 && (
+                                                    <div
+                                                        className="flex items-center gap-1 text-red-500 bg-red-50 px-2 py-0.5 rounded-md border border-red-100 cursor-help"
+                                                        title={`Ubicación fuera de rango${event.justification ? `: ${event.justification}` : ''}`}
+                                                    >
+                                                        <MapPin size={12} />
+                                                        {event.justification && <span className="text-[10px] font-bold hidden sm:inline">Justificado</span>}
+                                                    </div>
+                                                )}
+
+                                                {/* Botón de Mapa - Mostrar siempre si hay coordenadas */}
+                                                {(event.lat && event.lng) && (
                                                     <a
                                                         href={`https://www.google.com/maps/search/?api=1&query=${event.lat},${event.lng}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        title={`Ver ubicación: ${event.lat}, ${event.lng}`}
+                                                        title="Ver ubicación en Google Maps"
                                                         className="p-1.5 rounded-lg bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors"
+                                                        onClick={(e) => e.stopPropagation()}
                                                     >
-                                                        <MapPinCheck size={14} />
+                                                        <MapPinCheck size={16} />
                                                     </a>
                                                 )}
+
                                                 <button
                                                     title="Solicitar corrección"
                                                     onClick={() => onEdit?.(event)}
                                                     className="p-1.5 rounded-lg bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                                                 >
-                                                    <PencilLine size={14} />
+                                                    <PencilLine size={16} />
                                                 </button>
                                             </div>
                                         </div>

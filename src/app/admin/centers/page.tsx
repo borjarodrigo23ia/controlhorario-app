@@ -7,6 +7,12 @@ import Sidebar from '@/components/Sidebar';
 import MobileNav from '@/components/MobileNav';
 import { toast } from 'react-hot-toast';
 import { DolibarrUser } from '@/lib/admin-types';
+import dynamic from 'next/dynamic';
+
+const LocationMapPicker = dynamic(() => import('@/components/ui/LocationMapPicker'), {
+    ssr: false,
+    loading: () => <div className="h-[300px] w-full bg-gray-100 animate-pulse rounded-xl flex items-center justify-center text-gray-400">Cargando mapa...</div>
+});
 
 interface Center {
     rowid: number;
@@ -453,6 +459,23 @@ export default function CentersPage() {
                                     <MapPin size={12} strokeWidth={2.5} />
                                     <span>Obtener coordenadas actuales</span>
                                 </button>
+
+                                <div className="pt-2">
+                                    <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1 block">
+                                        Seleccionar en Mapa
+                                    </label>
+                                    <LocationMapPicker
+                                        initialLat={editingCenter?.latitude}
+                                        initialLng={editingCenter?.longitude}
+                                        onLocationSelect={(lat, lng) => {
+                                            setEditingCenter(prev => ({
+                                                ...(prev || {}),
+                                                latitude: parseFloat(lat.toFixed(6)),
+                                                longitude: parseFloat(lng.toFixed(6))
+                                            }));
+                                        }}
+                                    />
+                                </div>
 
                                 <div className="relative">
                                     <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Radio de Fichaje (metros)</label>

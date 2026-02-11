@@ -22,6 +22,8 @@
  */
 
 require_once DOL_DOCUMENT_ROOT . '/core/lib/functions.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/custom/fichajestrabajadores/class/jornadalaboral.class.php';
+require_once DOL_DOCUMENT_ROOT . '/custom/fichajestrabajadores/class/fichajestrabajadores_centers.class.php';
 
 /**
  * Clase para gestionar fichajes de trabajadores
@@ -94,6 +96,26 @@ class FichajeTrabajador
     public $estado_aceptacion;
 
     /**
+     * @var int Advertencia de ubicación (0/1)
+     */
+    public $location_warning;
+
+    /**
+     * @var string Justificación de ubicación/horario
+     */
+    public $justification;
+
+    /**
+     * @var int Advertencia de entrada anticipada (0/1)
+     */
+    public $early_entry_warning;
+
+    /**
+     * @var int ID del centro de trabajo asociado
+     */
+    public $workplace_center_id;
+
+    /**
      * Constructor
      *
      * @param DoliDB $db Database handler
@@ -111,9 +133,10 @@ class FichajeTrabajador
      * @param float $latitud Latitud de la ubicación (opcional)
      * @param float $longitud Longitud de la ubicación (opcional)
      * @param int $user_id ID del usuario (opcional)
+     * @param string $justification Justificación opcional
      * @return int <0 si error, >0 si ok
      */
-    public function registrarEntrada($usuario = 'USUARIO', $observaciones = '', $latitud = null, $longitud = null, $user_id = null)
+    public function registrarEntrada($usuario = 'USUARIO', $observaciones = '', $latitud = null, $longitud = null, $user_id = null, $justification = null, $location_warning = 0)
     {
         global $user;
 
@@ -136,6 +159,10 @@ class FichajeTrabajador
         $this->latitud = $latitud;
         $this->longitud = $longitud;
 
+        // Establecer campos de validación
+        $this->justification = $justification;
+        $this->location_warning = $location_warning ? 1 : 0;
+
         return $this->create();
     }
 
@@ -149,7 +176,7 @@ class FichajeTrabajador
      * @param int $user_id ID del usuario (opcional)
      * @return int <0 si error, >0 si ok
      */
-    public function registrarSalida($usuario = 'USUARIO', $observaciones = '', $latitud = null, $longitud = null, $user_id = null)
+    public function registrarSalida($usuario = 'USUARIO', $observaciones = '', $latitud = null, $longitud = null, $user_id = null, $justification = null, $location_warning = 0)
     {
         global $user;
 
@@ -171,6 +198,10 @@ class FichajeTrabajador
         // Establecer coordenadas de geolocalización
         $this->latitud = $latitud;
         $this->longitud = $longitud;
+
+        // Establecer campos de validación
+        $this->justification = $justification;
+        $this->location_warning = $location_warning ? 1 : 0;
 
         // Calculamos la jornada completa si acabamos de finalizar un ciclo
         $result = $this->create();
@@ -195,7 +226,7 @@ class FichajeTrabajador
      * @param int $user_id ID del usuario (opcional)
      * @return int <0 si error, >0 si ok
      */
-    public function iniciarPausa($usuario = 'USUARIO', $observaciones = '', $latitud = null, $longitud = null, $user_id = null)
+    public function iniciarPausa($usuario = 'USUARIO', $observaciones = '', $latitud = null, $longitud = null, $user_id = null, $justification = null, $location_warning = 0)
     {
         global $user;
 
@@ -218,6 +249,10 @@ class FichajeTrabajador
         $this->latitud = $latitud;
         $this->longitud = $longitud;
 
+        // Establecer campos de validación
+        $this->justification = $justification;
+        $this->location_warning = $location_warning ? 1 : 0;
+
         return $this->create();
     }
 
@@ -231,7 +266,7 @@ class FichajeTrabajador
      * @param int $user_id ID del usuario (opcional)
      * @return int <0 si error, >0 si ok
      */
-    public function terminarPausa($usuario = 'USUARIO', $observaciones = '', $latitud = null, $longitud = null, $user_id = null)
+    public function terminarPausa($usuario = 'USUARIO', $observaciones = '', $latitud = null, $longitud = null, $user_id = null, $justification = null, $location_warning = 0)
     {
         global $user;
 
@@ -253,6 +288,10 @@ class FichajeTrabajador
         // Establecer coordenadas de geolocalización
         $this->latitud = $latitud;
         $this->longitud = $longitud;
+
+        // Establecer campos de validación
+        $this->justification = $justification;
+        $this->location_warning = $location_warning ? 1 : 0;
 
         return $this->create();
     }
@@ -571,11 +610,21 @@ class FichajeTrabajador
         require_once DOL_DOCUMENT_ROOT . '/custom/fichajestrabajadores/class/fichajestrabajadoresconfig.class.php';
         $config = new FichajesTrabajadoresConfig($this->db);
         $require_geolocation = $config->getParamValue('require_geolocation', $this->fk_user);
-        if ($require_geolocation === false || $require_geolocation === '0') {
-            // Si la geolocalización está desactivada, no guardamos las coordenadas
-            $this->latitud = null;
-            $this->longitud = null;
+
+        // Assign workplace_center_id if not already set (e.g. manually)
+        if (empty($this->workplace_center_id)) {
+            $centerId = $config->getParamValue('work_center_id', $this->fk_user);
+            if ($centerId) {
+                $this->workplace_center_id = (int) $centerId;
+            }
         }
+
+        // Si la geolocalización está desactivada, AUN ASÍ guardamos las coordenadas si vienen.
+        // Solo validamos si es obligatorio en el frontend o en un método de validación específico.
+        // if ($require_geolocation === false || $require_geolocation === '0') {
+        //     $this->latitud = null;
+        //     $this->longitud = null;
+        // }
         // Prepare SQL
         // Si ya viene establecida (p.ej. inserción manual), respetarla. Si no, usar ahora en Europe/Madrid.
         if (empty($this->fecha_creacion)) {
@@ -588,7 +637,7 @@ class FichajeTrabajador
         $this->hash_integridad = hash('sha256', $hashData . getenv('INTEGRITY_SALT'));
 
         $sql = "INSERT INTO " . MAIN_DB_PREFIX . "fichajestrabajadores (";
-        $sql .= "fk_user, usuario, tipo, observaciones, fecha_creacion, latitud, longitud, hash_integridad, estado_aceptacion";
+        $sql .= "fk_user, usuario, tipo, observaciones, fecha_creacion, latitud, longitud, hash_integridad, estado_aceptacion, location_warning, justification, early_entry_warning, workplace_center_id";
         $sql .= ") VALUES (";
         $sql .= " " . (int) $this->fk_user . ",";
         $sql .= " '" . $this->db->escape($this->usuario) . "',";
@@ -598,8 +647,17 @@ class FichajeTrabajador
         $sql .= " " . ($this->latitud ? "'" . $this->db->escape($this->latitud) . "'" : "NULL") . ",";
         $sql .= " " . ($this->longitud ? "'" . $this->db->escape($this->longitud) . "'" : "NULL") . ",";
         $sql .= " '" . $this->db->escape($this->hash_integridad) . "',";
-        $sql .= " '" . $this->db->escape($this->estado_aceptacion ? $this->estado_aceptacion : 'aceptado') . "'";
+        $sql .= " '" . $this->db->escape($this->estado_aceptacion ? $this->estado_aceptacion : 'aceptado') . "',";
+        $sql .= " " . ($this->location_warning ? 1 : 0) . ",";
+        $sql .= " '" . $this->db->escape($this->justification) . "',";
+        $sql .= " " . ($this->early_entry_warning ? 1 : 0) . ",";
+        $sql .= " " . ($this->workplace_center_id ? (int) $this->workplace_center_id : "NULL");
         $sql .= ")";
+
+        // LOGIC FOR AUTOMATIC CHECKS (Before INSERT would be better, but we do it here or assume caller did it)
+        // Actually, logic is better inside registerEntrada before calling create(), but create() is generic.
+        // We already passed location_warning and early_entry_warning.
+        // However, if we want the BACKEND to enforce or double-check:
 
         dol_syslog("FichajeTrabajador::create - SQL Query: " . $sql, LOG_DEBUG);
 
@@ -960,6 +1018,70 @@ class FichajeTrabajador
         } else {
             $this->db->rollback();
             return -1;
+        }
+    }
+    /**
+     * Check if entry is too early based on assigned schedule
+     */
+    private function checkScheduleCompliance($usuario, $userId)
+    {
+        $jornada = new JornadaLaboral($this->db);
+        // Get all active jornadas for user
+        $jornadas = $jornada->getAllJornadas($userId);
+
+        if (is_array($jornadas) && count($jornadas) > 0) {
+            // Find logic for "today" - simplified: assume the first active one is the current one
+            $currentJornada = $jornadas[0];
+
+            if (!empty($currentJornada['hora_inicio_jornada'])) {
+                try {
+                    $tz = new DateTimeZone('Europe/Madrid');
+                    $now = new DateTime('now', $tz);
+                    $todayDate = $now->format('Y-m-d');
+
+                    $startTimeStr = $todayDate . ' ' . $currentJornada['hora_inicio_jornada']; // Y-m-d H:i:s
+                    $startTime = new DateTime($startTimeStr, $tz);
+
+                    // If now is more than 15 mins before start time
+                    // timestamp diff: startTime - now. If positive and > 900 (15*60)
+                    $diff = $startTime->getTimestamp() - $now->getTimestamp();
+                    if ($diff > (15 * 60)) {
+                        // Early entry detected
+                        $this->early_entry_warning = 1;
+                        dol_syslog("FichajeTrabajador::checkScheduleCompliance - Early entry detected for $usuario. Schedule: " . $currentJornada['hora_inicio_jornada'] . ", Actual: " . $now->format('H:i:s'), LOG_WARNING);
+                    }
+                } catch (Exception $e) {
+                    dol_syslog("FichajeTrabajador::checkScheduleCompliance - Error: " . $e->getMessage(), LOG_ERR);
+                }
+            }
+        }
+    }
+
+    /**
+     * Validate location against centers
+     */
+    private function validateLocationBackend()
+    {
+        if (!class_exists('FichajesTrabajadoresCenters')) {
+            return;
+        }
+        $centers = new FichajesTrabajadoresCenters($this->db);
+        $result = $centers->checkLocation($this->latitud, $this->longitud);
+
+        if ($result['inside']) {
+            $this->workplace_center_id = $result['center']['id'];
+            // If inside, we can theoretically clear the warning, but we trust frontend mostly.
+            // But let's say if we find them inside, we force warning off.
+            $this->location_warning = 0;
+        } else {
+            // Outside
+            // Logic: If frontend validation was skipped or spoofed, we confirm it here.
+            // If frontend sent justification, we keep it. If not, we still flag it.
+            if (!$this->justification) {
+                $this->location_warning = 1;
+            }
+            // If they have justification, we normally keep location_warning=1 to show it's an exception.
+            // So we don't force it to 1 if it's already 1.
         }
     }
 }

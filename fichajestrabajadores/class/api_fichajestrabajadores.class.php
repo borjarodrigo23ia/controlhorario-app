@@ -170,12 +170,14 @@ class FichajestrabajadoresApi extends DolibarrApi
             $observaciones = isset($request_data['observaciones']) ? $request_data['observaciones'] : '';
             $latitud = isset($request_data['latitud']) ? floatval($request_data['latitud']) : null;
             $longitud = isset($request_data['longitud']) ? floatval($request_data['longitud']) : null;
+            $justification = isset($request_data['justification']) ? $request_data['justification'] : null;
+            $location_warning = isset($request_data['location_warning']) ? (int) $request_data['location_warning'] : 0;
 
             // Registrar entrada
             if ($latitud !== null && $longitud !== null) {
-                $result = $fichaje->registrarEntrada($usuario, $observaciones, $latitud, $longitud);
+                $result = $fichaje->registrarEntrada($usuario, $observaciones, $latitud, $longitud, null, $justification, $location_warning);
             } else {
-                $result = $fichaje->registrarEntrada($usuario, $observaciones);
+                $result = $fichaje->registrarEntrada($usuario, $observaciones, null, null, null, $justification, $location_warning);
             }
 
             // Comprobar resultado
@@ -217,12 +219,14 @@ class FichajestrabajadoresApi extends DolibarrApi
             $observaciones = isset($request_data['observaciones']) ? $request_data['observaciones'] : '';
             $latitud = isset($request_data['latitud']) ? floatval($request_data['latitud']) : null;
             $longitud = isset($request_data['longitud']) ? floatval($request_data['longitud']) : null;
+            $justification = isset($request_data['justification']) ? $request_data['justification'] : null;
+            $location_warning = isset($request_data['location_warning']) ? (int) $request_data['location_warning'] : 0;
 
             // Registrar salida
             if ($latitud !== null && $longitud !== null) {
-                $result = $fichaje->registrarSalida($usuario, $observaciones, $latitud, $longitud);
+                $result = $fichaje->registrarSalida($usuario, $observaciones, $latitud, $longitud, null, $justification, $location_warning);
             } else {
-                $result = $fichaje->registrarSalida($usuario, $observaciones);
+                $result = $fichaje->registrarSalida($usuario, $observaciones, null, null, null, $justification, $location_warning);
             }
 
             // Comprobar resultado
@@ -264,12 +268,14 @@ class FichajestrabajadoresApi extends DolibarrApi
             $observaciones = isset($request_data['observaciones']) ? $request_data['observaciones'] : '';
             $latitud = isset($request_data['latitud']) ? floatval($request_data['latitud']) : null;
             $longitud = isset($request_data['longitud']) ? floatval($request_data['longitud']) : null;
+            $justification = isset($request_data['justification']) ? $request_data['justification'] : null;
+            $location_warning = isset($request_data['location_warning']) ? (int) $request_data['location_warning'] : 0;
 
             // Iniciar pausa
             if ($latitud !== null && $longitud !== null) {
-                $result = $fichaje->iniciarPausa($usuario, $observaciones, $latitud, $longitud);
+                $result = $fichaje->iniciarPausa($usuario, $observaciones, $latitud, $longitud, null, $justification, $location_warning);
             } else {
-                $result = $fichaje->iniciarPausa($usuario, $observaciones);
+                $result = $fichaje->iniciarPausa($usuario, $observaciones, null, null, null, $justification, $location_warning);
             }
 
             // Comprobar resultado
@@ -311,12 +317,14 @@ class FichajestrabajadoresApi extends DolibarrApi
             $observaciones = isset($request_data['observaciones']) ? $request_data['observaciones'] : '';
             $latitud = isset($request_data['latitud']) ? floatval($request_data['latitud']) : null;
             $longitud = isset($request_data['longitud']) ? floatval($request_data['longitud']) : null;
+            $justification = isset($request_data['justification']) ? $request_data['justification'] : null;
+            $location_warning = isset($request_data['location_warning']) ? (int) $request_data['location_warning'] : 0;
 
             // Terminar pausa
             if ($latitud !== null && $longitud !== null) {
-                $result = $fichaje->terminarPausa($usuario, $observaciones, $latitud, $longitud);
+                $result = $fichaje->terminarPausa($usuario, $observaciones, $latitud, $longitud, null, $justification, $location_warning);
             } else {
-                $result = $fichaje->terminarPausa($usuario, $observaciones);
+                $result = $fichaje->terminarPausa($usuario, $observaciones, null, null, null, $justification, $location_warning);
             }
 
             // Comprobar resultado
@@ -1300,6 +1308,12 @@ class FichajestrabajadoresApi extends DolibarrApi
             throw new RestException(401, 'Usuario no autenticado');
         }
 
+        // Obtener configuración de centro de trabajo
+        dol_include_once('/fichajestrabajadores/class/fichajestrabajadoresconfig.class.php');
+        $config = new FichajesTrabajadoresConfig($this->db);
+        $work_center_id = $config->getParamValue('work_center_id', $user->id);
+        $work_centers_ids = $config->getParamValue('work_centers_ids', $user->id);
+
         return array(
             'id' => $user->id,
             'login' => $user->login,
@@ -1307,7 +1321,9 @@ class FichajestrabajadoresApi extends DolibarrApi
             'lastname' => $user->lastname,
             'email' => $user->email,
             'admin' => !empty($user->admin) ? true : false,
-            'entity' => $user->entity
+            'entity' => $user->entity,
+            'workplace_center_id' => $work_center_id ? (int) $work_center_id : null,
+            'work_centers_ids' => $work_centers_ids ? $work_centers_ids : null
         );
     }
 

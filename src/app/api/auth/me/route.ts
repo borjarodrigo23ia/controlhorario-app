@@ -36,6 +36,8 @@ export async function GET(request: NextRequest) {
 
         const data = await response.json();
 
+        console.log('[API/ME] User Data received:', JSON.stringify(data, null, 2));
+
         // The custom endpoint returns the object directly
         return NextResponse.json(data);
 

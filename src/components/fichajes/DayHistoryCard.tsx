@@ -11,7 +11,10 @@ import {
     CheckCircle,
     XCircle,
     Clock as ClockIcon,
-    History as HistoryIcon
+    History as HistoryIcon,
+    AlertTriangle,
+    MapPin,
+    MapPinCheckInside
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getDailyEvents, TimelineEvent } from '@/lib/fichajes-utils';
@@ -164,6 +167,14 @@ const SessionItem = ({ cycle, index, formatTime, showUserName = false, onEdit, i
     const events = getDailyEvents([cycle]);
     const canEdit = user?.admin || !isGlobal;
 
+    console.log('[DayHistoryCard] Rendering session events:', events.map(e => ({
+        id: e.id,
+        type: e.type,
+        location: e.location,
+        lat: e.lat,
+        lng: e.lng
+    })));
+
     return (
         <div className="relative">
             <div className="flex justify-between items-center mb-4">
@@ -197,6 +208,26 @@ const SessionItem = ({ cycle, index, formatTime, showUserName = false, onEdit, i
                                 </div>
                             </div>
                             <div className="flex items-center gap-1.5">
+                                {/* Warnings Section */}
+                                {event.location_warning === 1 && (
+                                    <div
+                                        className="flex items-center gap-1 text-red-500 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-100 cursor-help"
+                                        title={`Ubicación fuera de rango${event.justification ? `: ${event.justification}` : ''}`}
+                                    >
+                                        <MapPin size={12} />
+                                        {event.justification && <span className="text-[10px] font-bold">Justificado</span>}
+                                    </div>
+                                )}
+
+                                {event.early_entry_warning === 1 && (
+                                    <div
+                                        className="text-amber-500 bg-amber-50 p-1 rounded-md border border-amber-100 cursor-help"
+                                        title="Entrada anticipada (más de 15 min antes del turno)"
+                                    >
+                                        <ClockIcon size={12} />
+                                    </div>
+                                )}
+
                                 {event.location && (
                                     <a
                                         href={event.lat && event.lng
@@ -205,11 +236,11 @@ const SessionItem = ({ cycle, index, formatTime, showUserName = false, onEdit, i
                                         }
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center gap-1 text-gray-300 hover:text-blue-500 hover:underline transition-colors"
+                                        className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 hover:bg-emerald-100 transition-colors"
                                         title={event.lat && event.lng ? `Ver coordenadas: ${event.lat}, ${event.lng}` : "Ver en mapa"}
                                         onClick={(e) => e.stopPropagation()}
                                     >
-                                        <MapPinCheck size={12} />
+                                        <MapPinCheckInside size={12} />
                                         <span className="text-[10px] font-bold">{event.location}</span>
                                     </a>
                                 )}

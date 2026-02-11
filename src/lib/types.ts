@@ -12,6 +12,8 @@ export interface User {
   entity: string;
   dolapikey?: string;
   admin?: boolean;
+  workplace_center_id?: number | string;
+  work_centers_ids?: string;
   permissions?: any[];
 }
 
@@ -30,6 +32,9 @@ export interface Fichaje {
   fk_user?: string;
   usuario_nombre?: string;
   estado_aceptacion?: 'pendiente' | 'aceptado' | 'rechazado';
+  location_warning?: number;
+  early_entry_warning?: number;
+  justification?: string;
 }
 
 export interface FichajeFilter {
@@ -52,6 +57,9 @@ export interface WorkCycle {
     latitud?: string;
     longitud?: string;
     estado_aceptacion?: 'pendiente' | 'aceptado' | 'rechazado';
+    location_warning?: number;
+    early_entry_warning?: number;
+    justification?: string;
   };
   salida?: {
     fecha_creacion: string;
