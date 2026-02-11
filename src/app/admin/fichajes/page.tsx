@@ -319,7 +319,7 @@ export default function AdminFichajesPage() {
                 {/* Date Selection Box - Centered between tabs and list */}
                 {activeTab !== 'calendar' && (
                     <div className="relative z-20 flex flex-col items-center justify-center gap-4 mb-8 bg-white/80 p-4 md:p-6 rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm mx-auto w-full max-w-xl animate-in fade-in slide-in-from-top-4 duration-700">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none">Filtrar por Período</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none">Filtrado de Fechas y Empleado</p>
                         <HistoryDateRangePicker
                             startDate={filter.startDate || ''}
                             endDate={filter.endDate || ''}
@@ -329,7 +329,7 @@ export default function AdminFichajesPage() {
                         />
 
                         {/* Employee Filter & Export Actions - Moved here */}
-                        <div className="flex flex-wrap items-center justify-center gap-3 mt-2 pt-4 border-t border-gray-100 w-full">
+                        <div className="flex flex-wrap items-center justify-center gap-3 mt-4 pt-6 border-t border-gray-200/60 w-full">
                             <CheckboxDropdown
                                 label={getLabel()}
                                 options={[
