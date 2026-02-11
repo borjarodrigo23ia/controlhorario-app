@@ -260,7 +260,7 @@ export default function AdminFichajesPage() {
 
 
                 {/* Tab Switcher - Distinct Components on One Line */}
-                <div className="flex gap-2 md:gap-4 mb-10 overflow-x-auto pb-2 no-scrollbar">
+                <div className="flex gap-2 md:gap-4 mb-4 overflow-x-auto pb-8 pt-2 px-2 no-scrollbar">
                     <button
                         onClick={() => setActiveTab('activity')}
                         className={cn(
