@@ -341,27 +341,30 @@ export default function AdminFichajesPage() {
                                 className="z-50"
                                 compact
                             />
-                            <ExportActions
-                                cycles={workCycles}
-                                userName={selectedUsers.length === 1 && selectedUsers[0] !== '0' ? getLabel() : undefined}
-                            />
                         </div>
                     </div>
                 )}
 
                 {
                     activeTab === 'activity' ? (
-                        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative animate-in fade-in duration-500">
-                            <div className="flex items-center gap-4 mb-8">
-                                <div className="p-3 bg-primary/5 text-primary rounded-2xl">
-                                    <Filter size={20} />
+                        <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative animate-in fade-in duration-500">
+                            <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-2.5 bg-primary/5 text-primary rounded-xl">
+                                        <Filter size={18} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm md:text-base font-bold text-[#121726] tracking-tight mb-0.5">Actividad Reciente</h3>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-tight">
+                                            {selectedUsers.includes('0') ? 'Equipo completo' : `${selectedUsers.length} Seleccionados`}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-[#121726] tracking-tight mb-0.5">Actividad Reciente</h3>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                        {selectedUsers.includes('0') ? 'Equipo completo' : `${selectedUsers.length} Empleados seleccionados`}
-                                    </p>
-                                </div>
+
+                                <ExportActions
+                                    cycles={workCycles}
+                                    userName={selectedUsers.length === 1 && selectedUsers[0] !== '0' ? getLabel() : undefined}
+                                />
                             </div>
 
                             <HistoryList
