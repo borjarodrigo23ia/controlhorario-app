@@ -241,11 +241,10 @@ export default function AdminFichajesPage() {
                                 setFilter(({ startDate: '', endDate: '' }));
                                 setCurrentPage(1);
                             }}
-                            className="bg-gray-100 hover:bg-gray-200 text-gray-600 p-2.5 rounded-xl transition-all shadow-sm flex items-center gap-2 font-bold text-[10px] uppercase tracking-wider"
+                            className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2.5 rounded-xl transition-all shadow-sm flex items-center font-bold text-[10px] uppercase tracking-wider h-[42px] md:h-[46px]"
                             title="Limpiar todos los filtros"
                         >
-                            <Filter className="w-4 h-4" />
-                            <span className="hidden xs:inline">Limpiar</span>
+                            Limpiar
                         </button>
                         <ExportActions
                             cycles={workCycles}
