@@ -699,7 +699,7 @@ class FichajeTrabajador
         $fichajes = array();
 
         // Construir la consulta SQL
-        $sql = "SELECT f.rowid, f.fk_user, f.usuario, f.tipo, f.observaciones, f.latitud, f.longitud, f.fecha_creacion, f.estado_aceptacion,";
+        $sql = "SELECT f.rowid, f.fk_user, f.usuario, f.tipo, f.observaciones, f.latitud, f.longitud, f.fecha_creacion, f.estado_aceptacion, f.justification, f.location_warning, f.early_entry_warning, f.workplace_center_id,";
         $sql .= " u.firstname, u.lastname, u.login";
         $sql .= " FROM " . MAIN_DB_PREFIX . "fichajestrabajadores as f";
         $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "user as u ON f.fk_user = u.rowid";
@@ -740,6 +740,10 @@ class FichajeTrabajador
                 $fichaje->longitud = $obj->longitud;
                 $fichaje->fecha_creacion = $obj->fecha_creacion;
                 $fichaje->estado_aceptacion = $obj->estado_aceptacion;
+                $fichaje->justification = $obj->justification;
+                $fichaje->location_warning = $obj->location_warning;
+                $fichaje->early_entry_warning = $obj->early_entry_warning;
+                $fichaje->workplace_center_id = $obj->workplace_center_id;
 
                 // Mostrar solo el login del usuario
                 $fichaje->usuario_nombre = $obj->login;

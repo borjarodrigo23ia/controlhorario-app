@@ -15,12 +15,13 @@ interface Option {
 }
 
 interface CustomSelectProps {
-    label: string;
+    label: React.ReactNode;
     options: Option[];
     value: string;
     onChange: (value: string) => void;
     className?: string;
     icon?: LucideIcon;
+    onOpenChange?: (open: boolean) => void;
 }
 
 export const CustomSelect: React.FC<CustomSelectProps> = ({
@@ -29,10 +30,15 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     value,
     onChange,
     className,
-    icon: Icon
+    icon: Icon,
+    onOpenChange
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        onOpenChange?.(isOpen);
+    }, [isOpen, onOpenChange]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -82,7 +88,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
             {/* Dropdown menu */}
             <div
                 className={cn(
-                    "absolute left-0 right-0 z-[100] mt-3 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-[2rem] shadow-2xl p-2 transition-all duration-300 origin-top overflow-hidden",
+                    "absolute left-0 right-0 z-[200] mt-3 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-[2rem] shadow-2xl p-2 transition-all duration-300 origin-top overflow-hidden",
                     isOpen ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-4 scale-95 pointer-events-none"
                 )}
             >

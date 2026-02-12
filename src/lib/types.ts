@@ -70,6 +70,9 @@ export interface WorkCycle {
     latitud?: string;
     longitud?: string;
     estado_aceptacion?: 'pendiente' | 'aceptado' | 'rechazado';
+    location_warning?: number;
+    early_entry_warning?: number;
+    justification?: string;
   };
   pausas: Array<{
     inicio?: {
@@ -78,7 +81,12 @@ export interface WorkCycle {
       tipo: 'iniciar_pausa' | 'pausa';
       usuario: string;
       observaciones?: string;
+      latitud?: string;
+      longitud?: string;
       estado_aceptacion?: 'pendiente' | 'aceptado' | 'rechazado';
+      location_warning?: number;
+      early_entry_warning?: number;
+      justification?: string;
     };
     fin?: {
       fecha_creacion: string;
@@ -86,7 +94,12 @@ export interface WorkCycle {
       tipo: 'terminar_pausa' | 'finp';
       usuario: string;
       observaciones?: string;
+      latitud?: string;
+      longitud?: string;
       estado_aceptacion?: 'pendiente' | 'aceptado' | 'rechazado';
+      location_warning?: number;
+      early_entry_warning?: number;
+      justification?: string;
     };
   }>;
   fecha: string;

@@ -1,9 +1,10 @@
 'use client';
 import { useMemo, useState, useEffect } from 'react';
-import { X, Plus, Trash2, Calendar, Clock, MessageSquare, Info, History, ArrowRight } from 'lucide-react';
+import { X, Plus, Trash2, Calendar, Clock, MessageCircle, Info, History, ArrowRight, GitPullRequestDraft, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 type Pausa = { inicio: string; fin: string };
 
@@ -51,16 +52,16 @@ export default function ManualFichajeModal({
     const [error, setError] = useState<string | null>(null);
     const [observaciones, setObservaciones] = useState('');
     const [motivo, setMotivo] = useState('');
+    const [dropdownOpen, setDropdownOpen] = useState(false);
 
     // Motivos de modificación para cumplimiento legal (Ley Control Horario 2026)
     const MOTIVO_OPTIONS = [
-        { value: '', label: 'Selecciona un motivo...' },
-        { value: 'olvido', label: 'Olvido de fichaje' },
-        { value: 'error_tecnico', label: 'Error técnico del sistema' },
-        { value: 'salida_medica', label: 'Salida médica' },
-        { value: 'modificacion_horario', label: 'Modificación de horario' },
-        { value: 'error_usuario', label: 'Error del usuario al marcar' },
-        { value: 'otros', label: 'Otros (especificar en observaciones)' }
+        { id: 'olvido', label: 'Olvido de fichaje' },
+        { id: 'error_tecnico', label: 'Error técnico del sistema' },
+        { id: 'salida_medica', label: 'Salida médica' },
+        { id: 'modificacion_horario', label: 'Modificación de horario' },
+        { id: 'error_usuario', label: 'Error del usuario al marcar' },
+        { id: 'otros', label: 'Otros (especificar en observaciones)' }
     ];
 
     const isSimpleMode = !!targetEvent;
@@ -72,14 +73,9 @@ export default function ManualFichajeModal({
     // Initialize from targeted event
     useEffect(() => {
         if (targetEvent) {
-            const timeStr = format(targetEvent.time, 'HH:mm');
-            if (targetEvent.type === 'entrada') {
-                setEntrada(timeStr);
-                setSalida('');
-            } else if (targetEvent.type === 'salida') {
-                setSalida(timeStr);
-                setEntrada('');
-            }
+            // As requested, keep manual entry fields empty even when targeting an event
+            setEntrada('');
+            setSalida('');
         }
     }, [targetEvent]);
 
@@ -111,9 +107,9 @@ export default function ManualFichajeModal({
         for (let i = 1; i < sorted.length; i++) {
             if (sorted[i].inicio < sorted[i - 1].fin) return 'Las pausas no pueden solaparse.';
         }
-        // Legal compliance: motivo is mandatory
+        // Legal compliance: motivo and justification are mandatory
         if (!motivo) return 'Debes seleccionar un motivo de la modificación (obligatorio por ley).';
-        if (motivo === 'otros' && !observaciones.trim()) return 'Debes especificar el motivo en las observaciones.';
+        if (!observaciones.trim()) return 'Debes indicar una justificación detallada (obligatorio por ley).';
         return null;
     };
 
@@ -144,7 +140,7 @@ export default function ManualFichajeModal({
                     salida_iso: salidaIso,
                     pausas: pausasPayload,
                     usuario: user?.login,
-                    observaciones: `[${MOTIVO_OPTIONS.find(m => m.value === motivo)?.label}] ${observaciones || "Edición manual por administrador"}`
+                    observaciones: `[${MOTIVO_OPTIONS.find(m => m.id === motivo)?.label}] ${observaciones || "Edición manual por administrador"}`
                 };
 
                 const res = await fetch('/api/fichajes/manual', {
@@ -166,7 +162,7 @@ export default function ManualFichajeModal({
                     hora_entrada: entradaIso || null,
                     hora_salida: salidaIso || null,
                     pausas: pausasJson,
-                    observaciones: `[${MOTIVO_OPTIONS.find(m => m.value === motivo)?.label}] ${observaciones || `Solicitud de corrección para ${targetEvent?.label || 'jornada'}`}`
+                    observaciones: `[${MOTIVO_OPTIONS.find(m => m.id === motivo)?.label}] ${observaciones || `Solicitud de corrección para ${targetEvent?.label || 'jornada'}`}`
                 };
 
                 console.log('[ManualFichajeModal] Sending correction:', payload);
@@ -270,30 +266,13 @@ export default function ManualFichajeModal({
                         </p>
                     </div>
 
-                    {/* Motivo selector - Required by law */}
-                    <div className="mb-6 md:mb-8">
-                        <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest px-1 mb-2">
-                            <MessageSquare size={14} /> Motivo del cambio <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                            value={motivo}
-                            onChange={(e) => setMotivo(e.target.value)}
-                            className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 md:py-4 text-sm md:text-base font-bold text-gray-900 focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
-                            required
-                        >
-                            {MOTIVO_OPTIONS.map(opt => (
-                                <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                        </select>
-                        <p className="text-[10px] text-gray-400 mt-1 px-1">Obligatorio por Ley de Control Horario 2026</p>
-                    </div>
 
                     <div className="space-y-8">
                         {isSimpleMode ? (
                             /* Simple view */
                             <div className="space-y-6">
-                                <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-100/50">
-                                    <div className="flex items-center gap-3 mb-4 text-gray-400">
+                                <div className="p-6 bg-white rounded-[2rem] border border-gray-100">
+                                    <div className="flex items-center gap-3 mb-4 text-gray-900">
                                         <Calendar size={16} />
                                         <span className="text-xs font-black uppercase tracking-widest">
                                             {format(new Date(fecha), "EEEE, d 'de' MMMM", { locale: es })}
@@ -304,7 +283,7 @@ export default function ManualFichajeModal({
                                             <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">
                                                 <Clock size={16} /> Actual
                                             </label>
-                                            <div className="w-full bg-gray-100/50 border border-gray-100 rounded-2xl px-5 py-3 md:py-4 text-sm md:text-base h-12 md:h-14 font-bold text-gray-500 flex items-center tracking-tight">
+                                            <div className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-3 md:py-4 text-sm md:text-base h-12 md:h-14 font-bold text-gray-500 flex items-center tracking-tight shadow-sm">
                                                 {targetEvent ? format(targetEvent.time, 'HH:mm') : '--:--'}
                                             </div>
                                         </div>
@@ -322,19 +301,28 @@ export default function ManualFichajeModal({
                                         </div>
                                     </div>
                                 </div>
-                                {!user?.admin && (
-                                    <div className="space-y-2">
-                                        <label className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest px-1">
-                                            <MessageSquare size={14} /> Motivo del cambio
-                                        </label>
-                                        <textarea
-                                            className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm text-gray-900 placeholder:text-gray-300 focus:ring-2 focus:ring-primary/20 transition-all min-h-[100px] resize-none"
-                                            value={observaciones}
-                                            onChange={e => setObservaciones(e.target.value)}
-                                            placeholder="Indica el motivo de esta corrección..."
-                                        />
-                                    </div>
-                                )}
+                                <CustomSelect
+                                    label={<span>Motivo del cambio <span className="text-red-500">*</span></span>}
+                                    icon={GitPullRequestDraft}
+                                    options={MOTIVO_OPTIONS}
+                                    value={motivo}
+                                    onChange={setMotivo}
+                                    onOpenChange={setDropdownOpen}
+                                />
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest px-1">
+                                        <MessageCircle size={14} /> Justificación <span className="text-red-500 ml-0.5">*</span>
+                                    </label>
+                                    <textarea
+                                        className="w-full bg-white border border-gray-100 shadow-sm rounded-2xl px-5 py-4 text-sm text-gray-900 placeholder:text-gray-300 focus:ring-2 focus:ring-primary/20 transition-all min-h-[100px] resize-none"
+                                        value={observaciones}
+                                        onChange={e => setObservaciones(e.target.value)}
+                                        placeholder="Indica la justificación detallada de este cambio..."
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-1 px-1 font-bold italic">
+                                        * El motivo y la justificación son obligatorios según la Ley de Control Horario 2026
+                                    </p>
+                                </div>
                             </div>
                         ) : (
                             /* Full View */
@@ -344,19 +332,27 @@ export default function ManualFichajeModal({
                                     <InputField label="Entrada" icon={<Clock size={16} />} type="time" value={entrada} onChange={setEntrada} />
                                     <InputField label="Salida" icon={<Clock size={16} />} type="time" value={salida} onChange={setSalida} />
                                 </div>
-                                {!user?.admin && (
-                                    <div className="space-y-2">
-                                        <label className="flex items-center gap-2 text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest px-1">
-                                            <MessageSquare size={14} /> Observaciones
-                                        </label>
-                                        <textarea
-                                            className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 md:py-4 text-sm text-gray-900 placeholder:text-gray-300 focus:ring-2 focus:ring-primary/20 transition-all min-h-[80px] md:min-h-[100px] resize-none"
-                                            value={observaciones}
-                                            onChange={e => setObservaciones(e.target.value)}
-                                            placeholder="Motivo del cambio..."
-                                        />
-                                    </div>
-                                )}
+                                <CustomSelect
+                                    label={<span>Motivo del cambio <span className="text-red-500">*</span></span>}
+                                    icon={GitPullRequestDraft}
+                                    options={MOTIVO_OPTIONS}
+                                    value={motivo}
+                                    onChange={setMotivo}
+                                />
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest px-1">
+                                        <MessageCircle size={14} /> Justificación <span className="text-red-500 ml-0.5">*</span>
+                                    </label>
+                                    <textarea
+                                        className="w-full bg-white border border-gray-100 shadow-sm rounded-2xl px-5 py-3 md:py-4 text-sm text-gray-900 placeholder:text-gray-300 focus:ring-2 focus:ring-primary/20 transition-all min-h-[80px] md:min-h-[100px] resize-none"
+                                        value={observaciones}
+                                        onChange={e => setObservaciones(e.target.value)}
+                                        placeholder="Indica la justificación detallada de este cambio..."
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-1 px-1 font-bold italic">
+                                        * El motivo y la justificación son obligatorios según la Ley de Control Horario 2026
+                                    </p>
+                                </div>
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between px-1">
                                         <h4 className="text-sm font-black text-gray-900 tracking-tight">Pausas</h4>
@@ -394,6 +390,9 @@ export default function ManualFichajeModal({
                             <p className="text-sm font-bold">{error}</p>
                         </div>
                     )}
+
+                    {/* Spacer to allow modal scrolling when dropdown is open */}
+                    <div className={cn("transition-all duration-300", dropdownOpen ? "h-64" : "h-0")} />
                 </div>
                 <div className="p-5 md:p-8 pt-2 md:pt-4 flex gap-3 bg-white border-t border-gray-50">
                     <button onClick={() => !saving && onClose()} className="flex-1 py-3 md:py-4 rounded-xl md:rounded-[1.2rem] border border-gray-100 text-gray-500 text-xs md:text-sm font-black uppercase tracking-widest hover:bg-gray-50 transition-all" disabled={saving}>Cancelar</button>
@@ -418,7 +417,7 @@ const InputField = ({ label, icon, type, value, onChange, compact = false }: { l
             <input
                 type={type}
                 className={cn(
-                    "w-full bg-gray-50 border-none rounded-2xl px-5 transition-all focus:ring-2 focus:ring-primary/20 text-gray-900 placeholder:text-gray-300 font-bold tracking-tight",
+                    "w-full bg-white border border-gray-100 rounded-2xl px-5 transition-all focus:ring-2 focus:ring-primary/20 text-gray-900 placeholder:text-gray-300 font-bold tracking-tight shadow-sm",
                     compact ? "py-2.5 text-sm h-10" : "py-3 md:py-4 text-sm md:text-base h-12 md:h-14"
                 )}
                 value={value}

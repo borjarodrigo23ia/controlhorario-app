@@ -1,13 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Outfit, JetBrains_Mono } from "next/font/google";
+import { Outfit, JetBrains_Mono, Roboto } from "next/font/google";
 import { AuthProvider } from '@/context/AuthContext';
 import { NetworkStatusBanner } from '@/components/ui/NetworkStatusBanner';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import "./globals.css";
+import 'leaflet/dist/leaflet.css';
 
 const outfit = Outfit({
     subsets: ["latin"],
     variable: "--font-outfit",
+});
+
+const roboto = Roboto({
+    weight: ['300', '400', '500', '700'],
+    subsets: ["latin"],
+    variable: "--font-roboto",
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -53,7 +60,7 @@ export default function RootLayout({
     return (
         <html lang="es">
             <body
-                className={`${outfit.variable} ${jetbrainsMono.variable} font-sans antialiased bg-white text-[#121726]`}
+                className={`${outfit.variable} ${roboto.variable} ${jetbrainsMono.variable} font-sans antialiased bg-white text-[#121726]`}
                 suppressHydrationWarning={true}
             >
                 <ServiceWorkerRegister />

@@ -147,6 +147,57 @@ class FichajestrabajadoresApi extends DolibarrApi
     }
 
     /**
+     * Update fichaje (observaciones / justificación)
+     *
+     * @param int   $id             ID del fichaje a actualizar
+     * @param array $request_data   { observaciones, comentario }
+     * @return array
+     *
+     * @url PUT /fichajes/{id}
+     *
+     * @throws RestException
+     */
+    public function updateFichaje($id, $request_data = null)
+    {
+        if (empty($id)) {
+            throw new RestException(400, 'ID de fichaje requerido');
+        }
+
+        if (!is_array($request_data)) {
+            throw new RestException(400, 'Cuerpo de la petición requerido');
+        }
+
+        dol_include_once('/fichajestrabajadores/class/fichajestrabajadores.class.php');
+        $fichaje = new FichajeTrabajador($this->db);
+
+        // Build data array with only the fields we allow to update
+        $data = array();
+        if (isset($request_data['observaciones'])) {
+            $data['observaciones'] = trim($request_data['observaciones']);
+        }
+
+        // Comentario is mandatory for audit trail
+        $comentario = isset($request_data['comentario']) ? trim($request_data['comentario']) : '';
+        if (empty($comentario)) {
+            $comentario = !empty($data['observaciones']) ? $data['observaciones'] : 'Actualización de fichaje';
+        }
+
+        if (empty($data)) {
+            throw new RestException(400, 'No se proporcionaron campos para actualizar');
+        }
+
+        $result = $fichaje->update($id, $data, $comentario);
+
+        if ($result > 0) {
+            return array('success' => true, 'id' => (int) $id);
+        } elseif ($result == 0) {
+            return array('success' => true, 'message' => 'Sin cambios');
+        } else {
+            throw new RestException(500, 'Error al actualizar fichaje: ' . implode(', ', $fichaje->errors));
+        }
+    }
+
+    /**
      * Registrar entrada
      *
      * @param array $request_data   Request data con usuario, observaciones y coordenadas (opcionales)

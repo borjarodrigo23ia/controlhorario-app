@@ -23,7 +23,7 @@ export default function FichajesPage() {
         activeCycle,
         currentState,
         workCycles,
-        loading,
+        loading: fichajesLoading,
         isInitialLoad,
         registrarEntrada,
         registrarSalida,
@@ -31,8 +31,12 @@ export default function FichajesPage() {
         refreshFichajes,
         terminarPausa,
         isOnline,
-        offlineQueueCount
+        offlineQueueCount,
+        geolocationLoading
     } = useFichajes();
+
+    // Block UI actions while geolocation config is still loading
+    const loading = fichajesLoading || geolocationLoading;
 
     const [manualModalOpen, setManualModalOpen] = useState(false);
     const [targetEvent, setTargetEvent] = useState<TimelineEvent | undefined>(undefined);
@@ -41,7 +45,7 @@ export default function FichajesPage() {
     // Soft-Block Modal State
     const [softBlockOpen, setSoftBlockOpen] = useState(false);
     const [softBlockData, setSoftBlockData] = useState<{ distance: number, centerName: string } | null>(null);
-    const [pendingAction, setPendingAction] = useState<((justification: string) => Promise<void>) | null>(null);
+    const [pendingAction, setPendingAction] = useState<((justification: string, coords?: { lat: string, lng: string }) => Promise<void>) | null>(null);
 
 
     const { pullProgress, isRefreshing } = usePullToRefresh(async () => {
@@ -59,7 +63,7 @@ export default function FichajesPage() {
     };
 
     // Manejadores de acción (wrappers simples)
-    const handleFichajeError = (e: any, retryAction: (justification: string) => Promise<void>) => {
+    const handleFichajeError = (e: any, retryAction: (justification: string, coords?: { lat: string, lng: string }) => Promise<void>) => {
         console.log('DEBUG: handleFichajeError called', e);
         console.log('DEBUG: Error code:', e.code);
         console.log('DEBUG: Is Location Out of Range?', e.code === 'LOCATION_OUT_OF_RANGE');
@@ -67,7 +71,7 @@ export default function FichajesPage() {
         if (e.code === 'LOCATION_OUT_OF_RANGE') {
             console.log('DEBUG: Setting soft block data');
             setSoftBlockData({ distance: e.distance, centerName: e.centerName });
-            setPendingAction(() => retryAction); // Store the action to retry
+            setPendingAction(() => (justification: string) => retryAction(justification, e.coords)); // Store action + coords
             setSoftBlockOpen(true);
         } else {
             const msg = e.message || 'Error desconocido';
@@ -95,8 +99,8 @@ export default function FichajesPage() {
         try {
             await registrarEntrada();
         } catch (e: any) {
-            handleFichajeError(e, async (justification: string) => {
-                await registrarEntrada(undefined, undefined, undefined, justification);
+            handleFichajeError(e, async (justification: string, coords?: { lat: string, lng: string }) => {
+                await registrarEntrada(undefined, coords, undefined, justification);
             });
         }
     };
@@ -105,8 +109,8 @@ export default function FichajesPage() {
         try {
             await registrarSalida();
         } catch (e: any) {
-            handleFichajeError(e, async (justification: string) => {
-                await registrarSalida(undefined, undefined, undefined, justification);
+            handleFichajeError(e, async (justification: string, coords?: { lat: string, lng: string }) => {
+                await registrarSalida(undefined, coords, undefined, justification);
             });
         }
     };
@@ -117,9 +121,9 @@ export default function FichajesPage() {
             if (action === 'terminar_pausa') await terminarPausa();
             else await iniciarPausa();
         } catch (e: any) {
-            handleFichajeError(e, async (justification: string) => {
-                if (action === 'terminar_pausa') await terminarPausa(undefined, undefined, undefined, justification);
-                else await iniciarPausa(undefined, undefined, undefined, justification);
+            handleFichajeError(e, async (justification: string, coords?: { lat: string, lng: string }) => {
+                if (action === 'terminar_pausa') await terminarPausa(undefined, coords, undefined, justification);
+                else await iniciarPausa(undefined, coords, undefined, justification);
             });
         }
     };

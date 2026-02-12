@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { WorkCycle, FichajeState } from '@/lib/types';
 
 import { parseDolibarrDate } from '@/lib/date-utils';
@@ -29,6 +29,7 @@ export const TimerCard: React.FC<TimerCardProps> = ({
     offlineQueueCount = 0
 }) => {
     const [currentTime, setCurrentTime] = useState<string>('');
+    const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
 
     const triggerVibration = () => {
         if (typeof navigator !== 'undefined' && navigator.vibrate) {
@@ -41,35 +42,98 @@ export const TimerCard: React.FC<TimerCardProps> = ({
         callback();
     };
 
+    // Calculate total completed pause duration in seconds
+    const completedPausesSeconds = useMemo(() => {
+        if (!cycle?.pausas) return 0;
+        let total = 0;
+        for (const pausa of cycle.pausas) {
+            if (pausa.inicio?.fecha_creacion && pausa.fin?.fecha_creacion) {
+                const start = parseDolibarrDate(pausa.inicio.fecha_creacion).getTime();
+                const end = parseDolibarrDate(pausa.fin.fecha_creacion).getTime();
+                total += Math.max(0, end - start);
+            }
+        }
+        return Math.floor(total / 1000);
+    }, [cycle?.pausas]);
+
+    // Get the entry time in ms
+    const entryTimeMs = useMemo(() => {
+        if (!cycle?.entrada?.fecha_creacion) return null;
+        return parseDolibarrDate(cycle.entrada.fecha_creacion).getTime();
+    }, [cycle?.entrada?.fecha_creacion]);
+
+    // Get the current pause start time in ms (for freezing the counter)
+    const currentPauseStartMs = useMemo(() => {
+        if (currentState !== 'en_pausa' || !cycle?.pausas) return null;
+        const lastPausa = cycle.pausas[cycle.pausas.length - 1];
+        if (lastPausa?.inicio?.fecha_creacion && !lastPausa?.fin) {
+            return parseDolibarrDate(lastPausa.inicio.fecha_creacion).getTime();
+        }
+        return null;
+    }, [currentState, cycle?.pausas]);
+
+    // Clock for sin_iniciar state
     useEffect(() => {
+        if (currentState !== 'sin_iniciar') return;
         const updateTime = () => {
             const now = new Date();
             setCurrentTime(now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
         };
         updateTime();
-        const interval = setInterval(updateTime, 1000); // Update every second to catch minute changes precisely
+        const interval = setInterval(updateTime, 1000);
         return () => clearInterval(interval);
-    }, []);
+    }, [currentState]);
+
+    // Elapsed timer for trabajando state
+    useEffect(() => {
+        if (currentState !== 'trabajando' || !entryTimeMs) return;
+
+        const calcElapsed = () => {
+            const now = Date.now();
+            const totalElapsed = Math.floor((now - entryTimeMs) / 1000);
+            return Math.max(0, totalElapsed - completedPausesSeconds);
+        };
+
+        setElapsedSeconds(calcElapsed());
+        const interval = setInterval(() => {
+            setElapsedSeconds(calcElapsed());
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [currentState, entryTimeMs, completedPausesSeconds]);
+
+    // Freeze elapsed when paused
+    useEffect(() => {
+        if (currentState !== 'en_pausa' || !entryTimeMs || !currentPauseStartMs) return;
+
+        const totalElapsed = Math.floor((currentPauseStartMs - entryTimeMs) / 1000);
+        setElapsedSeconds(Math.max(0, totalElapsed - completedPausesSeconds));
+    }, [currentState, entryTimeMs, currentPauseStartMs, completedPausesSeconds]);
+
+    // Format seconds to HH:MM:SS
+    const formatElapsed = (seconds: number): string => {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
 
     const getStartTime = () => {
         if (!cycle?.entrada?.fecha_creacion) return '--:--';
-        // Use parseDolibarrDate to treat the string as Local Time (backend is Europe/Madrid)
         const date = parseDolibarrDate(cycle.entrada.fecha_creacion);
         return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
     };
 
-    const getPausaStartTime = () => {
-        if (currentState !== 'en_pausa') return null;
-        const lastPausa = cycle?.pausas[cycle.pausas.length - 1];
-        if (!lastPausa?.inicio?.fecha_creacion) return null;
-
-        // Use parseDolibarrDate to treat the string as Local Time
-        const date = parseDolibarrDate(lastPausa.inicio.fecha_creacion);
-        return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-    };
-
     const startTime = getStartTime();
-    const pausaTime = getPausaStartTime();
+
+    const getPauseTime = () => {
+        if (!cycle?.pausas) return '--:--';
+        const lastPausa = cycle.pausas[cycle.pausas.length - 1];
+        if (lastPausa?.inicio?.fecha_creacion && !lastPausa?.fin) {
+            const date = parseDolibarrDate(lastPausa.inicio.fecha_creacion);
+            return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        }
+        return '--:--';
+    };
 
     const getStatusConfig = () => {
         switch (currentState) {
@@ -82,13 +146,13 @@ export const TimerCard: React.FC<TimerCardProps> = ({
             case 'trabajando':
                 return {
                     text: 'Trabajando',
-                    subtext: `Trabajando desde las ${startTime}`,
+                    subtext: `Desde las ${startTime}`,
                     color: 'emerald'
                 };
             case 'en_pausa':
                 return {
                     text: 'En pausa',
-                    subtext: `En pausa desde las ${pausaTime}`,
+                    subtext: `En pausa desde las ${getPauseTime()}`,
                     color: 'amber'
                 };
             case 'finalizado':
@@ -102,19 +166,17 @@ export const TimerCard: React.FC<TimerCardProps> = ({
     };
 
     const status = getStatusConfig();
-    const displayTime = currentState === 'sin_iniciar' ? currentTime : (
-        currentState === 'en_pausa' ? pausaTime : startTime
-    );
 
-    const AnimatedDigit = ({ char }: { char: string }) => (
-        <span className="inline-block relative overflow-hidden h-[1.2em] w-[0.6em] text-center -mx-[0.02em]">
-            <span key={char} className="block animate-slide-up absolute inset-0">
-                {char}
-            </span>
-            {/* Invis placeholder to keep width */}
-            <span className="invisible">{char}</span>
-        </span>
-    );
+    // Choose display: clock for sin_iniciar, elapsed counter for working/paused
+    const displayTime = currentState === 'sin_iniciar'
+        ? currentTime
+        : (currentState === 'trabajando' || currentState === 'en_pausa')
+            ? formatElapsed(elapsedSeconds)
+            : formatElapsed(elapsedSeconds); // finalizado: show last elapsed
+
+    const isGreyed = currentState === 'en_pausa';
+
+
 
     return (
         <div className="relative overflow-hidden bg-white/80 backdrop-blur-xl rounded-2xl md:rounded-[2.5rem] p-4 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/20">
@@ -123,7 +185,7 @@ export const TimerCard: React.FC<TimerCardProps> = ({
                 <div className={`
                     inline-flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm font-medium mb-3 md:mb-4
                     ${currentState === 'trabajando' ? 'bg-emerald-100 text-emerald-700' : ''}
-                    ${currentState === 'en_pausa' ? 'bg-amber-100 text-amber-800' : ''}
+                    ${currentState === 'en_pausa' ? 'bg-amber-100 text-amber-700' : ''}
                     ${currentState === 'sin_iniciar' ? 'bg-gray-100 text-gray-600' : ''}
                 `}>
                     <span className={`w-2 h-2 rounded-full ${currentState === 'trabajando' ? 'bg-emerald-500 animate-pulse' :
@@ -149,12 +211,11 @@ export const TimerCard: React.FC<TimerCardProps> = ({
                 </div>
 
                 <div className="text-center">
-                    <h2 className="text-4xl md:text-6xl font-bold text-gray-900 tracking-tighter mb-2 font-mono flex justify-center">
-                        {displayTime?.split('').map((char, i) => (
-                            <AnimatedDigit key={i} char={char} />
-                        )) || '--:--'}
+                    <h2 className={`text-4xl md:text-6xl font-bold tracking-tighter mb-2 font-mono transition-colors duration-500 ${isGreyed ? 'text-gray-400' : 'text-gray-900'
+                        }`}>
+                        {displayTime || '--:--'}
                     </h2>
-                    <p className="text-gray-500 font-medium text-base md:text-lg">
+                    <p className={`font-medium text-base md:text-lg transition-colors duration-500 ${isGreyed ? 'text-amber-500' : 'text-gray-500'}`}>
                         {status.subtext}
                     </p>
                 </div>

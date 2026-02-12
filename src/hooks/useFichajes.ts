@@ -221,6 +221,12 @@ export const useFichajes = (options?: UseFichajesOptions) => {
                 }))
                 : [];
 
+            console.log(`[useFichajes] Normalized ${normalized.length} fichajes. First one geo:`, {
+                id: normalized[0]?.id,
+                lat: normalized[0]?.latitud,
+                lng: normalized[0]?.longitud
+            });
+
             setFichajes(normalized);
 
         } catch (err) {
@@ -282,18 +288,17 @@ export const useFichajes = (options?: UseFichajesOptions) => {
         justification?: string // ADDED: Justification support
     ) => {
         try {
-            const isGeoEnabled = geolocationEnabledParam ?? geolocationEnabled;
+            // Guard: wait for geolocation config to fully load before proceeding
+            if (geolocationLoading) {
+                toast('Cargando configuración de ubicación...', { icon: '⏳', duration: 2000 });
+                return;
+            }
+
             let finalCoords = coords;
 
-            // CAPTURE GEOLOCATION IF ENABLED AND NOT PROVIDED
-            // 1. Obtener Geolocalización si es necesario
-            // Determinar si debemos intentar capturar la ubicación
-            // Se intenta si:
-            // a) Se pasa coords explícitamente (ej. mapa manual)
-            // b) La configuración lo requiere (geolocationEnabled)
-            // c) Opcionalmente podríamos intentarlo siempre si queremos "best effort"
-
-            const shouldCaptureLocation = geolocationEnabledParam !== undefined ? geolocationEnabledParam : geolocationEnabled;
+            // Determine if we should capture location:
+            // - Use explicit param if provided, otherwise fall back to global config
+            const shouldCaptureLocation = geolocationEnabledParam ?? geolocationEnabled;
 
             console.log('[registrarFichaje] Iniciando. Tipo:', tipo);
             console.log('[registrarFichaje] Configuración Geolocalización:', {
@@ -326,20 +331,16 @@ export const useFichajes = (options?: UseFichajesOptions) => {
                 } catch (error: any) {
                     console.error('[registrarFichaje] Error capturando ubicación:', error);
 
-                    // Si es obligatorio, fallar
-                    if (shouldCaptureLocation) {
-                        let msg = 'Error al obtener ubicación.';
-                        if (error.code === 1) msg = 'Permiso de geolocalización denegado.';
-                        else if (error.code === 2) msg = 'Ubicación no disponible.';
-                        else if (error.code === 3) msg = 'Tiempo de espera agotado.';
+                    // shouldCaptureLocation is always true here (we entered via its if-branch)
+                    let msg = 'Error al obtener ubicación.';
+                    if (error.code === 1) msg = 'Permiso de geolocalización denegado.';
+                    else if (error.code === 2) msg = 'Ubicación no disponible.';
+                    else if (error.code === 3) msg = 'Tiempo de espera agotado.';
 
-                        if (error.message) msg += ` (${error.message})`;
+                    if (error.message) msg += ` (${error.message})`;
 
-                        toast.error(msg);
-                        // User requested MANDATORY geolocation. If it fails, we should probably STOP?
-                        // "Geolocalización Obligatoria" -> Stop.
-                        throw new Error('La geolocalización es obligatoria pero no se pudo obtener.');
-                    }
+                    toast.error(msg);
+                    throw new Error('La geolocalización es obligatoria pero no se pudo obtener.');
                 }
             } else {
                 console.log('[registrarFichaje] Saltando captura de ubicación (No requerida)');
@@ -362,7 +363,6 @@ export const useFichajes = (options?: UseFichajesOptions) => {
 
                 let insideAny = false;
                 let minDistance = Infinity;
-                let closestCenterName = '';
                 let closestCenterLabel = '';
 
                 // FILTER CENTERS: If user has assigned center, ONLY check that one.
@@ -409,7 +409,8 @@ export const useFichajes = (options?: UseFichajesOptions) => {
                         code: 'LOCATION_OUT_OF_RANGE',
                         message: `Estás fuera del radio de fichaje de ${centerName}`,
                         distance: minDistance,
-                        centerName: closestCenterLabel
+                        centerName: closestCenterLabel,
+                        coords: finalCoords
                     };
                 }
             }
@@ -434,11 +435,11 @@ export const useFichajes = (options?: UseFichajesOptions) => {
             const requestData = {
                 tipo,
                 observaciones: observaciones || '',
-                geolocationEnabled: isGeoEnabled,
+                geolocationEnabled: shouldCaptureLocation,
                 ...(finalCoords && { latitud: finalCoords.lat, longitud: finalCoords.lng }),
                 usuario: user?.login,
-                justification: justification || undefined, // Send justification
-                location_warning: justification ? true : false // If justification exists, it implies warning
+                justification: justification || undefined,
+                location_warning: justification ? true : false
             };
 
             // ADDED: Token header
@@ -498,7 +499,7 @@ export const useFichajes = (options?: UseFichajesOptions) => {
             setError(err instanceof Error ? err.message : 'Error desconocido');
             throw err;
         }
-    }, [geolocationEnabled, fetchFichajes, logoutAfterClockEnabled, logout, user]);
+    }, [geolocationEnabled, geolocationLoading, fetchFichajes, logoutAfterClockEnabled, logout, user, centers]);
 
     // Funciones de conveniencia
     const registrarEntrada = useCallback((observaciones?: string, coords?: { lat: string, lng: string }, geolocationEnabledParam?: boolean, justification?: string) =>

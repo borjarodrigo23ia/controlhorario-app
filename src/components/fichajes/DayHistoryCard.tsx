@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { WorkCycle } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -14,11 +14,14 @@ import {
     History as HistoryIcon,
     AlertTriangle,
     MapPin,
-    MapPinCheckInside
+    MapPinCheckInside,
+    MessageSquare,
+    MessageCircle
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getDailyEvents, TimelineEvent } from '@/lib/fichajes-utils';
 import { toast } from 'react-hot-toast';
+import { LocationDetailModal } from './LocationDetailModal';
 
 interface DayHistoryCardProps {
     date: string;
@@ -31,6 +34,7 @@ interface DayHistoryCardProps {
 export const DayHistoryCard: React.FC<DayHistoryCardProps> = ({ date, cycles, showUserName = false, isGlobal = false, onEdit }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [expandedUsers, setExpandedUsers] = useState<Record<string, boolean>>({});
+    const [selectedEventForMap, setSelectedEventForMap] = useState<TimelineEvent | null>(null);
 
     const toggleUser = (userId: string) => {
         setExpandedUsers(prev => ({ ...prev, [userId]: !prev[userId] }));
@@ -129,6 +133,7 @@ export const DayHistoryCard: React.FC<DayHistoryCardProps> = ({ date, cycles, sh
                                                         formatTime={formatTime}
                                                         onEdit={onEdit}
                                                         isGlobal={isGlobal}
+                                                        onShowLocation={setSelectedEventForMap}
                                                     />
                                                 ))}
                                             </div>
@@ -150,6 +155,7 @@ export const DayHistoryCard: React.FC<DayHistoryCardProps> = ({ date, cycles, sh
                                         showUserName={showUserName}
                                         onEdit={onEdit}
                                         isGlobal={isGlobal}
+                                        onShowLocation={setSelectedEventForMap}
                                     />
                                 ))}
                             </div>
@@ -157,23 +163,58 @@ export const DayHistoryCard: React.FC<DayHistoryCardProps> = ({ date, cycles, sh
                     )}
                 </div>
             </div>
+            <LocationDetailModal
+                event={selectedEventForMap}
+                onClose={() => setSelectedEventForMap(null)}
+            />
         </div>
     );
 };
 
 // Subcomponent to avoid repetition
-const SessionItem = ({ cycle, index, formatTime, showUserName = false, onEdit, isGlobal = false }: { cycle: WorkCycle, index: number, formatTime: (d: Date) => string, showUserName?: boolean, onEdit?: (event: TimelineEvent) => void, isGlobal?: boolean }) => {
+const SessionItem = ({ cycle, index, formatTime, showUserName = false, onEdit, isGlobal = false, onShowLocation }: { cycle: WorkCycle, index: number, formatTime: (d: Date) => string, showUserName?: boolean, onEdit?: (event: TimelineEvent) => void, isGlobal?: boolean, onShowLocation: (event: TimelineEvent) => void }) => {
     const { user } = useAuth();
     const events = getDailyEvents([cycle]);
     const canEdit = user?.admin || !isGlobal;
 
-    console.log('[DayHistoryCard] Rendering session events:', events.map(e => ({
-        id: e.id,
-        type: e.type,
-        location: e.location,
-        lat: e.lat,
-        lng: e.lng
-    })));
+    // Comment editing state
+    const [editingEventId, setEditingEventId] = useState<string | null>(null);
+    const [editText, setEditText] = useState('');
+    const [savingComment, setSavingComment] = useState(false);
+
+    const handleSaveComment = useCallback(async (eventId: string) => {
+        if (!editText.trim()) {
+            setEditingEventId(null);
+            return;
+        }
+        setSavingComment(true);
+        try {
+            const token = localStorage.getItem('dolibarr_token') || '';
+            const res = await fetch(`/api/fichajes/${eventId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'DOLAPIKEY': token,
+                },
+                body: JSON.stringify({
+                    observaciones: editText.trim(),
+                }),
+            });
+            if (res.ok) {
+                toast.success('Observación guardada');
+                setEditingEventId(null);
+                // Reload the page to reflect the change
+                window.location.reload();
+            } else {
+                const data = await res.json();
+                toast.error(data?.error || 'Error al guardar');
+            }
+        } catch {
+            toast.error('Error de conexión');
+        } finally {
+            setSavingComment(false);
+        }
+    }, [editText]);
 
     return (
         <div className="relative">
@@ -211,11 +252,9 @@ const SessionItem = ({ cycle, index, formatTime, showUserName = false, onEdit, i
                                 {/* Warnings Section */}
                                 {event.location_warning === 1 && (
                                     <div
-                                        className="flex items-center gap-1 text-red-500 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-100 cursor-help"
-                                        title={`Ubicación fuera de rango${event.justification ? `: ${event.justification}` : ''}`}
+                                        className="flex items-center gap-1 text-red-500 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-100"
                                     >
                                         <MapPin size={12} />
-                                        {event.justification && <span className="text-[10px] font-bold">Justificado</span>}
                                     </div>
                                 )}
 
@@ -228,30 +267,22 @@ const SessionItem = ({ cycle, index, formatTime, showUserName = false, onEdit, i
                                     </div>
                                 )}
 
-                                {event.location && (
-                                    <a
-                                        href={event.lat && event.lng
-                                            ? `https://www.google.com/maps/search/?api=1&query=${event.lat},${event.lng}`
-                                            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`
-                                        }
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 hover:bg-emerald-100 transition-colors"
-                                        title={event.lat && event.lng ? `Ver coordenadas: ${event.lat}, ${event.lng}` : "Ver en mapa"}
-                                        onClick={(e) => e.stopPropagation()}
+                                {(event.location || (event.lat && event.lng && event.lat !== '0' && event.lat !== 'null')) && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onShowLocation(event);
+                                        }}
+                                        className="text-red-500 hover:text-red-700 transition-colors active:scale-95 p-0.5"
+                                        title="Ver ubicación y detalles"
                                     >
-                                        <MapPinCheckInside size={12} />
-                                        <span className="text-[10px] font-bold">{event.location}</span>
-                                    </a>
-                                )}
-                                {event.observaciones && (
-                                    <div className={`text-[10px] font-medium max-w-[150px] truncate ${event.observaciones.includes('Corregido') ? 'text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded' : 'text-gray-400'}`} title={event.observaciones}>
-                                        {event.observaciones}
-                                    </div>
+                                        <MapPin size={18} />
+                                    </button>
                                 )}
 
+
                                 {event.estado_aceptacion && (
-                                    <div className="flex items-center" title={`Estado: ${event.estado_aceptacion}`}>
+                                    <div className="flex items-center gap-1.5" title={`Estado: ${event.estado_aceptacion}`}>
                                         {event.estado_aceptacion === 'aceptado' && <CheckCircle size={14} className="text-emerald-500" />}
                                         {event.estado_aceptacion === 'pendiente' && <ClockIcon size={14} className="text-amber-500 animate-pulse" />}
                                         {event.estado_aceptacion === 'rechazado' && <XCircle size={14} className="text-red-500" />}
@@ -260,16 +291,34 @@ const SessionItem = ({ cycle, index, formatTime, showUserName = false, onEdit, i
 
                                 <div className="flex items-center gap-1">
                                     {canEdit && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onEdit?.(event);
-                                            }}
-                                            title="Solicitar corrección"
-                                            className="p-1.5 rounded-lg bg-gray-50 text-gray-400 hover:bg-primary/10 hover:text-primary transition-all active:scale-90"
-                                        >
-                                            <PencilLine size={12} />
-                                        </button>
+                                        <>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (event.justification) {
+                                                        onShowLocation?.(event);
+                                                    } else {
+                                                        setEditingEventId(event.id);
+                                                        setEditText(event.observaciones || '');
+                                                    }
+                                                }}
+                                                title={event.justification ? "Ver detalles de la incidencia" : "Añadir/editar observación"}
+                                                className={`p-1.5 transition-colors ${event.justification ? 'text-amber-500 hover:text-amber-600' : 'text-black hover:text-gray-600'}`}
+                                            >
+                                                {event.justification ? <AlertTriangle size={18} /> : <MessageCircle size={16} />}
+                                            </button>
+
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onEdit?.(event);
+                                                }}
+                                                title="Solicitar corrección"
+                                                className="p-1.5 rounded-lg bg-gray-50 text-gray-400 hover:bg-primary/10 hover:text-primary transition-all active:scale-90"
+                                            >
+                                                <PencilLine size={16} />
+                                            </button>
+                                        </>
                                     )}
                                 </div>
                             </div>
@@ -277,6 +326,42 @@ const SessionItem = ({ cycle, index, formatTime, showUserName = false, onEdit, i
                     </div>
                 ))}
             </div>
+
+            {/* Inline comment editor */}
+            {editingEventId !== null && (
+                <div className="mt-3 ml-6 p-3 rounded-xl border border-gray-100 animate-fade-in bg-white/50">
+                    <div className="flex items-center gap-2 mb-2">
+                        <MessageCircle size={14} className="text-black" />
+                        <span className="text-xs font-bold text-black uppercase tracking-wider">Observación</span>
+                    </div>
+                    <textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        placeholder="Escribe una observación..."
+                        rows={2}
+                        className="w-full text-sm rounded-lg border border-gray-200 p-2 focus:ring-1 focus:ring-black focus:border-black outline-none resize-none bg-white"
+                        autoFocus
+                    />
+                    <div className="flex justify-end gap-2 mt-2">
+                        <button
+                            onClick={() => setEditingEventId(null)}
+                            className="px-3 py-1 text-xs font-bold text-red-500 hover:text-red-700 transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={() => {
+                                const event = events.find(e => e.id === editingEventId);
+                                handleSaveComment(event?.dbId || editingEventId);
+                            }}
+                            disabled={savingComment}
+                            className="px-3 py-1.5 text-xs font-bold bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 shadow-sm"
+                        >
+                            {savingComment ? 'Guardando...' : 'Guardar'}
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

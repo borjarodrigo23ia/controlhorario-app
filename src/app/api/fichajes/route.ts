@@ -52,15 +52,7 @@ export async function GET(request: NextRequest) {
         // Vamos a replicar el mapping básico para ser compatibles.
 
         const fichajes = Array.isArray(data) ? data.map((fichaje: any) => ({
-            id: fichaje.id,
-            fk_user: fichaje.fk_user,
-            usuario: fichaje.usuario,
-            usuario_nombre: fichaje.usuario_nombre, // Preserve this field for history display
-            tipo: fichaje.tipo,
-            observaciones: fichaje.observaciones,
-            latitud: fichaje.latitud,
-            longitud: fichaje.longitud,
-            fecha_creacion: fichaje.fecha_creacion,
+            ...fichaje,
             tiene_ubicacion: !!(fichaje.latitud && fichaje.longitud)
         })) : [];
 

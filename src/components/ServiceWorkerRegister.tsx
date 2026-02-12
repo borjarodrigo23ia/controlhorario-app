@@ -4,8 +4,7 @@ import { useEffect } from 'react';
 
 export default function ServiceWorkerRegister() {
     useEffect(() => {
-        if ('serviceWorker' in navigator && (window as any).workbox === undefined) {
-            // Only register if not already handled by next-pwa (checked via workbox existence, or just force ours)
+        if ('serviceWorker' in navigator) {
             navigator.serviceWorker
                 .register('/sw.js')
                 .then(registration => {

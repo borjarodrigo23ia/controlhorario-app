@@ -29,6 +29,13 @@ function urlBase64ToUint8Array(base64String: string) {
     return outputArray;
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number, errorMsg: string): Promise<T> {
+    return Promise.race([
+        promise,
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error(errorMsg)), ms))
+    ]);
+}
+
 export default function PushNotificationManager() {
     const { user } = useAuth();
     const [isSubscribed, setIsSubscribed] = useState(false);
@@ -39,7 +46,11 @@ export default function PushNotificationManager() {
         if (!user) return;
 
         try {
-            const registration = await navigator.serviceWorker.ready;
+            const registration = await withTimeout(
+                navigator.serviceWorker.ready,
+                10000,
+                'Service Worker no se registró a tiempo'
+            );
             const subscription = await registration.pushManager.getSubscription();
 
             if (!subscription) {
@@ -84,7 +95,11 @@ export default function PushNotificationManager() {
         }
 
         try {
-            const registration = await navigator.serviceWorker.ready;
+            const registration = await withTimeout(
+                navigator.serviceWorker.ready,
+                10000,
+                'Service Worker no disponible'
+            );
             const subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
