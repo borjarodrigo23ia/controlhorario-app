@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCorrections } from '@/hooks/useCorrections';
 import Sidebar from '@/components/Sidebar';
 import MobileNav from '@/components/MobileNav';
@@ -150,44 +150,148 @@ export default function AdminCorrectionsPage() {
                                                                         </span>
                                                                     </div>
 
-                                                                    <div className="flex items-center gap-6 text-xs text-gray-500 ml-1">
-                                                                        <div className="flex flex-col">
-                                                                            <span className="text-[9px] font-bold uppercase text-gray-300 tracking-wider">Entrada</span>
-                                                                            <span className="font-bold text-gray-900 tabular-nums">
-                                                                                {c.hora_entrada ? format(new Date(c.hora_entrada), 'HH:mm') : '--:--'}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="w-px h-6 bg-gray-100" />
-                                                                        <div className="flex flex-col">
-                                                                            <span className="text-[9px] font-bold uppercase text-gray-300 tracking-wider">Salida</span>
-                                                                            <span className="font-bold text-gray-900 tabular-nums">
-                                                                                {c.hora_salida ? format(new Date(c.hora_salida), 'HH:mm') : '--:--'}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="w-px h-6 bg-gray-100" />
-                                                                        <div className="flex flex-col">
-                                                                            <span className="text-[9px] font-bold uppercase text-gray-300 tracking-wider">Pausas</span>
-                                                                            <span className="font-bold text-gray-700">
-                                                                                {(() => {
-                                                                                    try {
-                                                                                        if (!c.pausas) return '0';
-                                                                                        if (Array.isArray(c.pausas)) return c.pausas.length;
-                                                                                        const parsed = JSON.parse(c.pausas);
-                                                                                        return Array.isArray(parsed) ? parsed.length : '0';
-                                                                                    } catch { return '0'; }
-                                                                                })()} logs
-                                                                            </span>
-                                                                        </div>
+                                                                    <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 ml-1">
+                                                                        {c.hora_entrada && (() => {
+                                                                            const formattedNew = format(new Date(c.hora_entrada), 'HH:mm');
+                                                                            const formattedOld = c.hora_entrada_original ? format(new Date(c.hora_entrada_original), 'HH:mm') : formattedNew;
+                                                                            const isChanged = c.hora_entrada_original && formattedOld !== formattedNew;
+
+                                                                            return (
+                                                                                <div className="flex flex-col">
+                                                                                    <span className={`text-[9px] font-bold uppercase ${isChanged ? 'text-emerald-400' : 'text-gray-400'} tracking-wider`}>
+                                                                                        {isChanged ? 'Corrección Entrada' : 'Entrada'}
+                                                                                    </span>
+                                                                                    <span className="font-bold text-gray-900 tabular-nums">
+                                                                                        {isChanged ? (
+                                                                                            <span className="flex items-center gap-1.5">
+                                                                                                <span className="text-gray-400 line-through opacity-70 font-medium">{formattedOld}</span>
+                                                                                                <span className="text-gray-300 text-[10px]">→</span>
+                                                                                                <span>{formattedNew}</span>
+                                                                                            </span>
+                                                                                        ) : formattedNew}
+                                                                                    </span>
+                                                                                </div>
+                                                                            );
+                                                                        })()}
+
+                                                                        {c.hora_salida && (() => {
+                                                                            const formattedNew = format(new Date(c.hora_salida), 'HH:mm');
+                                                                            const formattedOld = c.hora_salida_original ? format(new Date(c.hora_salida_original), 'HH:mm') : formattedNew;
+                                                                            const isChanged = c.hora_salida_original && formattedOld !== formattedNew;
+
+                                                                            return (
+                                                                                <>
+                                                                                    {c.hora_entrada && <div className="w-px h-6 bg-gray-100" />}
+                                                                                    <div className="flex flex-col">
+                                                                                        <span className={`text-[9px] font-bold uppercase ${isChanged ? 'text-red-400' : 'text-gray-400'} tracking-wider`}>
+                                                                                            {isChanged ? 'Corrección Salida' : 'Salida'}
+                                                                                        </span>
+                                                                                        <span className="font-bold text-gray-900 tabular-nums">
+                                                                                            {isChanged ? (
+                                                                                                <span className="flex items-center gap-1.5">
+                                                                                                    <span className="text-gray-400 line-through opacity-70 font-medium">{formattedOld}</span>
+                                                                                                    <span className="text-gray-300 text-[10px]">→</span>
+                                                                                                    <span>{formattedNew}</span>
+                                                                                                </span>
+                                                                                            ) : formattedNew}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </>
+                                                                            );
+                                                                        })()}
+
+                                                                        {(() => {
+                                                                            try {
+                                                                                const pausas = typeof c.pausas === 'string' ? JSON.parse(c.pausas || '[]') : (c.pausas || []);
+                                                                                if (!Array.isArray(pausas) || pausas.length === 0) return null;
+
+                                                                                return pausas.map((p, i: number) => {
+                                                                                    const renderPauseField = (oldIso: string | undefined, newIso: string, labelChanged: string, labelUnchanged: string, colorClass: string) => {
+                                                                                        const formattedNew = newIso ? format(new Date(newIso), 'HH:mm') : '--:--';
+                                                                                        const formattedOld = oldIso ? format(new Date(oldIso), 'HH:mm') : formattedNew;
+                                                                                        const isChanged = oldIso && formattedNew !== '--:--' && formattedOld !== formattedNew;
+
+                                                                                        // If NOT changed, return null (hide it), as requested
+                                                                                        if (!isChanged) return null;
+
+                                                                                        return (
+                                                                                            <div className="flex flex-col">
+                                                                                                <span className={`text-[9px] font-bold uppercase ${colorClass} tracking-wider`}>
+                                                                                                    {labelChanged}
+                                                                                                </span>
+                                                                                                <span className="font-bold text-gray-900 tabular-nums">
+                                                                                                    <span className="flex items-center gap-1.5">
+                                                                                                        <span className="text-gray-400 line-through opacity-70 font-medium">{formattedOld}</span>
+                                                                                                        <span className="text-gray-300 text-[10px]">→</span>
+                                                                                                        <span>{formattedNew}</span>
+                                                                                                    </span>
+                                                                                                </span>
+                                                                                            </div>
+                                                                                        );
+                                                                                    };
+
+                                                                                    const startComp = renderPauseField(
+                                                                                        p.original_inicio_iso,
+                                                                                        p.inicio_iso,
+                                                                                        `Corrección para la pausa ${pausas.length > 1 ? i + 1 : ''}`,
+                                                                                        `Pausa ${pausas.length > 1 ? i + 1 : ''}`,
+                                                                                        'text-amber-400'
+                                                                                    );
+
+                                                                                    const endComp = renderPauseField(
+                                                                                        p.original_fin_iso,
+                                                                                        p.fin_iso,
+                                                                                        `Corrección para el regreso ${pausas.length > 1 ? i + 1 : ''}`,
+                                                                                        `Regreso ${pausas.length > 1 ? i + 1 : ''}`,
+                                                                                        'text-blue-500' // BLUE as requested
+                                                                                    );
+
+                                                                                    return (
+                                                                                        <React.Fragment key={i}>
+                                                                                            {startComp && (
+                                                                                                <>
+                                                                                                    {(c.hora_entrada || c.hora_salida || i > 0) && <div className="w-px h-6 bg-gray-100" />}
+                                                                                                    {startComp}
+                                                                                                </>
+                                                                                            )}
+                                                                                            {endComp && (
+                                                                                                <>
+                                                                                                    {((c.hora_entrada || c.hora_salida || i > 0) || startComp) && <div className="w-px h-6 bg-gray-100" />}
+                                                                                                    {endComp}
+                                                                                                </>
+                                                                                            )}
+                                                                                        </React.Fragment>
+                                                                                    );
+                                                                                });
+                                                                            } catch { return null; }
+                                                                        })()}
+                                                                        {!c.hora_entrada && !c.hora_salida && (() => {
+                                                                            try {
+                                                                                const pausas = typeof c.pausas === 'string' ? JSON.parse(c.pausas || '[]') : (c.pausas || []);
+                                                                                if (!Array.isArray(pausas) || pausas.length === 0) return (
+                                                                                    <span className="text-gray-400 italic text-[11px]">Sin datos de corrección</span>
+                                                                                );
+                                                                            } catch { return null; }
+                                                                            return null;
+                                                                        })()}
                                                                     </div>
 
-                                                                    {c.observaciones && (
-                                                                        <div className="mt-3 pt-3 border-t border-gray-100 w-full">
-                                                                            <div className="flex items-start gap-2 bg-white px-0 py-0 rounded-lg">
-                                                                                <Info size={12} className="mt-0.5 shrink-0 text-amber-500" />
-                                                                                <span className="text-[11px] font-medium text-gray-600 italic leading-snug">{c.observaciones}</span>
+                                                                    {c.observaciones && (() => {
+                                                                        const obsMatch = c.observaciones.match(/^\[([^\]]+)\]\s*([\s\S]*)/);
+                                                                        const label = obsMatch ? obsMatch[1] : '';
+                                                                        const text = obsMatch ? obsMatch[2] : c.observaciones;
+                                                                        return (
+                                                                            <div className="mt-3 pt-3 border-t border-gray-100 w-full">
+                                                                                <div className="flex items-start gap-2 bg-white px-0 py-0 rounded-lg">
+                                                                                    <Info size={12} className="mt-0.5 shrink-0 text-amber-500" />
+                                                                                    <span className="text-[11px] font-medium text-gray-600 leading-snug">
+                                                                                        {label && <strong className="font-bold text-gray-800">{label}: </strong>}
+                                                                                        {text}
+                                                                                    </span>
+                                                                                </div>
                                                                             </div>
-                                                                        </div>
-                                                                    )}
+                                                                        );
+                                                                    })()}
                                                                 </div>
 
                                                                 {/* Right: Actions */}

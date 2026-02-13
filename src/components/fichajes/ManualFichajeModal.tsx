@@ -12,7 +12,12 @@ export type ManualFichajePayload = {
     fecha: string;
     entrada_iso: string;
     salida_iso: string;
-    pausas: Array<{ inicio_iso: string; fin_iso: string }>;
+    pausas: Array<{
+        inicio_iso: string;
+        fin_iso: string;
+        original_inicio_iso?: string | null;
+        original_fin_iso?: string | null
+    }>;
     usuario?: string;
     observaciones?: string;
 };
@@ -48,6 +53,7 @@ export default function ManualFichajeModal({
     const [entrada, setEntrada] = useState('');
     const [salida, setSalida] = useState('');
     const [pausas, setPausas] = useState<Pausa[]>([]);
+    const [pausaTime, setPausaTime] = useState(''); // For simple mode pause editing
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [observaciones, setObservaciones] = useState('');
@@ -86,30 +92,69 @@ export default function ManualFichajeModal({
     const updatePausa = (idx: number, patch: Partial<Pausa>) =>
         setPausas(p => p.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
 
+    const isPauseEvent = targetEvent?.type === 'inicio_pausa' || targetEvent?.type === 'fin_pausa';
+
     const validate = (): string | null => {
         if (!isValidDateStr(fecha)) return 'La fecha no es válida.';
 
-        if (isSimpleMode) {
-            if (targetEvent?.type === 'entrada' && !isValidTimeStr(entrada)) return 'La hora de entrada es necesaria.';
-            if (targetEvent?.type === 'salida' && !isValidTimeStr(salida)) return 'La hora de salida es necesaria.';
-            return null;
+        if (isSimpleMode && targetEvent) {
+            const contextEntryStr = targetEvent.contextEntry ? format(targetEvent.contextEntry, 'HH:mm') : null;
+            const contextExitStr = targetEvent.contextExit ? format(targetEvent.contextExit, 'HH:mm') : null;
+
+            if (targetEvent.type === 'entrada') {
+                if (!isValidTimeStr(entrada)) return 'La hora de entrada es necesaria.';
+                if (contextExitStr && entrada >= contextExitStr) {
+                    return `La entrada (${entrada}) debe ser anterior a la salida (${contextExitStr})`;
+                }
+            }
+            if (targetEvent.type === 'salida') {
+                if (!isValidTimeStr(salida)) return 'La hora de salida es necesaria.';
+                if (contextEntryStr && salida <= contextEntryStr) {
+                    return `La salida (${salida}) debe ser posterior a la entrada (${contextEntryStr})`;
+                }
+            }
+            if (isPauseEvent) {
+                if (!isValidTimeStr(pausaTime)) return 'La hora de la pausa es necesaria.';
+
+                const existingPauseStart = targetEvent?.pauseStart ? format(targetEvent.pauseStart, 'HH:mm') : '';
+                const existingPauseEnd = targetEvent?.pauseEnd ? format(targetEvent.pauseEnd, 'HH:mm') : '';
+
+                let checkStart = targetEvent.type === 'inicio_pausa' ? pausaTime : existingPauseStart;
+                let checkEnd = targetEvent.type === 'fin_pausa' ? pausaTime : existingPauseEnd;
+
+                // Solo validar duración si ambos extremos existen (si está activa, checkEnd está vacío)
+                if (checkStart && checkEnd && checkEnd <= checkStart) {
+                    return 'La pausa debe tener duración.';
+                }
+
+                if (contextEntryStr && checkStart && checkStart < contextEntryStr) {
+                    return `La pausa (${checkStart}) no puede empezar antes de la entrada (${contextEntryStr})`;
+                }
+
+                if (contextExitStr && checkEnd && checkEnd > contextExitStr) {
+                    return `La pausa (${checkEnd}) no puede terminar después de la salida (${contextExitStr})`;
+                }
+            }
+        } else {
+            // Modo Manual Completo
+            if (!isValidTimeStr(entrada)) return 'La hora de entrada es necesaria.';
+            if (!isValidTimeStr(salida)) return 'La hora de salida es necesaria.';
+            if (entrada >= salida) return 'La salida debe ser posterior a la entrada.';
+            for (const [i, p] of pausas.entries()) {
+                if (!isValidTimeStr(p.inicio) || !isValidTimeStr(p.fin)) return `Pausa #${i + 1}: faltan horas.`;
+                if (p.inicio >= p.fin) return `Pausa #${i + 1}: el fin debe ser posterior al inicio.`;
+                if (p.inicio < entrada || p.fin > salida) return `Pausa #${i + 1}: debe estar dentro de la jornada principal.`;
+            }
+            const sorted = [...pausas].sort((a, b) => a.inicio.localeCompare(b.inicio));
+            for (let i = 1; i < sorted.length; i++) {
+                if (sorted[i].inicio < sorted[i - 1].fin) return 'Las pausas no pueden solaparse.';
+            }
         }
 
-        if (!isValidTimeStr(entrada)) return 'La hora de entrada es necesaria.';
-        if (!isValidTimeStr(salida)) return 'La hora de salida es necesaria.';
-        if (entrada >= salida) return 'La salida debe ser posterior a la entrada.';
-        for (const [i, p] of pausas.entries()) {
-            if (!isValidTimeStr(p.inicio) || !isValidTimeStr(p.fin)) return `Pausa #${i + 1}: faltan horas.`;
-            if (p.inicio >= p.fin) return `Pausa #${i + 1}: el fin debe ser posterior al inicio.`;
-            if (p.inicio < entrada || p.fin > salida) return `Pausa #${i + 1}: debe estar dentro de la jornada principal.`;
-        }
-        const sorted = [...pausas].sort((a, b) => a.inicio.localeCompare(b.inicio));
-        for (let i = 1; i < sorted.length; i++) {
-            if (sorted[i].inicio < sorted[i - 1].fin) return 'Las pausas no pueden solaparse.';
-        }
-        // Legal compliance: motivo and justification are mandatory
+        // Cumplimiento legal: motivo y justificación obligatorios
         if (!motivo) return 'Debes seleccionar un motivo de la modificación (obligatorio por ley).';
         if (!observaciones.trim()) return 'Debes indicar una justificación detallada (obligatorio por ley).';
+
         return null;
     };
 
@@ -126,10 +171,32 @@ export default function ManualFichajeModal({
             const salidaIso = salida ? new Date(`${fecha}T${salida}:00`).toISOString() : '';
             const fechaUtc = fecha;
 
-            const pausasPayload = pausas.map(p => ({
-                inicio_iso: new Date(`${fecha}T${p.inicio}:00`).toISOString(),
-                fin_iso: new Date(`${fecha}T${p.fin}:00`).toISOString(),
-            }));
+
+
+            // Build pausas payload - handle simple mode pause editing
+            let pausasPayload: Array<{ inicio_iso: string; fin_iso: string }> = [];
+
+            if (isPauseEvent && pausaTime) {
+                const existingPauseStart = targetEvent?.pauseStart ? format(targetEvent.pauseStart, 'HH:mm') : '';
+                const existingPauseEnd = targetEvent?.pauseEnd ? format(targetEvent.pauseEnd, 'HH:mm') : '';
+                let pStart: string, pEnd: string;
+                if (targetEvent?.type === 'inicio_pausa') {
+                    pStart = pausaTime;
+                    pEnd = existingPauseEnd || pausaTime;
+                } else {
+                    pStart = existingPauseStart || pausaTime;
+                    pEnd = pausaTime;
+                }
+                pausasPayload = [{
+                    inicio_iso: new Date(`${fecha}T${pStart}:00`).toISOString(),
+                    fin_iso: new Date(`${fecha}T${pEnd}:00`).toISOString(),
+                }];
+            } else {
+                pausasPayload = pausas.map(p => ({
+                    inicio_iso: new Date(`${fecha}T${p.inicio}:00`).toISOString(),
+                    fin_iso: new Date(`${fecha}T${p.fin}:00`).toISOString(),
+                }));
+            }
 
             const token = typeof window !== 'undefined' ? localStorage.getItem('dolibarr_token') : '';
 
@@ -152,16 +219,53 @@ export default function ManualFichajeModal({
                 toast.success('Fichaje guardado correctamente');
             } else {
                 // Non-admin: Send correction request
-                const pausasJson = pausasPayload.map(p => ({
-                    inicio_iso: p.inicio_iso,
-                    fin_iso: p.fin_iso
-                }));
+                // Use local datetime strings (not UTC ISO) so PHP stores the correct Madrid time
+                const entradaLocal = entrada ? `${fecha}T${entrada}:00` : null;
+                const salidaLocal = salida ? `${fecha}T${salida}:00` : null;
+
+                // Build pause payload
+                let pausasLocal: Array<{
+                    inicio_iso: string;
+                    fin_iso: string;
+                    original_inicio_iso?: string | null;
+                    original_fin_iso?: string | null
+                }> = [];
+                if (isPauseEvent && pausaTime) {
+                    // When editing a specific pause event, construct the pause with:
+                    // - if editing inicio_pausa: new start time, keep existing end time from the target event's cycle
+                    // - if editing fin_pausa: keep existing start time, new end time
+                    const existingPauseStart = targetEvent?.pauseStart ? format(targetEvent.pauseStart, 'HH:mm') : '';
+                    const existingPauseEnd = targetEvent?.pauseEnd ? format(targetEvent.pauseEnd, 'HH:mm') : '';
+
+                    let pauseStartTime: string;
+                    let pauseEndTime: string;
+                    if (targetEvent?.type === 'inicio_pausa') {
+                        pauseStartTime = pausaTime;
+                        pauseEndTime = existingPauseEnd || pausaTime; // fallback
+                    } else {
+                        pauseStartTime = existingPauseStart || pausaTime; // fallback
+                        pauseEndTime = pausaTime;
+                    }
+                    pausasLocal = [{
+                        inicio_iso: `${fecha}T${pauseStartTime}:00`,
+                        fin_iso: `${fecha}T${pauseEndTime}:00`,
+                        original_inicio_iso: targetEvent?.pauseStart?.toISOString() || null,
+                        original_fin_iso: targetEvent?.pauseEnd?.toISOString() || null
+                    }];
+                } else {
+                    pausasLocal = pausas.map(p => ({
+                        inicio_iso: `${fecha}T${p.inicio}:00`,
+                        fin_iso: `${fecha}T${p.fin}:00`
+                    }));
+                }
 
                 const payload = {
-                    fecha_jornada: fechaUtc,
-                    hora_entrada: entradaIso || null,
-                    hora_salida: salidaIso || null,
-                    pausas: pausasJson,
+                    fecha_jornada: fecha,
+                    hora_entrada: entradaLocal,
+                    hora_entrada_original: targetEvent?.type === 'entrada' ? targetEvent.time.toISOString() : null,
+                    hora_salida: salidaLocal,
+                    hora_salida_original: targetEvent?.type === 'salida' ? targetEvent.time.toISOString() : null,
+                    pausas: pausasLocal,
                     observaciones: `[${MOTIVO_OPTIONS.find(m => m.id === motivo)?.label}] ${observaciones || `Solicitud de corrección para ${targetEvent?.label || 'jornada'}`}`
                 };
 
@@ -295,8 +399,8 @@ export default function ManualFichajeModal({
                                                 label="Nueva"
                                                 icon={<Clock size={16} />}
                                                 type="time"
-                                                value={targetEvent?.type === 'entrada' ? entrada : salida}
-                                                onChange={targetEvent?.type === 'entrada' ? setEntrada : setSalida}
+                                                value={isPauseEvent ? pausaTime : (targetEvent?.type === 'entrada' ? entrada : salida)}
+                                                onChange={isPauseEvent ? setPausaTime : (targetEvent?.type === 'entrada' ? setEntrada : setSalida)}
                                             />
                                         </div>
                                     </div>

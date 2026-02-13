@@ -25,10 +25,15 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
         console.error('Error fetching correction details for notification:', e);
     }
 
-    // 2. Perform Approval
+    // 2. Read admin note from request body
+    const body = await request.json().catch(() => ({}));
+    const adminNote = body.note || '';
+
+    // 3. Perform Approval (with admin_note)
     const res = await fetch(`${apiUrl}/fichajestrabajadoresapi/corrections/${params.id}/approve`, {
         method: 'POST',
-        headers: { 'DOLAPIKEY': apiKey }
+        headers: { 'DOLAPIKEY': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admin_note: adminNote })
     });
 
     const data = await res.json().catch(() => ({ error: 'Invalid JSON response' }));
@@ -36,18 +41,22 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
 
     if (!res.ok) return NextResponse.json(data, { status: res.status });
 
-    // 3. Send Notification if we have userId
+    // 4. Send Notification if we have userId (non-blocking, don't crash on failure)
     if (userId) {
-        const { sendPushNotification } = await import('@/lib/push-sender');
-        const { getUserPreferences } = await import('@/lib/push-db');
+        try {
+            const { sendPushNotification } = await import('@/lib/push-sender');
+            const { getUserPreferences } = await import('@/lib/push-db');
 
-        const prefs = getUserPreferences(userId);
-        if (prefs.cambios) {
-            await sendPushNotification(userId, {
-                title: 'Solicitud Aprobada',
-                body: 'Tu solicitud de corrección de fichaje ha sido aprobada.',
-                url: '/fichajes/historial'
-            });
+            const prefs = getUserPreferences(userId);
+            if (prefs.cambios) {
+                await sendPushNotification(userId, {
+                    title: 'Solicitud Aprobada',
+                    body: 'Tu solicitud de corrección de fichaje ha sido aprobada.',
+                    url: '/gestion/solicitudes'
+                });
+            }
+        } catch (e) {
+            console.warn('[Approve] Push notification failed (non-blocking):', e);
         }
     }
 

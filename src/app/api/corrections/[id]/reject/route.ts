@@ -22,27 +22,38 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
         console.error('Error fetching correction details for notification:', e);
     }
 
-    // 2. Perform Rejection
+    // 2. Read admin note from request body
+    const body = await request.json().catch(() => ({}));
+    const adminNote = body.note || '';
+
+    // 3. Perform Rejection (with admin_note)
     const res = await fetch(`${apiUrl}/fichajestrabajadoresapi/corrections/${params.id}/reject`, {
         method: 'POST',
-        headers: { 'DOLAPIKEY': apiKey }
+        headers: { 'DOLAPIKEY': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admin_note: adminNote })
     });
 
-    if (!res.ok) return NextResponse.json({ error: 'Error' }, { status: res.status });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({ error: 'Invalid JSON response' }));
+    console.log('[Reject] Dolibarr response:', res.status, data);
 
-    // 3. Send Notification
+    if (!res.ok) return NextResponse.json(data, { status: res.status });
+
+    // 4. Send Notification (non-blocking)
     if (userId) {
-        const { sendPushNotification } = await import('@/lib/push-sender');
-        const { getUserPreferences } = await import('@/lib/push-db');
+        try {
+            const { sendPushNotification } = await import('@/lib/push-sender');
+            const { getUserPreferences } = await import('@/lib/push-db');
 
-        const prefs = getUserPreferences(userId);
-        if (prefs.cambios) {
-            await sendPushNotification(userId, {
-                title: 'Solicitud Rechazada',
-                body: 'Tu solicitud de corrección de fichaje ha sido rechazada.',
-                url: '/fichajes/historial'
-            });
+            const prefs = getUserPreferences(userId);
+            if (prefs.cambios) {
+                await sendPushNotification(userId, {
+                    title: 'Solicitud Rechazada',
+                    body: 'Tu solicitud de corrección de fichaje ha sido rechazada.',
+                    url: '/gestion/solicitudes'
+                });
+            }
+        } catch (e) {
+            console.warn('[Reject] Push notification failed (non-blocking):', e);
         }
     }
 

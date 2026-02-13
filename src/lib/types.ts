@@ -25,6 +25,7 @@ export interface Fichaje {
   usuario: string;
   tipo: FichajeTipo;
   fecha_creacion: string;
+  fecha_original?: string; // Original time before correction (legal compliance)
   comentario?: string;
   observaciones?: string;
   latitud?: string;
@@ -49,6 +50,7 @@ export interface WorkCycle {
   id?: string;
   entrada: {
     fecha_creacion: string;
+    fecha_original?: string;
     id: string;
     tipo: 'entrar';
     usuario: string;
@@ -63,6 +65,7 @@ export interface WorkCycle {
   };
   salida?: {
     fecha_creacion: string;
+    fecha_original?: string;
     id: string;
     tipo: 'salir';
     usuario: string;
@@ -77,6 +80,7 @@ export interface WorkCycle {
   pausas: Array<{
     inicio?: {
       fecha_creacion: string;
+      fecha_original?: string;
       id: string;
       tipo: 'iniciar_pausa' | 'pausa';
       usuario: string;
@@ -90,6 +94,7 @@ export interface WorkCycle {
     };
     fin?: {
       fecha_creacion: string;
+      fecha_original?: string;
       id: string;
       tipo: 'terminar_pausa' | 'finp';
       usuario: string;
@@ -107,3 +112,4 @@ export interface WorkCycle {
   duracion_pausas?: number;
   duracion_efectiva?: number;
 }
+

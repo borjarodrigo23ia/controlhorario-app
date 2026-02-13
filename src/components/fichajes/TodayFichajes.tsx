@@ -155,7 +155,13 @@ export const TodayFichajes: React.FC<TodayFichajesProps> = ({ cycles, loading, o
                                             <div className="flex-1 flex justify-between items-start pt-0.5">
                                                 <div className="flex flex-col">
                                                     <div className="text-lg text-gray-900 font-bold tracking-tight">
-                                                        {formatTime(event.time)}
+                                                        {event.originalTime && formatTime(event.originalTime) !== formatTime(event.time) ? (
+                                                            <span className="flex items-center gap-1.5">
+                                                                <span className="text-gray-400 line-through font-medium text-base">{formatTime(event.originalTime)}</span>
+                                                                <span className="text-gray-300 text-sm">→</span>
+                                                                <span>{formatTime(event.time)}</span>
+                                                            </span>
+                                                        ) : formatTime(event.time)}
                                                     </div>
                                                     <div className="text-base text-gray-500 font-medium">
                                                         {event.label}

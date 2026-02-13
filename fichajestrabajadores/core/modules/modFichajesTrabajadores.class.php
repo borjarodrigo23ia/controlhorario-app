@@ -54,7 +54,7 @@ class modFichajesTrabajadores extends DolibarrModules
         $this->description = "Módulo sencillo para el registro de fichajes de trabajadores";
 
         // Versión del módulo
-        $this->version = '2.6';
+        $this->version = '2.7';
 
         // Clave utilizada en la tabla llx_const para guardar el estado habilitado/deshabilitado del módulo
         $this->const_name = 'MAIN_MODULE_' . strtoupper($this->name);

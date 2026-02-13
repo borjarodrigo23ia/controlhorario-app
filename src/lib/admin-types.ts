@@ -7,13 +7,21 @@ export interface CorrectionRequest {
     login?: string;
     fecha_jornada: string; // YYYY-MM-DD
     hora_entrada: string;
+    hora_entrada_original?: string;
     hora_salida: string;
-    pausas: Array<{ inicio: string, fin: string }>;
+    hora_salida_original?: string;
+    pausas: Array<{
+        inicio_iso: string,
+        fin_iso: string,
+        original_inicio_iso?: string,
+        original_fin_iso?: string
+    }>;
     observaciones: string;
     estado: 'pendiente' | 'aprobada' | 'rechazada';
     date_creation: string;
     fk_approver?: string;
     date_approval?: string;
+    admin_note?: string;
 }
 
 export interface UserConfig {

@@ -1606,6 +1606,8 @@ class FichajestrabajadoresApi extends DolibarrApi
             $request_data['fecha_jornada'],
             $request_data['hora_entrada'],
             $request_data['hora_salida'],
+            isset($request_data['hora_entrada_original']) ? $request_data['hora_entrada_original'] : null,
+            isset($request_data['hora_salida_original']) ? $request_data['hora_salida_original'] : null,
             isset($request_data['pausas']) ? $request_data['pausas'] : array(),
             isset($request_data['observaciones']) ? $request_data['observaciones'] : ''
         );
@@ -1620,11 +1622,12 @@ class FichajestrabajadoresApi extends DolibarrApi
      * Approve correction request
      *
      * @param int $id Correction ID
+     * @param array $request_data Optional data (admin_note)
      * @return array
      *
      * @url POST /corrections/{id}/approve
      */
-    public function approveCorrection($id)
+    public function approveCorrection($id, $request_data = null)
     {
         global $user;
         if (!$user->admin && empty($user->rights->fichajestrabajadores->config)) {
@@ -1634,7 +1637,9 @@ class FichajestrabajadoresApi extends DolibarrApi
         dol_include_once('/fichajestrabajadores/class/fichajescorrections.class.php');
         $correction = new FichajesCorrections($this->db);
 
-        $res = $correction->approve($id, $user->id);
+        $admin_note = is_array($request_data) && isset($request_data['admin_note']) ? $request_data['admin_note'] : '';
+
+        $res = $correction->approve($id, $user->id, $admin_note);
         if ($res > 0) {
             return array('success' => true);
         }
@@ -1645,11 +1650,12 @@ class FichajestrabajadoresApi extends DolibarrApi
      * Reject correction request
      *
      * @param int $id Correction ID
+     * @param array $request_data Optional data (admin_note)
      * @return array
      *
      * @url POST /corrections/{id}/reject
      */
-    public function rejectCorrection($id)
+    public function rejectCorrection($id, $request_data = null)
     {
         global $user;
         if (!$user->admin && empty($user->rights->fichajestrabajadores->config)) {
@@ -1659,7 +1665,9 @@ class FichajestrabajadoresApi extends DolibarrApi
         dol_include_once('/fichajestrabajadores/class/fichajescorrections.class.php');
         $correction = new FichajesCorrections($this->db);
 
-        $res = $correction->reject($id, $user->id);
+        $admin_note = is_array($request_data) && isset($request_data['admin_note']) ? $request_data['admin_note'] : '';
+
+        $res = $correction->reject($id, $user->id, $admin_note);
         if ($res > 0) {
             return array('success' => true);
         }

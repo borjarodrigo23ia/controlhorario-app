@@ -47,7 +47,9 @@ class FichajesCorrections
     public $fk_user;
     public $fecha_jornada;
     public $hora_entrada;
+    public $hora_entrada_original;
     public $hora_salida;
+    public $hora_salida_original;
     public $pausas; // JSON
     public $observaciones;
     public $estado; // pendiente, aprobada, rechazada
@@ -72,50 +74,50 @@ class FichajesCorrections
      * @param string $fecha_jornada YYYY-MM-DD
      * @param string $hora_entrada YYYY-MM-DD HH:MM:SS
      * @param string $hora_salida YYYY-MM-DD HH:MM:SS
+     * @param string $hora_entrada_original YYYY-MM-DD HH:MM:SS
+     * @param string $hora_salida_original YYYY-MM-DD HH:MM:SS
      * @param array $pausas Array of pauses
      * @param string $observaciones Observations
      * @return int ID if OK, <0 if KO
      */
-    public function create($fk_user, $fecha_jornada, $hora_entrada, $hora_salida, $pausas = array(), $observaciones = '')
+    public function create($fk_user, $fecha_jornada, $hora_entrada, $hora_salida, $hora_entrada_original = null, $hora_salida_original = null, $pausas = array(), $observaciones = '')
     {
         global $user;
 
-        // Basic validation
-        if (empty($fk_user) || empty($fecha_jornada) || (empty($hora_entrada) && empty($hora_salida))) {
-            $this->errors[] = "Missing required fields (entrada or salida must be provided)";
+        // Basic validation: at least one of entrada, salida, or pausas must be provided
+        if (empty($fk_user) || empty($fecha_jornada) || (empty($hora_entrada) && empty($hora_salida) && empty($pausas))) {
+            $this->errors[] = "Missing required fields (entrada, salida, or pausas must be provided)";
             return -1;
         }
 
         $this->fk_user = $fk_user;
         $this->fecha_jornada = $fecha_jornada;
         $this->hora_entrada = $hora_entrada;
+        $this->hora_entrada_original = $hora_entrada_original;
         $this->hora_salida = $hora_salida;
+        $this->hora_salida_original = $hora_salida_original;
         $this->pausas = json_encode($pausas);
         $this->observaciones = $observaciones;
         $this->estado = 'pendiente';
         $this->fecha_creacion = dol_now(); // server time
 
-        $sql = "INSERT INTO " . MAIN_DB_PREFIX . "fichajestrabajadores_corrections (";
-        $sql .= "fk_user, fecha_jornada, hora_entrada, hora_salida, pausas, observaciones, estado, fecha_creacion";
-        $sql .= ") VALUES (";
-        $sql .= (int) $this->fk_user . ",";
-        $sql .= "'" . $this->db->escape($this->fecha_jornada) . "',";
-        // Helper to format date for MySQL
-        $formatDate = function ($isoDate) {
-            if (empty($isoDate))
-                return 'NULL';
-            $ts = strtotime($isoDate);
-            if ($ts === false)
-                return 'NULL';
-            return "'" . $this->db->escape(date('Y-m-d H:i:s', $ts)) . "'";
-        };
+        // Ensure columns exist (auto-migrate)
+        @$this->db->query("ALTER TABLE " . MAIN_DB_PREFIX . "fichajestrabajadores_corrections ADD COLUMN IF NOT EXISTS hora_entrada_original DATETIME NULL");
+        @$this->db->query("ALTER TABLE " . MAIN_DB_PREFIX . "fichajestrabajadores_corrections ADD COLUMN IF NOT EXISTS hora_salida_original DATETIME NULL");
 
-        $sql .= $formatDate($this->hora_entrada) . ",";
-        $sql .= $formatDate($this->hora_salida) . ",";
-        $sql .= "'" . $this->db->escape($this->pausas) . "',";
-        $sql .= "'" . $this->db->escape($this->observaciones) . "',";
-        $sql .= "'pendiente',";
-        $sql .= "'" . $this->db->idate($this->fecha_creacion) . "'";
+        $sql = "INSERT INTO " . MAIN_DB_PREFIX . "fichajestrabajadores_corrections (";
+        $sql .= "fk_user, fecha_jornada, hora_entrada, hora_entrada_original, hora_salida, hora_salida_original, pausas, observaciones, estado, fecha_creacion";
+        $sql .= ") VALUES (";
+        $sql .= " " . (int) $fk_user;
+        $sql .= ", '" . $this->db->escape($fecha_jornada) . "'";
+        $sql .= ", " . ($hora_entrada ? "'" . $this->db->escape($hora_entrada) . "'" : "NULL");
+        $sql .= ", " . ($hora_entrada_original ? "'" . $this->db->escape($hora_entrada_original) . "'" : "NULL");
+        $sql .= ", " . ($hora_salida ? "'" . $this->db->escape($hora_salida) . "'" : "NULL");
+        $sql .= ", " . ($hora_salida_original ? "'" . $this->db->escape($hora_salida_original) . "'" : "NULL");
+        $sql .= ", '" . $this->db->escape($this->pausas) . "'";
+        $sql .= ", '" . $this->db->escape($observaciones) . "'";
+        $sql .= ", 'pendiente'";
+        $sql .= ", '" . $this->db->idate($this->fecha_creacion) . "'";
         $sql .= ")";
 
         $resql = $this->db->query($sql);
@@ -146,13 +148,15 @@ class FichajesCorrections
                 $this->fk_user = $obj->fk_user;
                 $this->fecha_jornada = $obj->fecha_jornada;
                 $this->hora_entrada = $obj->hora_entrada;
+                $this->hora_entrada_original = $obj->hora_entrada_original;
                 $this->hora_salida = $obj->hora_salida;
+                $this->hora_salida_original = $obj->hora_salida_original;
                 $this->pausas = $obj->pausas; // json string
                 $this->observaciones = $obj->observaciones;
                 $this->estado = $obj->estado;
                 $this->fk_approver = $obj->fk_approver;
-                $this->fecha_aprobacion = $this->db->jdate($obj->fecha_aprobacion);
-                $this->fecha_creacion = $this->db->jdate($obj->fecha_creacion);
+                $this->fecha_aprobacion = $obj->date_approval;
+                $this->fecha_creacion = $obj->date_creation;
                 return 1;
             }
             return 0;
@@ -201,7 +205,7 @@ class FichajesCorrections
      * @param int $fk_approver ID of approver
      * @return int >0 OK, <0 KO
      */
-    public function approve($id, $fk_approver)
+    public function approve($id, $fk_approver, $admin_note = '')
     {
         if ($this->fetch($id) <= 0)
             return -1;
@@ -210,11 +214,21 @@ class FichajesCorrections
             return -1;
         }
 
+        // Ensure columns exist (auto-migrate) — must be BEFORE begin() since DDL causes implicit commit
+        @$this->db->query("ALTER TABLE " . MAIN_DB_PREFIX . "fichajestrabajadores_corrections ADD COLUMN admin_note TEXT NULL");
+        @$this->db->query("ALTER TABLE " . MAIN_DB_PREFIX . "fichajestrabajadores_corrections ADD COLUMN date_approval DATETIME NULL");
+        // Also ensure fecha_original exists in main table (moved here from insertarJornadaManual to avoid implicit commit inside txn)
+        @$this->db->query("ALTER TABLE " . MAIN_DB_PREFIX . "fichajestrabajadores ADD COLUMN fecha_original DATETIME DEFAULT NULL");
+
         $this->db->begin();
 
-        // 1. Mark as approved
+        // 1. Mark as approved (including admin_note)
         $sql = "UPDATE " . MAIN_DB_PREFIX . "fichajestrabajadores_corrections";
-        $sql .= " SET estado = 'aprobada', fk_approver = " . (int) $fk_approver . ", date_approval = '" . $this->db->idate(dol_now()) . "'";
+        $sql .= " SET estado = 'aprobada', fk_approver = " . (int) $fk_approver;
+        $sql .= ", date_approval = '" . $this->db->idate(dol_now()) . "'";
+        if (!empty($admin_note)) {
+            $sql .= ", admin_note = '" . $this->db->escape($admin_note) . "'";
+        }
         $sql .= " WHERE rowid = " . (int) $id;
 
         if (!$this->db->query($sql)) {
@@ -224,7 +238,6 @@ class FichajesCorrections
         }
 
         // 2. Apply the correction (Insert Manual Journey)
-        // Need to require the main class
         require_once __DIR__ . '/fichajestrabajadores.class.php';
         $fichaje = new FichajeTrabajador($this->db);
 
@@ -239,19 +252,10 @@ class FichajesCorrections
         if (!is_array($pausasArr))
             $pausasArr = array();
 
-        // Format times to ISO (fichajestrabajadores expects ISO)
-        // In DB we stored as DATETIME (Y-m-d H:i:s), potentially local or UTC depending on how it was saved.
-        // Assuming the input was correct, pass it as is, or convert to ISO8601
-
-
         $pausasIso = array();
         foreach ($pausasArr as $p) {
-            // Support both formats if exist
-            $i = isset($p['inicio']) ? $p['inicio'] : (isset($p['start']) ? $p['start'] : '');
-            $f = isset($p['fin']) ? $p['fin'] : (isset($p['end']) ? $p['end'] : '');
-
-            // If they are timestamps or raw strings, ensure ISO
-            // For simplicity assume the JSON stored valid ISO or date strings
+            $i = isset($p['inicio']) ? $p['inicio'] : (isset($p['start']) ? $p['start'] : (isset($p['inicio_iso']) ? $p['inicio_iso'] : ''));
+            $f = isset($p['fin']) ? $p['fin'] : (isset($p['end']) ? $p['end'] : (isset($p['fin_iso']) ? $p['fin_iso'] : ''));
             $pausasIso[] = array('inicio_iso' => $i, 'fin_iso' => $f);
         }
 
@@ -269,16 +273,18 @@ class FichajesCorrections
 
         $auditMsg = "Corrección #$id. Solicitado: $requesterName. Aprobado: $approverName.";
 
-        // Use the existing manual insertion logic which handles creating fichajes and the jornada completa
+        // Pass is_approved_request=true so fichajes are marked as 'aceptado' directly
+        // (the employee already requested this change, no need for validation modal)
         $res = $fichaje->insertarJornadaManual(
             $userLogin,
             $this->fecha_jornada,
-            $this->hora_entrada, // method supports "Y-m-d H:i:s" too usually, let's check
+            $this->hora_entrada,
             $this->hora_salida,
             $pausasIso,
             $auditMsg,
-            $this->observaciones, // obs_jornada
-            $this->fk_user
+            $this->observaciones,
+            $this->fk_user,
+            true // is_approved_request — skip validation modal for user
         );
 
         if (!$res['success']) {
@@ -298,7 +304,7 @@ class FichajesCorrections
      * @param int $fk_approver ID of approver
      * @return int >0 OK, <0 KO
      */
-    public function reject($id, $fk_approver)
+    public function reject($id, $fk_approver, $admin_note = '')
     {
         if ($this->fetch($id) <= 0)
             return -1;
@@ -307,8 +313,15 @@ class FichajesCorrections
             return -1;
         }
 
+        // Ensure admin_note column exists (auto-migrate)
+        $this->db->query("ALTER TABLE " . MAIN_DB_PREFIX . "fichajestrabajadores_corrections ADD COLUMN admin_note TEXT NULL");
+
         $sql = "UPDATE " . MAIN_DB_PREFIX . "fichajestrabajadores_corrections";
-        $sql .= " SET estado = 'rechazada', fk_approver = " . (int) $fk_approver . ", date_approval = '" . $this->db->idate(dol_now()) . "'";
+        $sql .= " SET estado = 'rechazada', fk_approver = " . (int) $fk_approver;
+        $sql .= ", date_approval = '" . $this->db->idate(dol_now()) . "'";
+        if (!empty($admin_note)) {
+            $sql .= ", admin_note = '" . $this->db->escape($admin_note) . "'";
+        }
         $sql .= " WHERE rowid = " . (int) $id;
 
         if ($this->db->query($sql)) {

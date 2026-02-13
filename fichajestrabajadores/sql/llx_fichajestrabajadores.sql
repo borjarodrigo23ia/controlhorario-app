@@ -23,6 +23,7 @@ CREATE TABLE llx_fichajestrabajadores(
     longitud DECIMAL(10,7) DEFAULT NULL,
     hash_integridad VARCHAR(64) DEFAULT NULL,
     estado_aceptacion VARCHAR(20) DEFAULT 'aceptado', -- aceptado, pendiente, rechazado
+    fecha_original DATETIME DEFAULT NULL, -- Original time before correction (legal compliance)
     fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP
     -- END MODULEBUILDER FIELDS
 ) ENGINE=innodb; 

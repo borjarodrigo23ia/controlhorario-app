@@ -12,3 +12,6 @@ ALTER TABLE llx_fichajestrabajadores_corrections ADD COLUMN IF NOT EXISTS date_c
 
 -- Update date_creation for any existing records without it
 UPDATE llx_fichajestrabajadores_corrections SET date_creation = tms WHERE date_creation IS NULL;
+
+-- Add admin_note column for approve/reject comments
+ALTER TABLE llx_fichajestrabajadores_corrections ADD COLUMN IF NOT EXISTS admin_note TEXT NULL;

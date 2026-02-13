@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useFichajes } from '@/hooks/useFichajes';
 import { HistoryList } from '@/components/fichajes/HistoryList';
-import { ArrowLeft, CalendarClock, History, ClipboardList } from 'lucide-react';
+import { ArrowLeft, CalendarClock, History, ClipboardList, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/ui/PageHeader';
 import ManualFichajeModal from '@/components/fichajes/ManualFichajeModal';

@@ -1,13 +1,23 @@
 'use client';
+import { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useUserCorrections } from '@/hooks/useUserCorrections';
 import Link from 'next/link';
 import Sidebar from '@/components/Sidebar';
 import MobileNav from '@/components/MobileNav';
-import { LayoutDashboard, Palmtree, ChevronRight, Clock } from 'lucide-react';
+import { LayoutDashboard, Palmtree, ChevronRight, Clock, FileText } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 export default function GestionPage() {
     const { user } = useAuth();
+    const { corrections, fetchMyCorrections } = useUserCorrections();
+
+    // Load corrections on mount to update badge
+    useEffect(() => {
+        fetchMyCorrections();
+    }, [fetchMyCorrections]);
+
+    const pendingCount = corrections.filter(c => c.estado === 'pendiente').length;
 
     // Simple protection
     if (user && user.admin) {
@@ -22,7 +32,14 @@ export default function GestionPage() {
             desc: 'Solicitar vacaciones, días propios o bajas',
             color: 'primary'
         },
-        // Aquí puedes añadir más módulos en el futuro
+        {
+            title: 'Mis Solicitudes',
+            icon: FileText,
+            href: '/gestion/solicitudes',
+            desc: 'Consulta estado de correcciones y cambios',
+            color: 'amber',
+            badge: pendingCount
+        }
     ];
 
     return (

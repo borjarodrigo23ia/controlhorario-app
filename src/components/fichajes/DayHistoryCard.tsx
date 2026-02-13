@@ -8,8 +8,6 @@ import {
     MapPinCheck,
     CalendarClock,
     PencilLine,
-    CheckCircle,
-    XCircle,
     Clock as ClockIcon,
     History as HistoryIcon,
     AlertTriangle,
@@ -242,7 +240,13 @@ const SessionItem = ({ cycle, index, formatTime, showUserName = false, onEdit, i
                         <div className="flex-1 flex justify-between items-start pt-0.5">
                             <div className="flex flex-col">
                                 <div className="text-sm text-gray-900 font-black tracking-tight leading-none mb-1">
-                                    {formatTime(event.time)}
+                                    {event.originalTime && formatTime(event.originalTime) !== formatTime(event.time) ? (
+                                        <span className="flex items-center gap-1">
+                                            <span className="text-gray-400 line-through font-medium text-xs">{formatTime(event.originalTime)}</span>
+                                            <span className="text-gray-300 text-xs">→</span>
+                                            <span>{formatTime(event.time)}</span>
+                                        </span>
+                                    ) : formatTime(event.time)}
                                 </div>
                                 <div className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">
                                     {event.label}
@@ -281,13 +285,7 @@ const SessionItem = ({ cycle, index, formatTime, showUserName = false, onEdit, i
                                 )}
 
 
-                                {event.estado_aceptacion && (
-                                    <div className="flex items-center gap-1.5" title={`Estado: ${event.estado_aceptacion}`}>
-                                        {event.estado_aceptacion === 'aceptado' && <CheckCircle size={14} className="text-emerald-500" />}
-                                        {event.estado_aceptacion === 'pendiente' && <ClockIcon size={14} className="text-amber-500 animate-pulse" />}
-                                        {event.estado_aceptacion === 'rechazado' && <XCircle size={14} className="text-red-500" />}
-                                    </div>
-                                )}
+
 
                                 <div className="flex items-center gap-1">
                                     {canEdit && (

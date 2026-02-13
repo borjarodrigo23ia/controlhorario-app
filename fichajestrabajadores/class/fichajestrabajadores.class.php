@@ -318,15 +318,20 @@ class FichajeTrabajador
         $this->latitud = null;
         $this->longitud = null;
 
-        $ts = strtotime($fecha_iso);
-        if ($ts === false) {
-            $this->errors[] = 'Fecha ISO inválida: ' . $fecha_iso;
-            return -1;
-        }
-        // Guardamos en Europe/Madrid (Hora legal)
+        // The input may be a local datetime string (no TZ info) already in Madrid time,
+        // or an ISO string with TZ info (e.g. 2026-02-13T07:20:00Z).
+        // We need to store as Europe/Madrid local time.
         $tz = new DateTimeZone('Europe/Madrid');
-        $date = new DateTime("@$ts"); // @timestamp is always UTC
-        $date->setTimezone($tz); // Convert to Madrid
+
+        // Detect if input has explicit timezone info (Z, +00:00, etc.)
+        if (preg_match('/[Zz]$|[+-]\d{2}:\d{2}$/', $fecha_iso)) {
+            // Input has explicit timezone — parse and convert to Madrid
+            $date = new DateTime($fecha_iso);
+            $date->setTimezone($tz);
+        } else {
+            // Input is a local time string (no TZ) — treat as already Madrid time
+            $date = new DateTime($fecha_iso, $tz);
+        }
         $this->fecha_creacion = $date->format('Y-m-d H:i:s');
 
         return $this->create();
@@ -347,14 +352,14 @@ class FichajeTrabajador
      * @param int|null $user_id        ID de usuario (opcional)
      * @return array                   Resultado con ids
      */
-    public function insertarJornadaManual($usuario, $fecha, $entrada_iso, $salida_iso, $pausas = array(), $obs_fichaje = '', $obs_jornada = '', $user_id = null)
+    public function insertarJornadaManual($usuario, $fecha, $entrada_iso, $salida_iso, $pausas = array(), $obs_fichaje = '', $obs_jornada = '', $user_id = null, $is_approved_request = false)
     {
         global $conf, $user;
 
         $this->errors = array();
 
-        if (empty($usuario) || empty($fecha) || (empty($entrada_iso) && empty($salida_iso))) {
-            $this->errors[] = 'Parámetros requeridos: usuario, fecha, y al menos entrada o salida';
+        if (empty($usuario) || empty($fecha) || (empty($entrada_iso) && empty($salida_iso) && empty($pausas))) {
+            $this->errors[] = 'Parámetros requeridos: usuario, fecha, y al menos entrada, salida, o pausas';
             return array('success' => false, 'errors' => $this->errors);
         }
 
@@ -366,6 +371,49 @@ class FichajeTrabajador
         // Convertir a timestamps para validar y calcular
         $tsEntrada = !empty($entrada_iso) ? strtotime($entrada_iso) : false;
         $tsSalida = !empty($salida_iso) ? strtotime($salida_iso) : false;
+
+        // If entry or exit are missing but pauses exist, read existing ones from DB
+        // This handles pause-only corrections where the user didn't change entry/exit
+        if (($tsEntrada === false || $tsSalida === false) && !empty($pausas)) {
+            $dayS = $fecha . ' 00:00:00';
+            $dayE = $fecha . ' 23:59:59';
+            // Resolve uid early for this lookup
+            $lookupUid = $user_id;
+            if (!$lookupUid) {
+                $sql_lu = "SELECT rowid FROM " . MAIN_DB_PREFIX . "user WHERE login = '" . $this->db->escape($usuario) . "'";
+                $res_lu = $this->db->query($sql_lu);
+                if ($res_lu && $this->db->num_rows($res_lu) > 0) {
+                    $obj_lu = $this->db->fetch_object($res_lu);
+                    $lookupUid = $obj_lu->rowid;
+                }
+            }
+            if ($lookupUid) {
+                if ($tsEntrada === false) {
+                    $sqlE = "SELECT fecha_creacion FROM " . MAIN_DB_PREFIX . "fichajestrabajadores";
+                    $sqlE .= " WHERE fk_user = " . (int) $lookupUid . " AND tipo = 'entrar'";
+                    $sqlE .= " AND fecha_creacion >= '" . $this->db->escape($dayS) . "' AND fecha_creacion <= '" . $this->db->escape($dayE) . "'";
+                    $sqlE .= " ORDER BY fecha_creacion ASC LIMIT 1";
+                    $resE = $this->db->query($sqlE);
+                    if ($resE && $this->db->num_rows($resE) > 0) {
+                        $objE = $this->db->fetch_object($resE);
+                        $entrada_iso = $objE->fecha_creacion;
+                        $tsEntrada = strtotime($entrada_iso);
+                    }
+                }
+                if ($tsSalida === false) {
+                    $sqlS = "SELECT fecha_creacion FROM " . MAIN_DB_PREFIX . "fichajestrabajadores";
+                    $sqlS .= " WHERE fk_user = " . (int) $lookupUid . " AND tipo = 'salir'";
+                    $sqlS .= " AND fecha_creacion >= '" . $this->db->escape($dayS) . "' AND fecha_creacion <= '" . $this->db->escape($dayE) . "'";
+                    $sqlS .= " ORDER BY fecha_creacion DESC LIMIT 1";
+                    $resS = $this->db->query($sqlS);
+                    if ($resS && $this->db->num_rows($resS) > 0) {
+                        $objS = $this->db->fetch_object($resS);
+                        $salida_iso = $objS->fecha_creacion;
+                        $tsSalida = strtotime($salida_iso);
+                    }
+                }
+            }
+        }
 
         if ($tsEntrada === false && $tsSalida === false) {
             $this->errors[] = 'Rango de entrada/salida inválido';
@@ -410,7 +458,7 @@ class FichajeTrabajador
                     $this->errors[] = 'Pausa inválida (inicio/fin)';
                     return array('success' => false, 'errors' => $this->errors);
                 }
-                if ($tIni < $tsEntrada || $tFin > $tsSalida) {
+                if ($tIni < $tsEntrada || ($tsSalida !== false && $tFin > $tsSalida)) {
                     $this->errors[] = 'Las pausas deben estar dentro del rango entrada/salida';
                     return array('success' => false, 'errors' => $this->errors);
                 }
@@ -450,8 +498,9 @@ class FichajeTrabajador
         }
 
         // Determinar estado de aceptación (Ley Control Horario 2026)
-        // Si el usuario que edita NO es el trabajador, se marca como 'pendiente' de validación
-        if ($user->id != $uid) {
+        // Si el usuario que edita NO es el trabajador Y no es una solicitud aprobada del propio empleado,
+        // se marca como 'pendiente' de validación
+        if ($user->id != $uid && !$is_approved_request) {
             $this->estado_aceptacion = 'pendiente';
             dol_syslog("FichajeTrabajador::insertarJornadaManual - Edición por tercero (Admin ID: {$user->id}, Target ID: {$uid}). Estado: pendiente", LOG_INFO);
         } else {
@@ -463,6 +512,38 @@ class FichajeTrabajador
         $dayStart = $fecha . ' 00:00:00';
         $dayEnd = $fecha . ' 23:59:59';
         $obsSuffix = " [ANULADO]";
+
+        // Helper to read original fecha_creacion before soft-deleting
+        $getOriginalTime = function ($tipo) use ($uid, $dayStart, $dayEnd) {
+            $sqlOrig = "SELECT fecha_creacion FROM " . MAIN_DB_PREFIX . "fichajestrabajadores";
+            $sqlOrig .= " WHERE fk_user = " . (int) $uid . " AND tipo = '" . $this->db->escape($tipo) . "'";
+            $sqlOrig .= " AND fecha_creacion >= '" . $this->db->escape($dayStart) . "' AND fecha_creacion <= '" . $this->db->escape($dayEnd) . "'";
+            $sqlOrig .= " ORDER BY fecha_creacion ASC LIMIT 1";
+            $resOrig = $this->db->query($sqlOrig);
+            if ($resOrig && $this->db->num_rows($resOrig) > 0) {
+                $objOrig = $this->db->fetch_object($resOrig);
+                return $objOrig->fecha_creacion;
+            }
+            return null;
+        };
+
+        // Capture original times BEFORE soft-deleting (legal compliance: preserve old values)
+        $origEntrada = !empty($entrada_iso) ? $getOriginalTime('entrar') : null;
+        $origSalida = !empty($salida_iso) ? $getOriginalTime('salir') : null;
+        $origPausas = array();
+        if (!empty($pausas_norm)) {
+            // Get all original pause start times
+            $sqlOrigPausas = "SELECT rowid, tipo, fecha_creacion FROM " . MAIN_DB_PREFIX . "fichajestrabajadores";
+            $sqlOrigPausas .= " WHERE fk_user = " . (int) $uid . " AND tipo IN ('pausa','finp')";
+            $sqlOrigPausas .= " AND fecha_creacion >= '" . $this->db->escape($dayStart) . "' AND fecha_creacion <= '" . $this->db->escape($dayEnd) . "'";
+            $sqlOrigPausas .= " ORDER BY fecha_creacion ASC";
+            $resOrigPausas = $this->db->query($sqlOrigPausas);
+            if ($resOrigPausas) {
+                while ($objP = $this->db->fetch_object($resOrigPausas)) {
+                    $origPausas[] = array('tipo' => $objP->tipo, 'fecha_creacion' => $objP->fecha_creacion);
+                }
+            }
+        }
 
         // Helper to soft delete
         $softDelete = function ($tipo) use ($uid, $dayStart, $dayEnd, $obsSuffix) {
@@ -484,32 +565,53 @@ class FichajeTrabajador
             $softDelete('finp');
         }
 
+        // Helper to set fecha_original on a newly inserted fichaje
+        $setFechaOriginal = function ($newId, $originalTime) {
+            if ($newId > 0 && !empty($originalTime)) {
+                $sqlFO = "UPDATE " . MAIN_DB_PREFIX . "fichajestrabajadores";
+                $sqlFO .= " SET fecha_original = '" . $this->db->escape($originalTime) . "'";
+                $sqlFO .= " WHERE rowid = " . (int) $newId;
+                $this->db->query($sqlFO);
+            }
+        };
+
         // Insertar fichajes
         $ids = array();
         if (!empty($entrada_iso)) {
             $res_e = $this->insertarFichajeConFecha('entrar', $usuario, $obs_fichaje, $entrada_iso, $uid);
-            if ($res_e > 0)
+            if ($res_e > 0) {
                 $ids[] = $res_e;
-            else {
+                $setFechaOriginal($res_e, $origEntrada);
+            } else {
                 $this->errors[] = 'Error al insertar fichaje de entrada';
                 return array('success' => false, 'errors' => $this->errors);
             }
         }
 
+        $pausaIdx = 0;
         foreach ($pausas_norm as $p) {
             $res_p = $this->insertarFichajeConFecha('pausa', $usuario, $obs_fichaje, $p['inicio_iso'], $uid);
             $res_f = $this->insertarFichajeConFecha('finp', $usuario, $obs_fichaje, $p['fin_iso'], $uid);
-            if ($res_p > 0)
+            if ($res_p > 0) {
                 $ids[] = $res_p;
-            if ($res_f > 0)
+                // Match original pause times by index
+                $origPausa = isset($origPausas[$pausaIdx * 2]) ? $origPausas[$pausaIdx * 2]['fecha_creacion'] : null;
+                $setFechaOriginal($res_p, $origPausa);
+            }
+            if ($res_f > 0) {
                 $ids[] = $res_f;
+                $origFinp = isset($origPausas[$pausaIdx * 2 + 1]) ? $origPausas[$pausaIdx * 2 + 1]['fecha_creacion'] : null;
+                $setFechaOriginal($res_f, $origFinp);
+            }
+            $pausaIdx++;
         }
 
         if (!empty($salida_iso)) {
             $res_s = $this->insertarFichajeConFecha('salir', $usuario, $obs_fichaje, $salida_iso, $uid);
-            if ($res_s > 0)
+            if ($res_s > 0) {
                 $ids[] = $res_s;
-            else {
+                $setFechaOriginal($res_s, $origSalida);
+            } else {
                 $this->errors[] = 'Error al insertar fichaje de salida';
                 return array('success' => false, 'errors' => $this->errors);
             }
@@ -685,6 +787,51 @@ class FichajeTrabajador
     }
 
     /**
+     * Get fichajes pending employee validation (admin-made changes)
+     * 
+     * Returns fichajes where estado_aceptacion = 'pendiente' for the given user.
+     * These are records that an admin modified directly (not user correction requests).
+     * 
+     * @param int $user_id User ID to check
+     * @return array Array of pending fichaje objects, or error string
+     */
+    public function getPendingValidationFichajes($user_id)
+    {
+        $result = array();
+
+        $sql = "SELECT f.rowid, f.fk_user, f.tipo, f.fecha_creacion, f.observaciones,";
+        $sql .= " f.estado_aceptacion, f.usuario";
+        $sql .= " FROM " . MAIN_DB_PREFIX . "fichajestrabajadores as f";
+        $sql .= " WHERE f.fk_user = " . (int) $user_id;
+        $sql .= " AND f.estado_aceptacion = 'pendiente'";
+        $sql .= " AND f.tipo NOT LIKE '%_anulado'";
+        $sql .= " ORDER BY f.fecha_creacion DESC";
+
+        dol_syslog("FichajeTrabajador::getPendingValidationFichajes for user $user_id", LOG_DEBUG);
+
+        $resql = $this->db->query($sql);
+        if ($resql) {
+            while ($obj = $this->db->fetch_object($resql)) {
+                $result[] = array(
+                    'rowid' => $obj->rowid,
+                    'fk_user' => $obj->fk_user,
+                    'tipo' => $obj->tipo,
+                    'fecha_creacion' => $obj->fecha_creacion,
+                    'observaciones' => $obj->observaciones,
+                    'estado_aceptacion' => $obj->estado_aceptacion,
+                    'usuario' => $obj->usuario
+                );
+            }
+            $this->db->free($resql);
+        } else {
+            $this->error = $this->db->lasterror();
+            return $this->error;
+        }
+
+        return $result;
+    }
+
+    /**
      * Carga todos los registros de fichajes
      *
      * @param int    $user_id             ID de usuario
@@ -698,8 +845,11 @@ class FichajeTrabajador
 
         $fichajes = array();
 
+        // Auto-migrate: ensure fecha_original column exists (legal compliance)
+        // @$this->db->query("ALTER TABLE " . MAIN_DB_PREFIX . "fichajestrabajadores ADD COLUMN fecha_original DATETIME DEFAULT NULL");
+
         // Construir la consulta SQL
-        $sql = "SELECT f.rowid, f.fk_user, f.usuario, f.tipo, f.observaciones, f.latitud, f.longitud, f.fecha_creacion, f.estado_aceptacion, f.justification, f.location_warning, f.early_entry_warning, f.workplace_center_id,";
+        $sql = "SELECT f.rowid, f.fk_user, f.usuario, f.tipo, f.observaciones, f.latitud, f.longitud, f.fecha_creacion, f.fecha_original, f.estado_aceptacion, f.justification, f.location_warning, f.early_entry_warning, f.workplace_center_id,";
         $sql .= " u.firstname, u.lastname, u.login";
         $sql .= " FROM " . MAIN_DB_PREFIX . "fichajestrabajadores as f";
         $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "user as u ON f.fk_user = u.rowid";
@@ -744,6 +894,7 @@ class FichajeTrabajador
                 $fichaje->location_warning = $obj->location_warning;
                 $fichaje->early_entry_warning = $obj->early_entry_warning;
                 $fichaje->workplace_center_id = $obj->workplace_center_id;
+                $fichaje->fecha_original = $obj->fecha_original;
 
                 // Mostrar solo el login del usuario
                 $fichaje->usuario_nombre = $obj->login;

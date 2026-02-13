@@ -6,6 +6,7 @@ export type TimelineEvent = {
     id: string;
     dbId?: string; // Real database ID from Dolibarr
     time: Date;
+    originalTime?: Date; // Original time before correction (legal compliance)
     type: 'entrada' | 'salida' | 'inicio_pausa' | 'fin_pausa';
     label: string;
     location?: string;
@@ -19,6 +20,10 @@ export type TimelineEvent = {
     location_warning?: number;
     early_entry_warning?: number;
     justification?: string;
+    pauseStart?: Date; // For pause events: start time of the pause pair
+    pauseEnd?: Date;   // For pause events: end time of the pause pair
+    contextEntry?: Date; // For validation: entry time of the cycle
+    contextExit?: Date;  // For validation: exit time of the cycle
 };
 
 const hasValidCoords = (lat?: any, lng?: any): boolean => {
@@ -43,8 +48,11 @@ export const getDailyEvents = (cycles: WorkCycle[]): TimelineEvent[] => {
         const cycleId = cycle.id?.toString() || Math.random().toString();
         const cycleDateStr = new Date(cycle.entrada.fecha_creacion).toISOString().split('T')[0];
 
-        // Entrada
+        // Pre-calculate boundaries for context
         const entradaDate = parseDolibarrDate(cycle.entrada.fecha_creacion);
+        const salidaDate = cycle.salida ? parseDolibarrDate(cycle.salida.fecha_creacion) : undefined;
+
+        // Entrada
         result.push({
             id: `entrada-${entradaDate.getTime()}`,
             dbId: cycle.entrada.id,
@@ -59,9 +67,12 @@ export const getDailyEvents = (cycles: WorkCycle[]): TimelineEvent[] => {
             dateStr: cycleDateStr,
             observaciones: cycle.entrada.observaciones,
             estado_aceptacion: cycle.entrada.estado_aceptacion,
+            originalTime: cycle.entrada.fecha_original ? parseDolibarrDate(cycle.entrada.fecha_original) : undefined,
             location_warning: cycle.entrada.location_warning,
             early_entry_warning: cycle.entrada.early_entry_warning,
-            justification: cycle.entrada.justification
+            justification: cycle.entrada.justification,
+            contextEntry: entradaDate,
+            contextExit: salidaDate
         });
 
         // Pausas
@@ -70,6 +81,7 @@ export const getDailyEvents = (cycles: WorkCycle[]): TimelineEvent[] => {
                 if (!pausa.inicio) return;
 
                 const pausaInicio = parseDolibarrDate(pausa.inicio.fecha_creacion);
+                const pausaFinDate = pausa.fin ? parseDolibarrDate(pausa.fin.fecha_creacion) : undefined;
                 result.push({
                     id: `pausa-start-${pausaInicio.getTime()}`,
                     dbId: pausa.inicio.id,
@@ -84,9 +96,14 @@ export const getDailyEvents = (cycles: WorkCycle[]): TimelineEvent[] => {
                     dateStr: cycleDateStr,
                     observaciones: pausa.inicio.observaciones,
                     estado_aceptacion: pausa.inicio.estado_aceptacion,
+                    originalTime: pausa.inicio.fecha_original ? parseDolibarrDate(pausa.inicio.fecha_original) : undefined,
                     location_warning: pausa.inicio.location_warning,
                     early_entry_warning: pausa.inicio.early_entry_warning,
-                    justification: pausa.inicio.justification
+                    justification: pausa.inicio.justification,
+                    pauseStart: pausaInicio,
+                    pauseEnd: pausaFinDate,
+                    contextEntry: entradaDate,
+                    contextExit: salidaDate
                 });
 
                 if (pausa.fin) {
@@ -96,7 +113,7 @@ export const getDailyEvents = (cycles: WorkCycle[]): TimelineEvent[] => {
                         dbId: pausa.fin.id,
                         time: pausaFin,
                         type: 'fin_pausa',
-                        label: 'Reanudación',
+                        label: 'Regreso',
                         location: hasValidCoords(pausa.fin.latitud, pausa.fin.longitud) ? 'Ubicación' : undefined,
                         lat: pausa.fin.latitud,
                         lng: pausa.fin.longitud,
@@ -105,9 +122,14 @@ export const getDailyEvents = (cycles: WorkCycle[]): TimelineEvent[] => {
                         dateStr: cycleDateStr,
                         observaciones: pausa.fin.observaciones,
                         estado_aceptacion: pausa.fin.estado_aceptacion,
+                        originalTime: pausa.fin.fecha_original ? parseDolibarrDate(pausa.fin.fecha_original) : undefined,
                         location_warning: pausa.fin.location_warning,
                         early_entry_warning: pausa.fin.early_entry_warning,
-                        justification: pausa.fin.justification
+                        justification: pausa.fin.justification,
+                        pauseStart: pausaInicio,
+                        pauseEnd: pausaFin,
+                        contextEntry: entradaDate,
+                        contextExit: salidaDate
                     });
                 }
             });
@@ -115,11 +137,11 @@ export const getDailyEvents = (cycles: WorkCycle[]): TimelineEvent[] => {
 
         // Salida
         if (cycle.salida) {
-            const salidaDate = parseDolibarrDate(cycle.salida.fecha_creacion);
+            // reused calculated salidaDate
             result.push({
-                id: `salida-${salidaDate.getTime()}`,
+                id: `salida-${salidaDate!.getTime()}`, // valid here because block exists
                 dbId: cycle.salida.id,
-                time: salidaDate,
+                time: salidaDate!,
                 type: 'salida',
                 label: 'Salida',
                 location: hasValidCoords(cycle.salida.latitud, cycle.salida.longitud) ? 'Ubicación' : undefined,
@@ -130,9 +152,12 @@ export const getDailyEvents = (cycles: WorkCycle[]): TimelineEvent[] => {
                 dateStr: cycleDateStr,
                 observaciones: cycle.salida.observaciones,
                 estado_aceptacion: cycle.salida.estado_aceptacion,
+                originalTime: cycle.salida.fecha_original ? parseDolibarrDate(cycle.salida.fecha_original) : undefined,
                 location_warning: cycle.salida.location_warning,
                 early_entry_warning: cycle.salida.early_entry_warning,
-                justification: cycle.salida.justification
+                justification: cycle.salida.justification,
+                contextEntry: entradaDate,
+                contextExit: salidaDate
             });
         }
     });

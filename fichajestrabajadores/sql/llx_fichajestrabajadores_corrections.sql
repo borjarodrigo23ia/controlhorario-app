@@ -9,6 +9,7 @@ CREATE TABLE llx_fichajestrabajadores_corrections(
     estado VARCHAR(20) DEFAULT 'pendiente', -- pendiente, aprobada, rechazada
     fk_approver INTEGER,
     date_approval DATETIME,
+    admin_note TEXT,
     date_creation DATETIME NOT NULL,
     tms TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_fichajestrabajadores_corrections_user FOREIGN KEY (fk_user) REFERENCES llx_user(rowid)
