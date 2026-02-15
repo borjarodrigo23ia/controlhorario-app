@@ -34,10 +34,13 @@ export interface UserConfig {
     logout_after_clock?: string;
 }
 
+
 export interface DolibarrUser {
     id: string;
     login: string;
     firstname: string;
     lastname: string;
     active: string;
+    admin: string;
+    note_private?: string;
 }

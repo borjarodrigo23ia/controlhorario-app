@@ -25,6 +25,8 @@ export default function LoginPage() {
         login: '',
         email: '',
         password: '',
+        dni: '',
+        user_mobile: '',
         center_ids: [] as number[]
     });
 
@@ -88,6 +90,8 @@ export default function LoginPage() {
                         login: formData.login,
                         email: formData.email,
                         password: formData.password,
+                        dni: formData.dni,
+                        user_mobile: formData.user_mobile,
                         center_ids: formData.center_ids
                     })
                 });
@@ -191,6 +195,37 @@ export default function LoginPage() {
                                         placeholder="Ej. Pérez"
                                         className="w-full h-11 px-4 rounded-xl bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white/20 transition-all text-sm"
                                         value={formData.lastname}
+                                        onChange={handleChange}
+                                        onFocus={handleFocus}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {state === "register" && (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider ml-1">DNI / NIE *</label>
+                                    <input
+                                        type="text"
+                                        name="dni"
+                                        placeholder="12345678X"
+                                        className="w-full h-11 px-4 rounded-xl bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white/20 transition-all text-sm"
+                                        value={formData.dni}
+                                        onChange={handleChange}
+                                        onFocus={handleFocus}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider ml-1">Móvil *</label>
+                                    <input
+                                        type="tel"
+                                        name="user_mobile"
+                                        placeholder="600123456"
+                                        className="w-full h-11 px-4 rounded-xl bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white/20 transition-all text-sm"
+                                        value={formData.user_mobile}
                                         onChange={handleChange}
                                         onFocus={handleFocus}
                                         required
@@ -321,51 +356,53 @@ export default function LoginPage() {
                         </button>
                     </p>
                 </div>
-            </div>
+            </div >
 
             {/* Background Details */}
-            <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+            < div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden" >
                 <div className="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-gray-200/50 dark:bg-zinc-800/20 blur-[100px]" />
                 <div className="absolute top-[40%] -left-[10%] w-[40%] h-[40%] rounded-full bg-gray-200/50 dark:bg-zinc-800/20 blur-[100px]" />
-            </div>
+            </div >
 
             <LoginInstallPrompt />
 
             {/* Forgot Password Modal */}
-            {showForgotModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
-                    <div
-                        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                        onClick={() => setShowForgotModal(false)}
-                    />
-                    <div className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[2rem] shadow-2xl p-8 text-center animate-slide-up overflow-hidden group">
-                        <button
+            {
+                showForgotModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
+                        <div
+                            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
                             onClick={() => setShowForgotModal(false)}
-                            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-black dark:hover:text-white transition-colors"
-                        >
-                            <X size={20} />
-                        </button>
+                        />
+                        <div className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[2rem] shadow-2xl p-8 text-center animate-slide-up overflow-hidden group">
+                            <button
+                                onClick={() => setShowForgotModal(false)}
+                                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-black dark:hover:text-white transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
 
-                        <div className="w-16 h-16 bg-black/[0.03] dark:bg-white/[0.05] rounded-2xl flex items-center justify-center mx-auto mb-6 text-black dark:text-white">
-                            <Info size={32} strokeWidth={1.5} />
+                            <div className="w-16 h-16 bg-black/[0.03] dark:bg-white/[0.05] rounded-2xl flex items-center justify-center mx-auto mb-6 text-black dark:text-white">
+                                <Info size={32} strokeWidth={1.5} />
+                            </div>
+
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                                ¿Necesitas ayuda?
+                            </h3>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-8">
+                                Para resetear tu contraseña, por favor <span className="font-bold text-black dark:text-white">contacta con tu administrador</span> o responsable de personal. Ellos podrán generarte una nueva clave de acceso.
+                            </p>
+
+                            <button
+                                onClick={() => setShowForgotModal(false)}
+                                className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm tracking-tight hover:opacity-90 active:scale-[0.98] transition-all"
+                            >
+                                Entendido
+                            </button>
                         </div>
-
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                            ¿Necesitas ayuda?
-                        </h3>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-8">
-                            Para resetear tu contraseña, por favor <span className="font-bold text-black dark:text-white">contacta con tu administrador</span> o responsable de personal. Ellos podrán generarte una nueva clave de acceso.
-                        </p>
-
-                        <button
-                            onClick={() => setShowForgotModal(false)}
-                            className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm tracking-tight hover:opacity-90 active:scale-[0.98] transition-all"
-                        >
-                            Entendido
-                        </button>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     )
 }

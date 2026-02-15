@@ -4,10 +4,11 @@ import { DolibarrUser } from '@/lib/admin-types';
 import Sidebar from '@/components/Sidebar';
 import MobileNav from '@/components/MobileNav';
 import Link from 'next/link';
-import { Settings, Search, CirclePower, Coffee, LogOut, Users, ChevronRight } from 'lucide-react';
+import { Settings, Search, CirclePower, Coffee, LogOut, Users, ChevronRight, Plus, Shield } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import CreateUserModal from '@/components/admin/CreateUserModal';
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -23,95 +24,87 @@ export default function AdminUsersPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const token = localStorage.getItem('dolibarr_token');
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
-                // Fetch users
-                const usersRes = await fetch('/api/users', {
-                    headers: { 'DOLAPIKEY': token || '' }
-                });
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('dolibarr_token');
 
-                if (!usersRes.ok) {
-                    console.error('Error fetching users');
-                    setLoading(false);
-                    return;
-                }
+            // Fetch users
+            const usersRes = await fetch('/api/users', {
+                headers: { 'DOLAPIKEY': token || '' }
+            });
 
-                const usersData = await usersRes.json();
-                const usersList: DolibarrUser[] = Array.isArray(usersData) ? usersData : [];
-
-                // Fetch all fichajes (admin sees all)
-                const fichajesRes = await fetch('/api/fichajes', {
-                    headers: { 'DOLAPIKEY': token || '' }
-                });
-
-                if (!fichajesRes.ok) {
-                    console.error('Error fetching fichajes');
-                    // Still show users even if fichajes fail
-                    setUsers(usersList.map(u => ({ ...u, workStatus: 'out' as const })));
-                    setLoading(false);
-                    return;
-                }
-
-                const fichajesData = await fichajesRes.json();
-                // API returns { success: true, fichajes: [...] }
-                const fichajes = Array.isArray(fichajesData.fichajes) ? fichajesData.fichajes :
-                    Array.isArray(fichajesData) ? fichajesData : [];
-
-                console.log('Total fichajes:', fichajes.length);
-                console.log('Sample fichaje:', fichajes[0]);
-
-                // Group fichajes by user_id and get last fichaje for each
-                const lastFichajeByUser = new Map<string, any>();
-
-                fichajes.forEach((fichaje: any) => {
-                    const userId = fichaje.fk_user?.toString();
-                    if (!userId) {
-                        console.log('Fichaje without user:', fichaje);
-                        return;
-                    }
-
-                    const current = lastFichajeByUser.get(userId);
-                    if (!current || new Date(fichaje.fecha_creacion) > new Date(current.fecha_creacion)) {
-                        lastFichajeByUser.set(userId, fichaje);
-                    }
-                });
-
-                console.log('Last fichajes by user:', Object.fromEntries(lastFichajeByUser));
-
-                // Determine work status for each user
-                const usersWithStatus: UserWithStatus[] = usersList.map(user => {
-                    const lastFichaje = lastFichajeByUser.get(user.id);
-
-                    let workStatus: 'working' | 'paused' | 'out' = 'out';
-                    if (lastFichaje?.tipo === 'entrar' || lastFichaje?.tipo === 'finp') {
-                        workStatus = 'working';
-                    } else if (lastFichaje?.tipo === 'pausa') {
-                        workStatus = 'paused';
-                    }
-
-                    console.log(`User ${user.login} (ID: ${user.id}):`, {
-                        lastFichaje: lastFichaje?.tipo,
-                        fecha: lastFichaje?.fecha_creacion,
-                        workStatus
-                    });
-
-                    return {
-                        ...user,
-                        workStatus,
-                        lastFichajeType: lastFichaje?.tipo
-                    };
-                });
-
-                setUsers(usersWithStatus);
-            } catch (e) {
-                console.error(e);
-            } finally {
+            if (!usersRes.ok) {
+                console.error('Error fetching users');
                 setLoading(false);
+                return;
             }
-        };
+
+            const usersData = await usersRes.json();
+            const usersList: DolibarrUser[] = Array.isArray(usersData) ? usersData : [];
+
+            // Fetch all fichajes (admin sees all)
+            const fichajesRes = await fetch('/api/fichajes', {
+                headers: { 'DOLAPIKEY': token || '' }
+            });
+
+            if (!fichajesRes.ok) {
+                console.error('Error fetching fichajes');
+                // Still show users even if fichajes fail
+                setUsers(usersList.map(u => ({ ...u, workStatus: 'out' as const })));
+                setLoading(false);
+                return;
+            }
+
+            const fichajesData = await fichajesRes.json();
+            // API returns { success: true, fichajes: [...] }
+            const fichajes = Array.isArray(fichajesData.fichajes) ? fichajesData.fichajes :
+                Array.isArray(fichajesData) ? fichajesData : [];
+
+            // Group fichajes by user_id and get last fichaje for each
+            const lastFichajeByUser = new Map<string, any>();
+
+            fichajes.forEach((fichaje: any) => {
+                const userId = fichaje.fk_user?.toString();
+                if (!userId) {
+                    return;
+                }
+
+                const current = lastFichajeByUser.get(userId);
+                if (!current || new Date(fichaje.fecha_creacion) > new Date(current.fecha_creacion)) {
+                    lastFichajeByUser.set(userId, fichaje);
+                }
+            });
+
+            // Determine work status for each user
+            const usersWithStatus: UserWithStatus[] = usersList.map(user => {
+                const lastFichaje = lastFichajeByUser.get(user.id);
+
+                let workStatus: 'working' | 'paused' | 'out' = 'out';
+                if (lastFichaje?.tipo === 'entrar' || lastFichaje?.tipo === 'finp') {
+                    workStatus = 'working';
+                } else if (lastFichaje?.tipo === 'pausa') {
+                    workStatus = 'paused';
+                }
+
+                return {
+                    ...user,
+                    workStatus,
+                    lastFichajeType: lastFichaje?.tipo
+                };
+            });
+
+            setUsers(usersWithStatus);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchData();
     }, []);
 
@@ -132,6 +125,16 @@ export default function AdminUsersPage() {
                     badge="Administración"
                 />
 
+                <div className="mb-6">
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="flex items-center gap-2 bg-black text-white px-5 py-3 rounded-2xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-gray-200"
+                    >
+                        <Plus size={18} strokeWidth={2.5} />
+                        Crear Usuario
+                    </button>
+                </div>
+
                 <div className="mb-8 relative group max-w-md">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={20} />
                     <input
@@ -142,6 +145,12 @@ export default function AdminUsersPage() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
+
+                <CreateUserModal
+                    isOpen={showCreateModal}
+                    onClose={() => setShowCreateModal(false)}
+                    onCreated={fetchData}
+                />
 
                 {loading ? (
                     <div className="flex items-center justify-center py-20">
@@ -195,6 +204,11 @@ export default function AdminUsersPage() {
                                                         user.workStatus === 'paused' ? 'en pausa' :
                                                             'desconectado'}
                                                 </span>
+                                                {user.admin === '1' && (
+                                                    <span className="text-[8px] bg-black text-white px-1.5 py-0.5 rounded-full border border-black font-bold leading-none flex items-center gap-1">
+                                                        <Shield size={8} className="fill-current" /> ADMIN
+                                                    </span>
+                                                )}
                                                 {user.active === '0' && (
                                                     <span className="text-[8px] bg-red-50 text-red-500 px-1.5 py-0.5 rounded-full border border-red-100 font-bold leading-none">off</span>
                                                 )}

@@ -18,14 +18,25 @@ export async function PUT(
         // Dolibarr expects partial updates in some versions, or full object in others.
         // Usually PUT /users/{id} works for updates.
 
-        const response = await fetch(`${apiUrl}/users/${id}`, {
+        // Use Admin API Key from environment to ensure we have permission to update all fields
+        const adminApiKey = process.env.DOLAPIKEY;
+        if (!adminApiKey) {
+            console.error("Missing server-side DOLAPIKEY");
+            return NextResponse.json({ error: 'Configuración de servidor incompleta' }, { status: 500 });
+        }
+
+
+        // Use custom endpoint that ensures fields like mobile and note_private are updated
+        const response = await fetch(`${apiUrl}/setupusuariosapi/updateUsuario/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'DOLAPIKEY': apiKey
+                'DOLAPIKEY': adminApiKey
             },
             body: JSON.stringify(body)
         });
+
+        console.log(`[PUT /users/${id}] Dolibarr Response Status:`, response.status);
 
         if (!response.ok) {
             const errorText = await response.text();

@@ -29,7 +29,8 @@ export default function UsuarioPage() {
         lastname: '',
         email: '',
         user_mobile: '',
-        password: ''
+        password: '',
+        dni: ''
     });
 
     // Initialize form with user data using API
@@ -45,6 +46,7 @@ export default function UsuarioPage() {
                     lastname: user.lastname || '',
                     email: user.email || '',
                     user_mobile: user.user_mobile || '',
+                    dni: (user as any).note_private?.match(/DNI:\s*([^\n]*)/i)?.[1].trim() || ''
                 }));
 
                 const token = localStorage.getItem('dolibarr_token');
@@ -63,6 +65,7 @@ export default function UsuarioPage() {
                         lastname: data.lastname || '',
                         email: data.email || '',
                         user_mobile: data.user_mobile || '',
+                        dni: data.note_private?.match(/DNI:\s*([^\n]*)/i)?.[1].trim() || ''
                     }));
                 }
             } catch (error) {
@@ -91,8 +94,9 @@ export default function UsuarioPage() {
                     firstname: formData.firstname,
                     lastname: formData.lastname,
                     email: formData.email,
-                    user_mobile: formData.user_mobile,
-                    mobile: formData.user_mobile, // Some Dolibarr instances use 'mobile' instead of 'user_mobile'
+                    mobile: formData.user_mobile,
+                    user_mobile: formData.user_mobile, // Send both to cover field name variations
+                    note_private: formData.dni ? `DNI: ${formData.dni}` : '',
                     ...(formData.password ? { password: formData.password } : {})
                 })
             });
@@ -206,6 +210,23 @@ export default function UsuarioPage() {
                             <div className="space-y-7">
                                 <div className="group">
                                     <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 transition-colors">
+                                        DNI / NIE
+                                    </label>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all underline decoration-slate-300 decoration-2 underline-offset-4"
+                                            value={formData.dni}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, dni: e.target.value }))}
+                                            placeholder="12345678X"
+                                        />
+                                    ) : (
+                                        <p className="text-base font-bold text-slate-700 px-1">{formData.dni || 'No registrado'}</p>
+                                    )}
+                                </div>
+
+                                <div className="group">
+                                    <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 transition-colors">
                                         Correo electrónico
                                     </label>
                                     {isEditing ? (
@@ -237,6 +258,8 @@ export default function UsuarioPage() {
                                         <p className="text-base font-bold text-slate-700 px-1">{formData.user_mobile || 'No registrado'}</p>
                                     )}
                                 </div>
+
+
 
                                 {isEditing && (
                                     <div className="group animate-in fade-in slide-in-from-top-2 duration-300">

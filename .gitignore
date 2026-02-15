@@ -43,3 +43,5 @@ regenerate_keys*.js
 *.json
 !package.json
 !tsconfig.json
+
+dolibarr-custom

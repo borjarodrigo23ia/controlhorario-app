@@ -3,10 +3,10 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { firstname, lastname, email, login, password } = body;
+        const { firstname, lastname, email, login, password, dni, user_mobile } = body;
 
         // Validation
-        if (!firstname || !lastname || !login || !password) {
+        if (!firstname || !lastname || !login || !password || !dni || !user_mobile) {
             return NextResponse.json(
                 { success: false, message: 'Faltan campos obligatorios' },
                 { status: 400 }
@@ -42,7 +42,9 @@ export async function POST(request: Request) {
                 email,
                 password,
                 employee: 1, // Default to employee
-                admin: 0     // Default to non-admin
+                admin: 0,     // Default to non-admin
+                note_private: dni ? `DNI: ${dni}` : '',
+                mobile: user_mobile
             })
         });
 

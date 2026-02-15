@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { CustomToggle } from '@/components/ui/CustomToggle';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import VacationDaysIndividualAssign from '@/components/admin/VacationDaysIndividualAssign';
+import UserDetailsCard from '@/components/admin/UserDetailsCard';
 
 interface UserData {
     id: number;
@@ -19,6 +20,16 @@ interface UserData {
     firstname: string;
     lastname: string;
     email: string;
+    user_mobile?: string;
+    office_phone?: string;
+    address?: string;
+    zip?: string;
+    town?: string;
+    job?: string;
+    gender?: string;
+    birth?: string;
+    admin?: string;
+    note_private?: string;
 }
 
 interface Center {
@@ -135,6 +146,8 @@ export default function UserConfigPage({ params }: { params: Promise<{ id: strin
                 />
 
                 <div className="max-w-2xl space-y-8">
+
+                    {userData && <UserDetailsCard user={userData} />}
 
                     {/* Geolocation Toggle (Compact) */}
                     <div className="group relative bg-white p-6 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex items-center justify-between overflow-hidden transition-all hover:shadow-md">
