@@ -13,23 +13,16 @@ import { CustomToggle } from '@/components/ui/CustomToggle';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import VacationDaysIndividualAssign from '@/components/admin/VacationDaysIndividualAssign';
 import UserDetailsCard from '@/components/admin/UserDetailsCard';
+import UserFormModal from '@/components/admin/UserFormModal';
+import { DolibarrUser } from '@/lib/admin-types';
 
-interface UserData {
-    id: number;
-    login: string;
-    firstname: string;
-    lastname: string;
-    email: string;
-    user_mobile?: string;
-    office_phone?: string;
+interface UserData extends DolibarrUser {
     address?: string;
     zip?: string;
     town?: string;
     job?: string;
     gender?: string;
     birth?: string;
-    admin?: string;
-    note_private?: string;
 }
 
 interface Center {
@@ -50,49 +43,61 @@ export default function UserConfigPage({ params }: { params: Promise<{ id: strin
     const [availableCenters, setAvailableCenters] = useState<Center[]>([]);
     const [initialCenters, setInitialCenters] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const token = localStorage.getItem('dolibarr_token');
+    // Edit Modal State
+    const [showEditModal, setShowEditModal] = useState(false);
 
-                // Fetch User Data
-                const userRes = await fetch(`/api/users/${id}`, {
-                    headers: { 'DOLAPIKEY': token || '' }
-                });
-                if (userRes.ok) setUserData(await userRes.json());
+    const fetchData = async () => {
+        try {
+            const token = localStorage.getItem('dolibarr_token');
 
-                // Fetch Config
-                const configRes = await fetch(`/api/users/${id}/config`, {
-                    headers: { 'DOLAPIKEY': token || '' }
+            // Fetch User Data
+            const userRes = await fetch(`/api/users/${id}`, {
+                headers: { 'DOLAPIKEY': token || '' }
+            });
+            if (userRes.ok) setUserData(await userRes.json());
+
+            // Fetch Config (only on initial load if needed, but here we can refetch)
+            const configRes = await fetch(`/api/users/${id}/config`, {
+                headers: { 'DOLAPIKEY': token || '' }
+            });
+            if (configRes.ok) {
+                const data = await configRes.json();
+                // Flatten config
+                const flatConfig: Record<string, string> = {};
+                Object.keys(data).forEach(key => {
+                    flatConfig[key] = data[key] || '';
                 });
-                if (configRes.ok) {
-                    const data = await configRes.json();
-                    // Flatten config
-                    const flatConfig: Record<string, string> = {};
-                    Object.keys(data).forEach(key => {
-                        flatConfig[key] = data[key] || '';
-                    });
-                    // Force update state with new object to ensure re-render
-                    setConfig({ ...flatConfig });
+
+                // Keep config state if already set, or initialize
+                setConfig(prev => Object.keys(prev).length ? prev : { ...flatConfig });
+
+                if (initialCenters === null) {
                     setInitialCenters(flatConfig.work_centers_ids || '');
                 }
-
-                // Fetch Centers
-                const centersRes = await fetch('/api/centers', {
-                    headers: { 'DOLAPIKEY': token || '' }
-                });
-                if (centersRes.ok) {
-                    setAvailableCenters(await centersRes.json());
-                }
-
-            } catch (error) {
-                console.error(error);
-                toast.error('Error al cargar datos');
-            } finally {
-                setLoading(false);
             }
+
+            // Fetch Centers
+            const centersRes = await fetch('/api/centers', {
+                headers: { 'DOLAPIKEY': token || '' }
+            });
+            if (centersRes.ok) {
+                setAvailableCenters(await centersRes.json());
+            }
+
+        } catch (error) {
+            console.error(error);
+            toast.error('Error al cargar datos');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const loadInitial = async () => {
+            await fetchData();
+            setLoading(false);
         };
-        fetchData();
+        loadInitial();
     }, [id]);
 
     const handleChange = (key: string, value: string) => {
@@ -147,7 +152,19 @@ export default function UserConfigPage({ params }: { params: Promise<{ id: strin
 
                 <div className="max-w-2xl space-y-8">
 
-                    {userData && <UserDetailsCard user={userData} />}
+                    {userData && (
+                        <UserDetailsCard
+                            user={userData}
+                            onEdit={() => setShowEditModal(true)}
+                        />
+                    )}
+
+                    <UserFormModal
+                        isOpen={showEditModal}
+                        onClose={() => setShowEditModal(false)}
+                        onSuccess={fetchData}
+                        initialData={userData}
+                    />
 
                     {/* Geolocation Toggle (Compact) */}
                     <div className="group relative bg-white p-6 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex items-center justify-between overflow-hidden transition-all hover:shadow-md">

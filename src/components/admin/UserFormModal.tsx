@@ -1,17 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { X, User, Mail, Lock, Shield, Check, Loader2, Fingerprint } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, User as UserIcon, Mail, Lock, Shield, Check, Loader2, Fingerprint, Phone, Smartphone } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { cn } from '@/lib/utils'; // Assuming cn utility exists, based on other files
+import { cn } from '@/lib/utils';
+import { DolibarrUser } from '@/lib/admin-types';
 
-interface CreateUserModalProps {
+interface UserFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onCreated: () => void;
+    onSuccess: () => void;
+    initialData?: DolibarrUser | null; // If null, it's create mode
 }
 
-export default function CreateUserModal({ isOpen, onClose, onCreated }: CreateUserModalProps) {
+export default function UserFormModal({ isOpen, onClose, onSuccess, initialData }: UserFormModalProps) {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         firstname: '',
@@ -20,8 +22,47 @@ export default function CreateUserModal({ isOpen, onClose, onCreated }: CreateUs
         email: '',
         password: '',
         dni: '',
+        user_mobile: '',
+        office_phone: '',
         isAdmin: false
     });
+
+    const isEditMode = !!initialData;
+
+    useEffect(() => {
+        if (isOpen) {
+            if (initialData) {
+                // Extract DNI from note_private
+                const dniMatch = initialData.note_private?.match(/DNI:\s*([^\n]*)/i);
+                const dni = dniMatch ? dniMatch[1].trim() : '';
+
+                setFormData({
+                    firstname: initialData.firstname || '',
+                    lastname: initialData.lastname || '',
+                    login: initialData.login || '',
+                    email: initialData.email || '',
+                    password: '', // Password empty on edit
+                    dni: dni,
+                    user_mobile: initialData.user_mobile || '',
+                    office_phone: initialData.office_phone || '',
+                    isAdmin: initialData.admin === '1'
+                });
+            } else {
+                // Reset for create
+                setFormData({
+                    firstname: '',
+                    lastname: '',
+                    login: '',
+                    email: '',
+                    password: '',
+                    dni: '',
+                    user_mobile: '',
+                    office_phone: '',
+                    isAdmin: false
+                });
+            }
+        }
+    }, [isOpen, initialData]);
 
     if (!isOpen) return null;
 
@@ -39,38 +80,44 @@ export default function CreateUserModal({ isOpen, onClose, onCreated }: CreateUs
 
         try {
             const token = localStorage.getItem('dolibarr_token');
-            const res = await fetch('/api/admin/create-user', {
-                method: 'POST',
+            const url = isEditMode
+                ? `/api/users/${initialData?.id}` // Use standard user update endpoint (internally uses admin key)
+                : '/api/admin/create-user';
+
+            const method = isEditMode ? 'PUT' : 'POST';
+
+            // Clean data for submission
+            const payload: any = {
+                ...formData,
+                admin: formData.isAdmin ? 1 : 0
+            };
+
+            // If editing and password is empty, remove it to avoid overwriting
+            if (isEditMode && !payload.password) {
+                delete payload.password;
+            }
+
+            const res = await fetch(url, {
+                method,
                 headers: {
                     'Content-Type': 'application/json',
                     'DOLAPIKEY': token || ''
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(payload)
             });
 
-            const data = await res.json();
-
-            if (!res.ok || !data.success) {
-                throw new Error(data.message || 'Error al crear usuario');
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || errorData.error || 'Error al guardar usuario');
             }
 
-            toast.success('Usuario creado exitosamente');
-            onCreated();
+            toast.success(isEditMode ? 'Usuario actualizado' : 'Usuario creado');
+            onSuccess();
             onClose();
-            // Reset form
-            setFormData({
-                firstname: '',
-                lastname: '',
-                login: '',
-                email: '',
-                password: '',
-                dni: '',
-                isAdmin: false
-            });
 
         } catch (error: any) {
-            console.error('Error creating user:', error);
-            toast.error(error.message || 'Error desconocido al crear usuario');
+            console.error('Error saving user:', error);
+            toast.error(error.message || 'Error desconocido');
         } finally {
             setLoading(false);
         }
@@ -85,17 +132,17 @@ export default function CreateUserModal({ isOpen, onClose, onCreated }: CreateUs
             />
 
             {/* Modal */}
-            <div className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 h-[90vh] md:h-auto md:max-h-[90vh]">
 
                 {/* Header */}
-                <div className="p-6 md:p-8 md:pb-4 flex items-start justify-between">
+                <div className="p-6 md:p-8 md:pb-4 flex items-start justify-between shrink-0">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-black/5 rounded-2xl">
-                            <User size={24} className="text-black" />
+                            <UserIcon size={24} className="text-black" />
                         </div>
                         <div>
                             <h3 className="text-xl font-black text-gray-900 tracking-tight">
-                                Crear Nuevo Usuario
+                                {isEditMode ? 'Editar Usuario' : 'Crear Nuevo Usuario'}
                             </h3>
                             <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mt-1">
                                 Administración
@@ -144,7 +191,9 @@ export default function CreateUserModal({ isOpen, onClose, onCreated }: CreateUs
 
                         {/* DNI Field */}
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider px-1">DNI / NIE</label>
+                            <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-wider px-1">
+                                <Fingerprint size={12} /> DNI / NIE
+                            </label>
                             <input
                                 type="text"
                                 name="dni"
@@ -158,7 +207,7 @@ export default function CreateUserModal({ isOpen, onClose, onCreated }: CreateUs
                         {/* Login & Email */}
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-wider px-1">
-                                <Fingerprint size={12} /> Usuario (Login)
+                                <UserIcon size={12} /> Usuario (Login)
                             </label>
                             <input
                                 type="text"
@@ -166,8 +215,13 @@ export default function CreateUserModal({ isOpen, onClose, onCreated }: CreateUs
                                 value={formData.login}
                                 onChange={handleChange}
                                 required
+                                disabled={isEditMode} // Usually login shouldn't change easily
+                                title={isEditMode ? "El login no se puede cambiar" : ""}
                                 placeholder="usuario123"
-                                className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-3 text-sm text-gray-900 placeholder:text-gray-300 font-bold focus:outline-none focus:ring-2 focus:ring-black/10 transition-all"
+                                className={cn(
+                                    "w-full bg-white border border-gray-100 rounded-2xl px-5 py-3 text-sm text-gray-900 placeholder:text-gray-300 font-bold focus:outline-none focus:ring-2 focus:ring-black/10 transition-all",
+                                    isEditMode && "bg-gray-50 text-gray-500"
+                                )}
                             />
                         </div>
 
@@ -185,18 +239,48 @@ export default function CreateUserModal({ isOpen, onClose, onCreated }: CreateUs
                             />
                         </div>
 
+                        {/* Phones */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-wider px-1">
+                                    <Smartphone size={12} /> Móvil
+                                </label>
+                                <input
+                                    type="tel"
+                                    name="user_mobile"
+                                    value={formData.user_mobile}
+                                    onChange={handleChange}
+                                    placeholder="600 000 000"
+                                    className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-3 text-sm text-gray-900 placeholder:text-gray-300 font-bold focus:outline-none focus:ring-2 focus:ring-black/10 transition-all"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-wider px-1">
+                                    <Phone size={12} /> Fijo / Oficina
+                                </label>
+                                <input
+                                    type="tel"
+                                    name="office_phone"
+                                    value={formData.office_phone}
+                                    onChange={handleChange}
+                                    placeholder="910 000 000"
+                                    className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-3 text-sm text-gray-900 placeholder:text-gray-300 font-bold focus:outline-none focus:ring-2 focus:ring-black/10 transition-all"
+                                />
+                            </div>
+                        </div>
+
                         {/* Password */}
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-wider px-1">
-                                <Lock size={12} /> Contraseña
+                                <Lock size={12} /> {isEditMode ? 'Nueva Contraseña (Opcional)' : 'Contraseña'}
                             </label>
                             <input
                                 type="password"
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
-                                required
-                                placeholder="••••••••"
+                                required={!isEditMode}
+                                placeholder={isEditMode ? "Dejar en blanco para no cambiar" : "••••••••"}
                                 className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-3 text-sm text-gray-900 placeholder:text-gray-300 font-bold focus:outline-none focus:ring-2 focus:ring-black/10 transition-all"
                             />
                         </div>
@@ -223,7 +307,7 @@ export default function CreateUserModal({ isOpen, onClose, onCreated }: CreateUs
                     </div>
 
                     {/* Actions */}
-                    <div className="mt-8 flex gap-3">
+                    <div className="mt-8 flex gap-3 shrink-0">
                         <button
                             type="button"
                             onClick={onClose}
@@ -237,7 +321,7 @@ export default function CreateUserModal({ isOpen, onClose, onCreated }: CreateUs
                             disabled={loading}
                             className="flex-[2] py-4 rounded-xl bg-black text-white text-xs font-black uppercase tracking-[0.15em] hover:opacity-90 shadow-lg shadow-gray-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                         >
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Crear Usuario"}
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (isEditMode ? 'Guardar Cambios' : 'Crear Usuario')}
                         </button>
                     </div>
                 </form>

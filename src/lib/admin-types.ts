@@ -42,5 +42,8 @@ export interface DolibarrUser {
     lastname: string;
     active: string;
     admin: string;
+    email?: string;
+    user_mobile?: string;
+    office_phone?: string;
     note_private?: string;
 }

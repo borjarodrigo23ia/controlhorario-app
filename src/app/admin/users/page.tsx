@@ -8,7 +8,7 @@ import { Settings, Search, CirclePower, Coffee, LogOut, Users, ChevronRight, Plu
 import { PageHeader } from '@/components/ui/PageHeader';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import CreateUserModal from '@/components/admin/CreateUserModal';
+import UserFormModal from '@/components/admin/UserFormModal';
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -146,10 +146,11 @@ export default function AdminUsersPage() {
                     />
                 </div>
 
-                <CreateUserModal
+                <UserFormModal
                     isOpen={showCreateModal}
                     onClose={() => setShowCreateModal(false)}
-                    onCreated={fetchData}
+                    onSuccess={fetchData}
+                    initialData={null}
                 />
 
                 {loading ? (

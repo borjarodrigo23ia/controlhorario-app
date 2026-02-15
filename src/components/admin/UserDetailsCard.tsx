@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import {
     ChevronDown,
@@ -13,12 +11,17 @@ import {
     Copy,
     ExternalLink,
     Shield,
-    Fingerprint
+    Fingerprint,
+    Pencil,
+    Trash2,
+    Loader2
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 interface UserDetailsProps {
     user: {
+        id: string;
         login: string;
         firstname: string;
         lastname: string;
@@ -33,11 +36,36 @@ interface UserDetailsProps {
         birth?: string;
         admin?: string;
         note_private?: string;
-    }
+    };
+    onEdit?: () => void;
 }
 
-export default function UserDetailsCard({ user }: UserDetailsProps) {
-    const [isOpen, setIsOpen] = useState(false);
+export default function UserDetailsCard({ user, onEdit }: UserDetailsProps) {
+    const [isOpen, setIsOpen] = useState(true); // Open by default
+    const [isDeleting, setIsDeleting] = useState(false);
+    const router = useRouter();
+
+    const handleDelete = async () => {
+        if (!confirm('¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer.')) return;
+
+        setIsDeleting(true);
+        try {
+            const token = localStorage.getItem('dolibarr_token');
+            const res = await fetch(`/api/users/${user.id}`, {
+                method: 'DELETE',
+                headers: { 'DOLAPIKEY': token || '' }
+            });
+
+            if (!res.ok) throw new Error('Error al eliminar usuario');
+
+            toast.success('Usuario eliminado correctamente');
+            router.push('/admin/users');
+        } catch (error) {
+            console.error(error);
+            toast.error('No se pudo eliminar el usuario');
+            setIsDeleting(false);
+        }
+    };
 
     const copyToClipboard = (text: string, label: string) => {
         navigator.clipboard.writeText(text);
@@ -45,20 +73,21 @@ export default function UserDetailsCard({ user }: UserDetailsProps) {
     };
 
     // Extract DNI from note_private if available
+
+    // Extract DNI from note_private if available
     const dniMatch = user.note_private?.match(/DNI:\s*([^\n]*)/i);
     const dni = dniMatch ? dniMatch[1].trim() : null;
 
-    const hasContactInfo = user.email || user.user_mobile || user.office_phone || dni;
-
     return (
-        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:shadow-md">
-            <button
+        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:shadow-md group/card">
+            <div
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between p-6 text-left"
+                className="w-full flex items-center justify-between p-6 text-left cursor-pointer"
             >
                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-black text-white rounded-2xl">
-                        <UserCircle size={24} />
+                    <div className="p-3 bg-black text-white rounded-2xl relative overflow-hidden">
+                        <UserCircle size={24} className="relative z-10" />
+                        <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity"></div>
                     </div>
                     <div>
                         <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -70,15 +99,27 @@ export default function UserDetailsCard({ user }: UserDetailsProps) {
                                 </span>
                             )}
                         </h3>
-                        <p className="text-xs text-gray-500 font-medium">
-                            Información Personal
+                        <p className="text-xs text-gray-500 font-medium flex items-center gap-2">
+                            <span>{user.login}</span>
+                            <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                            <span>Información Personal</span>
                         </p>
                     </div>
                 </div>
-                <div className={`p-2 rounded-full bg-gray-50 text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180 bg-gray-100 text-gray-600' : ''}`}>
-                    <ChevronDown size={20} />
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+                        disabled={isDeleting}
+                        className="p-2 text-red-500 rounded-full hover:bg-red-50 hover:text-red-700 transition-colors disabled:opacity-50"
+                        title="Eliminar usuario"
+                    >
+                        {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                    </button>
+                    <div className={`p-2 rounded-full bg-gray-50 text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180 bg-gray-100 text-gray-600' : ''}`}>
+                        <ChevronDown size={20} />
+                    </div>
                 </div>
-            </button>
+            </div>
 
             <div
                 className={`transition-[max-height,opacity] duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
@@ -86,105 +127,97 @@ export default function UserDetailsCard({ user }: UserDetailsProps) {
             >
                 <div className="p-6 pt-0 border-t border-gray-50">
 
-                    {/* Contact Info */}
-                    <div className="space-y-4">
-                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-4 mb-2">Contacto</h4>
 
-                        {user.email ? (
-                            <div className="flex items-center justify-between group p-3 rounded-xl bg-gray-50/50 hover:bg-gray-50 transition-colors">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-white rounded-lg text-gray-400 shadow-sm">
-                                        <Mail size={16} />
+
+                    {/* Contact Info Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                        {/* Email */}
+                        <div className="group p-4 rounded-2xl bg-gray-50/50 border border-transparent hover:border-gray-100 hover:bg-white hover:shadow-sm transition-all">
+                            <div className="flex items-center justify-between mb-1">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Email</span>
+                                {user.email && (
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => copyToClipboard(user.email!, 'Email')} className="p-1 hover:text-blue-600 transition-colors"><Copy size={12} /></button>
+                                        <a href={`mailto:${user.email}`} className="p-1 hover:text-blue-600 transition-colors"><ExternalLink size={12} /></a>
                                     </div>
-                                    <span className="text-sm font-medium text-gray-700">{user.email}</span>
-                                </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={() => copyToClipboard(user.email!, 'Email')}
-                                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                    >
-                                        <Copy size={14} />
-                                    </button>
-                                    <a
-                                        href={`mailto:${user.email}`}
-                                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                    >
-                                        <ExternalLink size={14} />
-                                    </a>
-                                </div>
+                                )}
                             </div>
-                        ) : (
-                            <div className="text-sm text-gray-400 italic pl-2">Sin email registrado</div>
-                        )}
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-white rounded-lg text-gray-400 shadow-sm shrink-0">
+                                    <Mail size={16} />
+                                </div>
+                                <span className="text-sm font-bold text-gray-900 truncate">{user.email || 'No registrado'}</span>
+                            </div>
+                        </div>
 
-                        {user.user_mobile ? (
-                            <div className="flex items-center justify-between group p-3 rounded-xl bg-gray-50/50 hover:bg-gray-50 transition-colors">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-white rounded-lg text-gray-400 shadow-sm">
-                                        <Smartphone size={16} />
+                        {/* Mobile */}
+                        <div className="group p-4 rounded-2xl bg-gray-50/50 border border-transparent hover:border-gray-100 hover:bg-white hover:shadow-sm transition-all">
+                            <div className="flex items-center justify-between mb-1">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Móvil</span>
+                                {user.user_mobile && (
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => copyToClipboard(user.user_mobile!, 'Móvil')} className="p-1 hover:text-green-600 transition-colors"><Copy size={12} /></button>
+                                        <a href={`tel:${user.user_mobile}`} className="p-1 hover:text-green-600 transition-colors"><Phone size={12} /></a>
                                     </div>
-                                    <span className="text-sm font-medium text-gray-700">{user.user_mobile}</span>
-                                </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={() => copyToClipboard(user.user_mobile!, 'Móvil')}
-                                        className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                    >
-                                        <Copy size={14} />
-                                    </button>
-                                    <a
-                                        href={`tel:${user.user_mobile}`}
-                                        className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                    >
-                                        <Phone size={14} />
-                                    </a>
-                                </div>
+                                )}
                             </div>
-                        ) : null}
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-white rounded-lg text-gray-400 shadow-sm shrink-0">
+                                    <Smartphone size={16} />
+                                </div>
+                                <span className="text-sm font-bold text-gray-900">{user.user_mobile || 'No registrado'}</span>
+                            </div>
+                        </div>
 
-                        {dni ? (
-                            <div className="flex items-center justify-between group p-3 rounded-xl bg-gray-50/50 hover:bg-gray-50 transition-colors">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-white rounded-lg text-gray-400 shadow-sm">
-                                        <Fingerprint size={16} />
+                        {/* Office Phone */}
+                        {user.office_phone && (
+                            <div className="group p-4 rounded-2xl bg-gray-50/50 border border-transparent hover:border-gray-100 hover:bg-white hover:shadow-sm transition-all">
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Teléfono Fijo</span>
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => copyToClipboard(user.office_phone!, 'Teléfono')} className="p-1 hover:text-green-600 transition-colors"><Copy size={12} /></button>
+                                        <a href={`tel:${user.office_phone}`} className="p-1 hover:text-green-600 transition-colors"><Phone size={12} /></a>
                                     </div>
-                                    <span className="text-sm font-medium text-gray-700">DNI: {dni}</span>
                                 </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={() => copyToClipboard(dni, 'DNI')}
-                                        className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                    >
-                                        <Copy size={14} />
-                                    </button>
-                                </div>
-                            </div>
-                        ) : null}
-
-                        {user.office_phone ? (
-                            <div className="flex items-center justify-between group p-3 rounded-xl bg-gray-50/50 hover:bg-gray-50 transition-colors">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-white rounded-lg text-gray-400 shadow-sm">
+                                    <div className="p-2 bg-white rounded-lg text-gray-400 shadow-sm shrink-0">
                                         <Phone size={16} />
                                     </div>
-                                    <span className="text-sm font-medium text-gray-700">{user.office_phone}</span>
-                                </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={() => copyToClipboard(user.office_phone!, 'Teléfono')}
-                                        className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                    >
-                                        <Copy size={14} />
-                                    </button>
-                                    <a
-                                        href={`tel:${user.office_phone}`}
-                                        className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                    >
-                                        <Phone size={14} />
-                                    </a>
+                                    <span className="text-sm font-bold text-gray-900">{user.office_phone}</span>
                                 </div>
                             </div>
-                        ) : null}
+                        )}
+
+                        {/* DNI */}
+                        <div className="group p-4 rounded-2xl bg-gray-50/50 border border-transparent hover:border-gray-100 hover:bg-white hover:shadow-sm transition-all">
+                            <div className="flex items-center justify-between mb-1">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">DNI / NIE</span>
+                                {dni && (
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => copyToClipboard(dni, 'DNI')} className="p-1 hover:text-purple-600 transition-colors"><Copy size={12} /></button>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-white rounded-lg text-gray-400 shadow-sm shrink-0">
+                                    <Fingerprint size={16} />
+                                </div>
+                                <span className="text-sm font-bold text-gray-900">{dni || 'No registrado'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Actions Toolbar */}
+                    <div className="flex items-center justify-end gap-2 mt-6 pt-6 border-t border-gray-50">
+                        {onEdit && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black text-white hover:bg-gray-800 transition-all text-xs font-bold uppercase tracking-wide shadow-sm active:scale-95"
+                            >
+                                <Pencil size={14} /> Editar
+                            </button>
+                        )}
                     </div>
                 </div>
                 <div className="h-6"></div>

@@ -56,6 +56,42 @@ export async function PUT(
     }
 }
 
+
+export async function DELETE(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+        const apiKey = request.headers.get('DOLAPIKEY');
+        if (!apiKey) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
+        const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
+        const adminApiKey = process.env.DOLAPIKEY; // Use admin key for deletion
+
+        if (!adminApiKey) {
+            return NextResponse.json({ error: 'Configuración incompleta' }, { status: 500 });
+        }
+
+        const response = await fetch(`${apiUrl}/users/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'DOLAPIKEY': adminApiKey
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            return NextResponse.json({ error: 'Error al eliminar usuario', details: errorText }, { status: response.status });
+        }
+
+        return NextResponse.json({ success: true });
+
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
