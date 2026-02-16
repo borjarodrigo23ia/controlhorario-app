@@ -119,7 +119,7 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({ isOpen, onClos
                             <div className="w-full h-full max-w-5xl bg-white shadow-2xl md:rounded-lg overflow-hidden relative">
                                 <iframe
                                     id="pdf-preview-iframe"
-                                    src={`${pdfUrl}#view=FitH&toolbar=0&navpanes=0`}
+                                    src={`${pdfUrl}#view=Fit&toolbar=0&navpanes=0`}
                                     className="w-full h-full border-none"
                                     style={{
                                         width: '100%',

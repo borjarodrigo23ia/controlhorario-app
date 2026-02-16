@@ -130,7 +130,7 @@ export const HistoryDateRangePicker: React.FC<DateRangePickerProps> = ({ startDa
                         onClick={() => handleInputClick('start')}
                         value={startDate || ''}
                         className={cn(
-                            "block w-full ps-8 md:ps-10 pe-2 md:pe-3 py-2 md:py-2.5 bg-white border text-gray-900 text-xs md:text-sm rounded-xl cursor-pointer transition-all outline-none shadow-sm",
+                            "block w-full ps-8 md:ps-10 pe-2 md:pe-3 py-2 md:py-2.5 bg-white border text-gray-900 text-base md:text-sm rounded-xl cursor-pointer transition-all outline-none shadow-sm",
                             activeInput === 'start' ? "border-primary ring-2 ring-primary/10 bg-white" : "border-gray-100 bg-neutral-secondary-medium hover:border-gray-200"
                         )}
                         placeholder="Fecha inicio"
@@ -151,7 +151,7 @@ export const HistoryDateRangePicker: React.FC<DateRangePickerProps> = ({ startDa
                         onClick={() => handleInputClick('end')}
                         value={endDate || ''}
                         className={cn(
-                            "block w-full ps-8 md:ps-10 pe-2 md:pe-3 py-2 md:py-2.5 bg-white border text-gray-900 text-xs md:text-sm rounded-xl cursor-pointer transition-all outline-none shadow-sm",
+                            "block w-full ps-8 md:ps-10 pe-2 md:pe-3 py-2 md:py-2.5 bg-white border text-gray-900 text-base md:text-sm rounded-xl cursor-pointer transition-all outline-none shadow-sm",
                             activeInput === 'end' ? "border-primary ring-2 ring-primary/10 bg-white" : "border-gray-100 bg-neutral-secondary-medium hover:border-gray-200"
                         )}
                         placeholder="Fecha fin"

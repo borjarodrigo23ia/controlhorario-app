@@ -314,19 +314,19 @@ export const useFichajes = (options?: UseFichajesOptions) => {
                 try {
                     // Check permission state first if possible (optional)
                     console.log('[registrarFichaje] Intentando capturar ubicación...');
-                    toast.loading('Capturando ubicación...', {
-                        icon: '📍',
-                        duration: 3000
-                    });
+                    // toast.loading('Capturando ubicación...', {
+                    //     icon: '📍',
+                    //     duration: 3000
+                    // });
                     const position = await getCurrentPosition();
                     finalCoords = {
                         lat: position.lat,
                         lng: position.lng
                     };
-                    toast.success('Ubicación capturada correctamente', {
-                        icon: '✓',
-                        duration: 2000
-                    });
+                    // toast.success('Ubicación capturada correctamente', {
+                    //     icon: '✓',
+                    //     duration: 2000
+                    // });
                     console.log('[registrarFichaje] Ubicación capturada:', finalCoords);
                 } catch (error: any) {
                     console.error('[registrarFichaje] Error capturando ubicación:', error);

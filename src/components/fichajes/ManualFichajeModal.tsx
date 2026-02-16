@@ -496,7 +496,7 @@ const InputField = ({ label, icon, type, value, onChange, compact = false }: { l
                 type={type}
                 className={cn(
                     "w-full bg-white border border-gray-100 rounded-2xl px-3 md:px-5 transition-all focus:ring-2 focus:ring-primary/20 text-gray-900 placeholder:text-gray-300 font-bold tracking-tight shadow-sm min-w-0",
-                    compact ? "py-2.5 text-sm h-10" : "py-3 md:py-4 text-sm md:text-base h-12 md:h-14"
+                    compact ? "py-2.5 text-base md:text-sm h-10" : "py-3 md:py-4 text-base md:text-base h-12 md:h-14"
                 )}
                 value={value}
                 onChange={e => onChange(e.target.value)}

@@ -243,19 +243,19 @@ export default function AdminFichajesPage() {
 
                 {/* Stats Section - Small Square Badges with Refined Gradient Effect */}
                 <div className="flex flex-nowrap gap-4 mb-3 overflow-x-auto pb-4 scrollbar-hide px-1">
-                    <div className="relative overflow-hidden w-32 aspect-square bg-gradient-to-br from-white from-75% to-[#A1F2FF]/80 p-4 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all hover:shadow-md group flex flex-col items-center justify-center text-center shrink-0">
+                    <div className="relative overflow-hidden w-32 aspect-square bg-gradient-to-br from-white from-60% to-[#A1F2FF]/20 p-4 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all hover:shadow-md group flex flex-col items-center justify-center text-center shrink-0">
                         <p className="relative z-10 text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-2 group-hover:text-[#4AC6DA] transition-colors leading-none">Horas</p>
                         <span className="relative z-10 text-3xl font-black text-[#121726] leading-none mb-1">{stats.totalHours}</span>
                         <span className="relative z-10 text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Totales</span>
                     </div>
 
-                    <div className="relative overflow-hidden w-32 aspect-square bg-gradient-to-br from-white from-75% to-[#C5FFA1]/80 p-4 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all hover:shadow-md group flex flex-col items-center justify-center text-center shrink-0">
+                    <div className="relative overflow-hidden w-32 aspect-square bg-gradient-to-br from-white from-60% to-[#C5FFA1]/20 p-4 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all hover:shadow-md group flex flex-col items-center justify-center text-center shrink-0">
                         <p className="relative z-10 text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-2 group-hover:text-[#88C464] transition-colors leading-none">Activos</p>
                         <span className="relative z-10 text-3xl font-black text-[#88C464] leading-none mb-1">{stats.activeNow}</span>
                         <span className="relative z-10 text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Ahora</span>
                     </div>
 
-                    <div className="relative overflow-hidden w-32 aspect-square bg-gradient-to-br from-white from-75% to-[#FFFCA1]/80 p-4 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all hover:shadow-md group flex flex-col items-center justify-center text-center shrink-0">
+                    <div className="relative overflow-hidden w-32 aspect-square bg-gradient-to-br from-white from-60% to-[#FFFCA1]/20 p-4 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all hover:shadow-md group flex flex-col items-center justify-center text-center shrink-0">
                         <p className="relative z-10 text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-2 group-hover:text-[#D4C34D] transition-colors leading-none">Sesiones</p>
                         <span className="relative z-10 text-3xl font-black text-[#121726] leading-none mb-1">{stats.totalSessions}</span>
                         <span className="relative z-10 text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Jornadas</span>

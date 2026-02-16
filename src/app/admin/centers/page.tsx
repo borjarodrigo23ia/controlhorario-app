@@ -339,27 +339,25 @@ export default function CentersPage() {
 
     const renderCenterCard = (center: Center, index: number, isProj: boolean) => {
         const colors = [
-            { bg: 'bg-emerald-50', border: 'border-emerald-100', hover: 'group-hover:border-emerald-200', gradient: 'from-emerald-500/40 to-transparent', btn: 'hover:bg-emerald-100/50 text-emerald-600' },
-            { bg: 'bg-blue-50', border: 'border-blue-100', hover: 'group-hover:border-blue-200', gradient: 'from-blue-500/40 to-transparent', btn: 'hover:bg-blue-100/50 text-blue-600' },
-            { bg: 'bg-amber-50', border: 'border-amber-100', hover: 'group-hover:border-amber-200', gradient: 'from-amber-500/40 to-transparent', btn: 'hover:bg-amber-100/50 text-amber-600' },
-            { bg: 'bg-rose-50', border: 'border-rose-100', hover: 'group-hover:border-rose-200', gradient: 'from-rose-500/40 to-transparent', btn: 'hover:bg-rose-100/50 text-rose-600' },
-            { bg: 'bg-violet-50', border: 'border-violet-100', hover: 'group-hover:border-violet-200', gradient: 'from-violet-500/40 to-transparent', btn: 'hover:bg-violet-100/50 text-violet-600' },
-            { bg: 'bg-indigo-50', border: 'border-indigo-100', hover: 'group-hover:border-indigo-200', gradient: 'from-indigo-500/40 to-transparent', btn: 'hover:bg-indigo-100/50 text-indigo-600' },
+            { bg: 'bg-emerald-50', border: 'border-emerald-100', hover: 'group-hover:border-emerald-500/20', color: '#10b981', btn: 'hover:bg-emerald-100/50 text-emerald-600' },
+            { bg: 'bg-blue-50', border: 'border-blue-100', hover: 'group-hover:border-blue-500/20', color: '#3b82f6', btn: 'hover:bg-blue-100/50 text-blue-600' },
+            { bg: 'bg-amber-50', border: 'border-amber-100', hover: 'group-hover:border-amber-500/20', color: '#f59e0b', btn: 'hover:bg-amber-100/50 text-amber-600' },
+            { bg: 'bg-rose-50', border: 'border-rose-100', hover: 'group-hover:border-rose-500/20', color: '#f43f5e', btn: 'hover:bg-rose-100/50 text-rose-600' },
+            { bg: 'bg-violet-50', border: 'border-violet-100', hover: 'group-hover:border-violet-500/20', color: '#8b5cf6', btn: 'hover:bg-violet-100/50 text-violet-600' },
+            { bg: 'bg-indigo-50', border: 'border-indigo-100', hover: 'group-hover:border-indigo-500/20', color: '#6366f1', btn: 'hover:bg-indigo-100/50 text-indigo-600' },
         ];
         const color = colors[index % colors.length];
 
         return (
             <div
                 key={center.rowid}
-                className={`group relative flex items-center gap-5 bg-white p-5 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-500 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 overflow-hidden ${color.hover}`}
+                className={cn(
+                    "group relative flex items-center gap-5 p-5 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-500 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 overflow-hidden",
+                    "bg-gradient-to-br from-white from-60% transition-all",
+                    color.hover
+                )}
+                style={{ '--tw-gradient-to': `${color.color}33` } as any} // 33 is ~20% opacity
             >
-                {/* Intense Glow Effect - Matching Auditoría style */}
-                <div className={cn(
-                    "absolute bottom-0 right-0 w-32 h-32 blur-2xl rounded-tl-full transition-all duration-500 pointer-events-none z-0",
-                    "opacity-40 group-hover:opacity-100",
-                    `bg-gradient-to-tl ${color.gradient}`
-                )} />
-
                 {/* Icon Container - Left */}
                 <div className={`relative shrink-0 flex h-16 w-16 items-center justify-center rounded-[1.2rem] bg-gray-50 border border-gray-100 text-black transition-all duration-500 group-hover:scale-110 group-hover:bg-white group-hover:shadow-md z-10`}>
                     {isProj ? <MapPinned size={28} strokeWidth={1.5} /> : <MapPinHouse size={28} strokeWidth={1.5} />}

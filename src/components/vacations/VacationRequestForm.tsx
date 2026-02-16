@@ -94,7 +94,7 @@ export default function VacationRequestForm({ onSuccess }: VacationRequestFormPr
                                 "relative overflow-hidden flex-1 px-3 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap border-2",
                                 selectedType === 'vacaciones'
                                     ? "bg-[#9EE8FF] border-[#9EE8FF] text-blue-900 shadow-[0_8px_25px_rgba(158,232,255,0.5)] scale-[1.02]"
-                                    : "bg-gradient-to-br from-white from-50% to-[#9EE8FF]/60 border-gray-100 text-gray-500 hover:text-gray-700 hover:to-[#9EE8FF]/80"
+                                    : "bg-gradient-to-br from-white from-60% to-[#9EE8FF]/20 border-gray-100 text-gray-500 hover:text-gray-700 hover:to-[#9EE8FF]/80"
                             )}
                         >
                             <Palmtree size={16} className="relative z-10 shrink-0 text-black" />
@@ -107,7 +107,7 @@ export default function VacationRequestForm({ onSuccess }: VacationRequestFormPr
                                 "relative overflow-hidden flex-1 px-3 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap border-2",
                                 selectedType === 'enfermedad'
                                     ? "bg-[#EA9EFF] border-[#EA9EFF] text-purple-900 shadow-[0_8px_25px_rgba(234,158,255,0.5)] scale-[1.02]"
-                                    : "bg-gradient-to-br from-white from-50% to-[#EA9EFF]/60 border-gray-100 text-gray-500 hover:text-gray-700 hover:to-[#EA9EFF]/80"
+                                    : "bg-gradient-to-br from-white from-60% to-[#EA9EFF]/20 border-gray-100 text-gray-500 hover:text-gray-700 hover:to-[#EA9EFF]/80"
                             )}
                         >
                             <HeartPulse size={16} className="relative z-10 shrink-0 text-black" />
@@ -120,7 +120,7 @@ export default function VacationRequestForm({ onSuccess }: VacationRequestFormPr
                                 "relative overflow-hidden flex-1 px-3 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap border-2",
                                 selectedType === 'asuntos_propios'
                                     ? "bg-[#FFCE8A] border-[#FFCE8A] text-amber-900 shadow-[0_8px_25px_rgba(255,206,138,0.5)] scale-[1.02]"
-                                    : "bg-gradient-to-br from-white from-50% to-[#FFCE8A]/60 border-gray-100 text-gray-500 hover:text-gray-700 hover:to-[#FFCE8A]/80"
+                                    : "bg-gradient-to-br from-white from-60% to-[#FFCE8A]/20 border-gray-100 text-gray-500 hover:text-gray-700 hover:to-[#FFCE8A]/80"
                             )}
                         >
                             <ContactRound size={16} className="relative z-10 shrink-0 text-black" />
