@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Clock, Calendar as CalendarIcon, Save, X, AlertCircle, Users, LayoutGrid, PencilLine } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { TimePicker } from '@/components/ui/TimePicker';
 
 interface BreakPeriod {
     id?: number;
@@ -377,22 +378,16 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Entrada</label>
-                                        <input
-                                            type="time"
-                                            step="60"
-                                            className="w-full bg-white border border-gray-200 focus:border-black focus:ring-0 rounded-2xl p-3 md:p-4 text-sm md:text-base font-bold transition-all min-w-0"
-                                            value={newShift.hora_inicio_jornada}
-                                            onChange={e => setNewShift({ ...newShift, hora_inicio_jornada: e.target.value })}
+                                        <TimePicker
+                                            value={newShift.hora_inicio_jornada!}
+                                            onChange={v => setNewShift({ ...newShift, hora_inicio_jornada: v })}
                                         />
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Salida</label>
-                                        <input
-                                            type="time"
-                                            step="60"
-                                            className="w-full bg-white border border-gray-200 focus:border-black focus:ring-0 rounded-2xl p-3 md:p-4 text-sm md:text-base font-bold transition-all min-w-0"
-                                            value={newShift.hora_fin_jornada}
-                                            onChange={e => setNewShift({ ...newShift, hora_fin_jornada: e.target.value })}
+                                        <TimePicker
+                                            value={newShift.hora_fin_jornada!}
+                                            onChange={v => setNewShift({ ...newShift, hora_fin_jornada: v })}
                                         />
                                     </div>
                                 </div>
@@ -453,30 +448,26 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                                                     <div className="grid grid-cols-2 gap-4">
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Desde</label>
-                                                            <input
-                                                                type="time"
-                                                                step="60"
-                                                                className="w-full bg-white border border-gray-200 focus:border-black focus:ring-0 rounded-xl p-2 md:p-3 text-xs md:text-sm font-bold appearance-none min-w-0"
+                                                            <TimePicker
                                                                 value={pausa.hora_inicio}
-                                                                onChange={(e) => {
+                                                                onChange={(v) => {
                                                                     const pausas = [...(newShift.pausas || [])];
-                                                                    pausas[index] = { ...pausas[index], hora_inicio: e.target.value };
+                                                                    pausas[index] = { ...pausas[index], hora_inicio: v };
                                                                     setNewShift({ ...newShift, pausas });
                                                                 }}
+                                                                compact
                                                             />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Hasta</label>
-                                                            <input
-                                                                type="time"
-                                                                step="60"
-                                                                className="w-full bg-white border border-gray-200 focus:border-black focus:ring-0 rounded-xl p-2 md:p-3 text-xs md:text-sm font-bold appearance-none min-w-0"
+                                                            <TimePicker
                                                                 value={pausa.hora_fin}
-                                                                onChange={(e) => {
+                                                                onChange={(v) => {
                                                                     const pausas = [...(newShift.pausas || [])];
-                                                                    pausas[index] = { ...pausas[index], hora_fin: e.target.value };
+                                                                    pausas[index] = { ...pausas[index], hora_fin: v };
                                                                     setNewShift({ ...newShift, pausas });
                                                                 }}
+                                                                compact
                                                             />
                                                         </div>
                                                     </div>

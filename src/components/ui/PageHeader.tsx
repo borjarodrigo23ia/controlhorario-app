@@ -104,7 +104,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             </div>
 
             {children && (
-                <div className="relative z-10 flex items-center gap-3">
+                <div className="relative z-50 flex items-center gap-3">
                     {children}
                 </div>
             )}

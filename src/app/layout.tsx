@@ -61,7 +61,7 @@ export default function RootLayout({
     return (
         <html lang="es">
             <body
-                className={`${outfit.variable} ${roboto.variable} ${jetbrainsMono.variable} font-sans antialiased bg-white text-[#121726]`}
+                className={`${outfit.variable} ${roboto.variable} ${jetbrainsMono.variable} font-sans antialiased bg-white text-[#121726] overflow-x-hidden`}
                 suppressHydrationWarning={true}
             >
                 <ServiceWorkerRegister />

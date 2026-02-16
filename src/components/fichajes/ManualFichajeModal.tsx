@@ -5,6 +5,8 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import { TimePicker } from '@/components/ui/TimePicker';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { TimelineEvent } from '@/lib/fichajes-utils';
@@ -484,29 +486,50 @@ export default function ManualFichajeModal({
 }
 
 // Internal reusable field component
-const InputField = ({ label, icon, type, value, onChange, compact = false }: { label: string, icon?: React.ReactNode, type: string, value: string, onChange: (v: string) => void, compact?: boolean }) => (
-    <div className="space-y-2">
-        {!compact && (
-            <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">
-                {icon} {label}
-            </label>
-        )}
-        <div className="relative group">
-            <input
-                type={type}
-                className={cn(
-                    "w-full bg-white border border-gray-100 rounded-2xl px-3 md:px-5 transition-all focus:ring-2 focus:ring-primary/20 text-gray-900 placeholder:text-gray-300 font-bold tracking-tight shadow-sm min-w-0",
-                    compact ? "py-2.5 text-base md:text-sm h-10" : "py-3 md:py-4 text-base md:text-base h-12 md:h-14"
-                )}
+const InputField = ({ label, icon, type, value, onChange, compact = false }: { label: string, icon?: React.ReactNode, type: string, value: string, onChange: (v: string) => void, compact?: boolean }) => {
+    if (type === 'time') {
+        return (
+            <TimePicker
+                label={label}
                 value={value}
-                onChange={e => onChange(e.target.value)}
-                required
+                onChange={onChange}
+                compact={compact}
             />
-            {compact && (
-                <span className="absolute -top-2 left-3 bg-white px-1.5 text-[9px] font-black text-gray-300 uppercase tracking-widest border border-gray-100 rounded-md">
-                    {label}
-                </span>
+        );
+    }
+    if (type === 'date') {
+        return (
+            <DatePicker
+                label={label}
+                value={value}
+                onChange={onChange}
+            />
+        );
+    }
+    return (
+        <div className="space-y-2">
+            {!compact && (
+                <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">
+                    {icon} {label}
+                </label>
             )}
+            <div className="relative group">
+                <input
+                    type={type}
+                    className={cn(
+                        "w-full bg-white border border-gray-100 rounded-2xl px-3 md:px-5 transition-all focus:ring-2 focus:ring-primary/20 text-gray-900 placeholder:text-gray-300 font-bold tracking-tight shadow-sm min-w-0",
+                        compact ? "py-2.5 text-base md:text-sm h-10" : "py-3 md:py-4 text-base md:text-base h-12 md:h-14"
+                    )}
+                    value={value}
+                    onChange={e => onChange(e.target.value)}
+                    required
+                />
+                {compact && (
+                    <span className="absolute -top-2 left-3 bg-white px-1.5 text-[9px] font-black text-gray-300 uppercase tracking-widest border border-gray-100 rounded-md">
+                        {label}
+                    </span>
+                )}
+            </div>
         </div>
-    </div>
-);
+    );
+};

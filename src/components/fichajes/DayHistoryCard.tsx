@@ -328,9 +328,9 @@ const SessionItem = ({ cycle, index, formatTime, showUserName = false, onEdit, i
                                 style={{ backgroundColor: event.color }}
                             />
                         </div>
-                        <div className="flex-1 flex justify-between items-start pt-0.5">
-                            <div className="flex flex-col">
-                                <div className="text-sm text-gray-900 font-black tracking-tight leading-none mb-1">
+                        <div className="flex-1 flex justify-between items-start pt-0.5 min-w-0">
+                            <div className="flex flex-col min-w-0">
+                                <div className="text-sm text-gray-900 font-black tracking-tight leading-none mb-1 truncate">
                                     {event.originalTime && formatTime(event.originalTime) !== formatTime(event.time) ? (
                                         <span className="flex items-center gap-1">
                                             <span className="text-gray-400 line-through font-medium text-xs">{formatTime(event.originalTime)}</span>
@@ -339,7 +339,7 @@ const SessionItem = ({ cycle, index, formatTime, showUserName = false, onEdit, i
                                         </span>
                                     ) : formatTime(event.time)}
                                 </div>
-                                <div className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">
+                                <div className="text-[11px] text-gray-400 font-bold uppercase tracking-wider truncate">
                                     {event.label}
                                     {event.isNextDay && (
                                         <span className="ml-2 text-[9px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded-md border border-indigo-100 uppercase tracking-wider">
