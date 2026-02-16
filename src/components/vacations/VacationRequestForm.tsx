@@ -99,8 +99,8 @@ export default function VacationRequestForm({ onSuccess }: VacationRequestFormPr
                         >
                             {/* Permanent Diagonal Glow - More Visible */}
                             <div className={cn(
-                                "absolute -bottom-4 -right-4 w-20 h-20 bg-gradient-to-tl from-[#9EE8FF] to-transparent blur-xl rounded-tl-full pointer-events-none z-0 transition-opacity duration-300",
-                                selectedType === 'vacaciones' ? "opacity-0" : "opacity-100"
+                                "absolute -bottom-6 -right-6 w-24 h-24 bg-gradient-to-tl from-[#9EE8FF] to-transparent blur-2xl rounded-tl-full pointer-events-none z-0 transition-opacity duration-500",
+                                selectedType === 'vacaciones' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                             )} />
 
                             <Palmtree size={16} className="relative z-10 shrink-0 text-black" />
@@ -118,8 +118,8 @@ export default function VacationRequestForm({ onSuccess }: VacationRequestFormPr
                         >
                             {/* Permanent Diagonal Glow - More Visible */}
                             <div className={cn(
-                                "absolute -bottom-4 -right-4 w-20 h-20 bg-gradient-to-tl from-[#EA9EFF] to-transparent blur-xl rounded-tl-full pointer-events-none z-0 transition-opacity duration-300",
-                                selectedType === 'enfermedad' ? "opacity-0" : "opacity-100"
+                                "absolute -bottom-6 -right-6 w-24 h-24 bg-gradient-to-tl from-[#EA9EFF] to-transparent blur-2xl rounded-tl-full pointer-events-none z-0 transition-opacity duration-500",
+                                selectedType === 'enfermedad' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                             )} />
 
                             <HeartPulse size={16} className="relative z-10 shrink-0 text-black" />
@@ -137,8 +137,8 @@ export default function VacationRequestForm({ onSuccess }: VacationRequestFormPr
                         >
                             {/* Permanent Diagonal Glow - More Visible */}
                             <div className={cn(
-                                "absolute -bottom-4 -right-4 w-20 h-20 bg-gradient-to-tl from-[#FFCE8A] to-transparent blur-xl rounded-tl-full pointer-events-none z-0 transition-opacity duration-300",
-                                selectedType === 'asuntos_propios' ? "opacity-0" : "opacity-100"
+                                "absolute -bottom-6 -right-6 w-24 h-24 bg-gradient-to-tl from-[#FFCE8A] to-transparent blur-2xl rounded-tl-full pointer-events-none z-0 transition-opacity duration-500",
+                                selectedType === 'asuntos_propios' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                             )} />
 
                             <ContactRound size={16} className="relative z-10 shrink-0 text-black" />

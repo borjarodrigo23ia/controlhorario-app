@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, BellDot, CalendarClock, BadgeCheck, X, ChevronRight, Info } from 'lucide-react';
+import { Bell, BellDot, CalendarClock, BadgeCheck, X, ChevronRight, Info, CircleX } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useVacations, VacationRequest } from '@/hooks/useVacations';
 import { useCorrections } from '@/hooks/useCorrections';
@@ -56,8 +56,7 @@ export default function NotificationBell() {
                             href: '/admin/vacations',
                             date: v.fecha_creacion,
                             icon: CalendarClock,
-                            color: 'text-blue-500',
-                            bgColor: 'bg-blue-50'
+                            color: 'text-blue-500'
                         });
                     }
                 });
@@ -74,8 +73,7 @@ export default function NotificationBell() {
                             href: '/admin/corrections',
                             date: c.date_creation,
                             icon: BadgeCheck,
-                            color: 'text-purple-500',
-                            bgColor: 'bg-purple-50'
+                            color: 'text-emerald-500'
                         });
                     }
                 });
@@ -104,9 +102,8 @@ export default function NotificationBell() {
                             description: `Tu solicitud para el ${v.fecha_inicio} ha sido ${v.estado}`,
                             href: '/gestion',
                             date: v.fecha_aprobacion || v.fecha_creacion,
-                            icon: v.estado === 'aprobado' ? BadgeCheck : X,
-                            color: v.estado === 'aprobado' ? 'text-emerald-500' : 'text-red-500',
-                            bgColor: v.estado === 'aprobado' ? 'bg-emerald-50' : 'bg-red-50'
+                            icon: v.estado === 'aprobado' ? BadgeCheck : CircleX,
+                            color: v.estado === 'aprobado' ? 'text-emerald-500' : 'text-red-500'
                         });
                     }
                 });
@@ -118,9 +115,6 @@ export default function NotificationBell() {
 
                 pendingAdminRequests.forEach((c: CorrectionRequest) => {
                     const id = `corr-req-${c.rowid}`;
-                    // Important: These usually shouldn't be dismissible until acted upon, 
-                    // but for consistency we'll allow it or check logic.
-                    // For now, let's treat them like others.
                     if (!readSet.has(id)) {
                         allNotifications.push({
                             id,
@@ -130,8 +124,7 @@ export default function NotificationBell() {
                             href: '/fichajes',
                             date: c.date_creation,
                             icon: Info,
-                            color: 'text-amber-500',
-                            bgColor: 'bg-amber-50'
+                            color: 'text-amber-500'
                         });
                     }
                 });
@@ -210,70 +203,48 @@ export default function NotificationBell() {
 
     return (
         <>
-            {/* Blurred Backdrop */}
-            {isOpen && (
-                <div
-                    className="fixed inset-0 bg-white/40 backdrop-blur-md z-[90] animate-in fade-in duration-300"
-                    onClick={() => setIsOpen(false)}
-                />
-            )}
-
             <div className="relative" ref={bellRef}>
                 <button
                     onClick={() => setIsOpen(!isOpen)}
                     className={`relative p-2.5 rounded-2xl transition-all duration-300 z-[100] ${isOpen ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-50 border border-gray-100 shadow-sm'
                         }`}
                 >
-                    <Bell className="w-6 h-6" />
+                    <Bell className="w-6 h-6" strokeWidth={isOpen ? 2.5 : 2} />
                     {hasUnread && !isOpen && (
-                        <span className="absolute top-2 right-2 w-3 h-3 bg-red-500 border-2 border-white rounded-full animate-pulse" />
+                        <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
                     )}
                 </button>
 
                 {isOpen && (
-                    <div className="absolute right-0 mt-3 w-[320px] md:w-[400px] bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
-                        <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-                            <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                    <div className="absolute right-0 mt-3 w-[300px] md:w-[360px] bg-white rounded-[2rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="px-6 py-5 flex items-center justify-between">
+                            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">
                                 Notificaciones
-                                {hasUnread && (
-                                    <span className="px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-black rounded-full uppercase tracking-wider text-xs">
-                                        {notifications.length} NUEVAS
-                                    </span>
-                                )}
                             </h4>
-                            <div className="flex items-center gap-2">
-                                {hasUnread && (
-                                    <button
-                                        onClick={markAllAsRead}
-                                        className="text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors mr-2"
-                                    >
-                                        Marcar leídas
-                                    </button>
-                                )}
-                                <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-black transition-colors">
-                                    <X size={20} />
+                            {hasUnread && (
+                                <button
+                                    onClick={markAllAsRead}
+                                    className="text-[9px] font-black uppercase tracking-[0.1em] text-primary hover:opacity-70 transition-opacity"
+                                >
+                                    Limpiar todo
                                 </button>
-                            </div>
+                            )}
                         </div>
 
-                        <div className="max-h-[450px] overflow-y-auto">
+                        <div className="max-h-[380px] overflow-y-auto px-2 pb-4">
                             {loading && notifications.length === 0 ? (
-                                <div className="p-10 text-center">
-                                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                                    <p className="text-gray-400 text-sm font-medium">Buscando novedades...</p>
+                                <div className="py-12 flex flex-col items-center justify-center">
+                                    <div className="w-5 h-5 border-2 border-gray-100 border-t-primary rounded-full animate-spin mb-3" />
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Sincronizando...</p>
                                 </div>
                             ) : notifications.length === 0 ? (
-                                <div className="p-10 text-center space-y-4">
-                                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-gray-200">
-                                        <Bell size={32} />
-                                    </div>
-                                    <div>
-                                        <p className="text-gray-900 font-bold text-sm">Todo al día</p>
-                                        <p className="text-gray-400 text-xs mt-1">No tienes mejores notificaciones pendientes</p>
-                                    </div>
+                                <div className="py-12 text-center">
+                                    <p className="text-[10px] text-gray-300 font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                                        <BadgeCheck size={14} className="opacity-40" /> Sin pendientes
+                                    </p>
                                 </div>
                             ) : (
-                                <div className="divide-y divide-gray-50">
+                                <div className="space-y-1">
                                     {notifications.map((notif) => (
                                         <Link
                                             key={notif.id}
@@ -282,37 +253,29 @@ export default function NotificationBell() {
                                                 markOneAsRead(notif.id, notif.href);
                                                 setIsOpen(false);
                                             }}
-                                            className="flex items-start gap-4 p-5 hover:bg-gray-50 transition-colors group"
+                                            className="flex items-center gap-3.5 p-3.5 rounded-2xl hover:bg-gray-50 transition-all group"
                                         >
-                                            <div className={`w-12 h-12 shrink-0 rounded-2xl ${notif.bgColor} ${notif.color} flex items-center justify-center border border-white shadow-sm`}>
-                                                <notif.icon size={22} />
+                                            <div className={`w-10 h-10 shrink-0 rounded-xl bg-gray-50 flex items-center justify-center ${notif.color || 'text-gray-400'} group-hover:bg-primary/5 transition-colors`}>
+                                                <notif.icon size={18} strokeWidth={2.5} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <p className="text-sm font-bold text-gray-900 group-hover:text-primary transition-colors truncate">
+                                                <div className="flex items-center justify-between mb-0.5">
+                                                    <p className="text-[13px] font-bold text-gray-900 truncate">
                                                         {notif.title}
                                                     </p>
-                                                    <span className="text-[10px] font-bold text-gray-300 whitespace-nowrap">
+                                                    <span className="text-[8px] font-black text-gray-300 uppercase shrink-0">
                                                         {new Date(notif.date).toLocaleDateString()}
                                                     </span>
                                                 </div>
-                                                <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 font-medium">
+                                                <p className="text-[11px] text-gray-400 font-medium leading-normal line-clamp-1 group-hover:text-gray-600 transition-colors">
                                                     {notif.description}
                                                 </p>
-                                                <div className="flex items-center gap-1 mt-2 text-primary font-bold text-[10px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    Ver detalle <ChevronRight size={10} />
-                                                </div>
                                             </div>
+                                            <ChevronRight size={14} className="text-gray-200 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                                         </Link>
                                     ))}
                                 </div>
                             )}
-                        </div>
-
-                        <div className="p-4 bg-gray-50/50 text-center border-t border-gray-50">
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                                <Info size={12} /> Desliza para ver más
-                            </p>
                         </div>
                     </div>
                 )}

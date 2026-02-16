@@ -6,9 +6,11 @@ import { Skeleton } from '@/components/ui/Skeleton';
 
 interface VacationListProps {
     refreshTrigger: number;
+    compact?: boolean;
+    limit?: number;
 }
 
-export default function VacationList({ refreshTrigger }: VacationListProps) {
+export default function VacationList({ refreshTrigger, compact = false, limit }: VacationListProps) {
     const { fetchVacations, deleteVacation } = useVacations();
     const [vacations, setVacations] = useState<VacationRequest[]>([]);
     const [loading, setLoading] = useState(true);
@@ -18,6 +20,8 @@ export default function VacationList({ refreshTrigger }: VacationListProps) {
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 7;
+
+    const historyRef = React.useRef<HTMLDivElement>(null);
 
     const loadVacations = async () => {
         setLoading(true);
@@ -74,14 +78,17 @@ export default function VacationList({ refreshTrigger }: VacationListProps) {
     // Filter vacations by selected year
     const filteredVacations = useMemo(() => {
         let filtered = vacations;
-        if (selectedYear !== 'all') {
+        if (!compact && selectedYear !== 'all') {
             filtered = vacations.filter(v => v.fecha_inicio.startsWith(selectedYear));
         }
-        return filtered;
-    }, [vacations, selectedYear]);
+        return limit ? filtered.slice(0, limit) : filtered;
+    }, [vacations, selectedYear, compact, limit]);
 
     // Pagination logic
     const { paginatedVacations, totalPages } = useMemo(() => {
+        if (compact) {
+            return { paginatedVacations: filteredVacations, totalPages: 1 };
+        }
         const totalItems = filteredVacations.length;
         const totalPages = Math.ceil(totalItems / itemsPerPage);
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -91,12 +98,21 @@ export default function VacationList({ refreshTrigger }: VacationListProps) {
             paginatedVacations: pageVacations,
             totalPages
         };
-    }, [filteredVacations, currentPage]);
+    }, [filteredVacations, currentPage, compact]);
 
     // Reset page when filter changes
     useEffect(() => {
         setCurrentPage(1);
     }, [selectedYear]);
+
+    const scrollToHistory = () => {
+        if (historyRef.current) {
+            const yOffset = -100; // Offset for sticky headers or breathing room
+            const element = historyRef.current;
+            const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+    };
 
     const handleDelete = async (e: React.MouseEvent, id: number) => {
         e.stopPropagation();
@@ -183,27 +199,16 @@ export default function VacationList({ refreshTrigger }: VacationListProps) {
         });
     };
 
-    const historyRef = React.useRef<HTMLDivElement>(null);
+    function cn(...classes: any[]) {
+        return classes.filter(Boolean).join(' ');
+    }
 
-    const scrollToHistory = () => {
-        if (historyRef.current) {
-            const yOffset = -100; // Offset for sticky headers or breathing room
-            const element = historyRef.current;
-            const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
-            window.scrollTo({ top: y, behavior: 'smooth' });
-        }
-    };
-
-    // ... (rest of component)
-
-    // Pagination Controls Component - Strict History Design
+    // Pagination Controls Component
     const renderPagination = () => {
         if (filteredVacations.length === 0 && !loading) return null;
 
         const maxVisiblePages = 5;
-        // Force at least 2 pages even if data fits in 1 to match history logic
         const displayTotalPages = Math.max(2, totalPages);
-
         let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
         let endPage = startPage + maxVisiblePages - 1;
 
@@ -222,7 +227,6 @@ export default function VacationList({ refreshTrigger }: VacationListProps) {
                 <div className="flex items-center justify-between w-full max-w-lg mx-auto text-gray-500 font-medium p-2 transition-all duration-300">
                     <button
                         type="button"
-                        aria-label="prev"
                         onClick={() => {
                             if (currentPage > 1) {
                                 setCurrentPage(p => p - 1);
@@ -259,7 +263,6 @@ export default function VacationList({ refreshTrigger }: VacationListProps) {
 
                     <button
                         type="button"
-                        aria-label="next"
                         onClick={() => {
                             if (currentPage < displayTotalPages) {
                                 setCurrentPage(p => p + 1);
@@ -277,10 +280,6 @@ export default function VacationList({ refreshTrigger }: VacationListProps) {
             </div>
         );
     };
-
-    function cn(...classes: any[]) {
-        return classes.filter(Boolean).join(' ');
-    }
 
     if (loading) {
         return (
@@ -328,34 +327,35 @@ export default function VacationList({ refreshTrigger }: VacationListProps) {
 
     return (
         <div className="space-y-6" ref={historyRef}>
-            {/* Header with Year Filter */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 px-2">
-                <div className="flex-1">
-                    <h3 className="text-xl font-bold text-[#121726] tracking-tight mb-1">
-                        Historial de Solicitudes
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                        Mostrando {paginatedVacations.length} de {filteredVacations.length} solicitud{filteredVacations.length !== 1 ? 'es' : ''}
-                    </p>
-                </div>
+            {/* Header with Year Filter - Hide if compact */}
+            {!compact && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 px-2">
+                    <div className="flex-1">
+                        <h3 className="text-xl font-bold text-[#121726] tracking-tight mb-1">
+                            Historial de Solicitudes
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                            Mostrando {paginatedVacations.length} de {filteredVacations.length} solicitud{filteredVacations.length !== 1 ? 'es' : ''}
+                        </p>
+                    </div>
 
-                <div className="w-full sm:w-64">
-                    <CustomSelect
-                        label="Filtrar por Año"
-                        options={yearOptions}
-                        value={selectedYear}
-                        onChange={setSelectedYear}
-                        icon={Filter}
-                    />
+                    <div className="w-full sm:w-64">
+                        <CustomSelect
+                            label="Filtrar por Año"
+                            options={yearOptions}
+                            value={selectedYear}
+                            onChange={setSelectedYear}
+                            icon={Filter}
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Vacation Cards */}
             <div className="grid gap-4 max-w-2xl mx-auto">
                 {paginatedVacations.map((vacation) => {
                     const isExpanded = expandedCards.has(vacation.rowid);
                     const hasComments = !!vacation.comentarios;
-                    // Can delete if pending OR rejected
                     const canDelete = vacation.estado === 'pendiente' || vacation.estado === 'rechazado';
 
                     const statusGlowColors = {
@@ -379,6 +379,7 @@ export default function VacationList({ refreshTrigger }: VacationListProps) {
                                     background: `radial-gradient(circle at bottom right, ${glowColor}, transparent)`
                                 }}
                             />
+
                             <div className="p-4">
                                 <div className="flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-3">
@@ -409,7 +410,6 @@ export default function VacationList({ refreshTrigger }: VacationListProps) {
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
 
                             {/* Expandable Section */}
@@ -438,7 +438,7 @@ export default function VacationList({ refreshTrigger }: VacationListProps) {
                 })}
             </div>
 
-            {renderPagination()}
+            {!compact && renderPagination()}
         </div>
     );
 }

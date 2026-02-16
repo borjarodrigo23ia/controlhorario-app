@@ -243,7 +243,7 @@ export default function ScheduleManagementPage() {
                                             name="hora_inicio_jornada"
                                             value={formData.hora_inicio_jornada}
                                             onChange={handleInputChange}
-                                            className="w-full bg-gray-50 border-2 border-transparent focus:border-black/10 focus:bg-white rounded-2xl p-4 font-mono text-base font-bold text-center outline-none transition-all"
+                                            className="w-full bg-gray-50 border-2 border-transparent focus:border-black/10 focus:bg-white rounded-2xl p-3 md:p-4 font-mono text-sm md:text-base font-bold text-center outline-none transition-all min-w-0"
                                         />
                                     </div>
 
@@ -277,7 +277,7 @@ export default function ScheduleManagementPage() {
                                                                     type="time"
                                                                     value={pausa.hora_inicio}
                                                                     onChange={(e) => updatePausa(idx, 'hora_inicio', e.target.value)}
-                                                                    className="w-full bg-white border border-gray-200 focus:border-black/20 rounded-xl p-3 font-mono text-sm font-bold text-center outline-none transition-all"
+                                                                    className="w-full bg-white border border-gray-200 focus:border-black/20 rounded-xl p-2.5 md:p-3 font-mono text-xs md:text-sm font-bold text-center outline-none transition-all min-w-0"
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
@@ -286,7 +286,7 @@ export default function ScheduleManagementPage() {
                                                                     type="time"
                                                                     value={pausa.hora_fin}
                                                                     onChange={(e) => updatePausa(idx, 'hora_fin', e.target.value)}
-                                                                    className="w-full bg-white border border-gray-200 focus:border-black/20 rounded-xl p-3 font-mono text-sm font-bold text-center outline-none transition-all"
+                                                                    className="w-full bg-white border border-gray-200 focus:border-black/20 rounded-xl p-2.5 md:p-3 font-mono text-xs md:text-sm font-bold text-center outline-none transition-all min-w-0"
                                                                 />
                                                             </div>
                                                         </div>
@@ -321,7 +321,7 @@ export default function ScheduleManagementPage() {
                                             name="hora_fin_jornada"
                                             value={formData.hora_fin_jornada}
                                             onChange={handleInputChange}
-                                            className="w-full bg-gray-50 border-2 border-transparent focus:border-black/10 focus:bg-white rounded-2xl p-4 font-mono text-base font-bold text-center outline-none transition-all"
+                                            className="w-full bg-gray-50 border-2 border-transparent focus:border-black/10 focus:bg-white rounded-2xl p-3 md:p-4 font-mono text-sm md:text-base font-bold text-center outline-none transition-all min-w-0"
                                         />
                                     </div>
                                 </div>

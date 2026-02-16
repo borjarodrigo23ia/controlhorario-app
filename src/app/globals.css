@@ -459,3 +459,21 @@ textarea,
     -webkit-mask-image: -webkit-radial-gradient(white, black);
     mask-image: radial-gradient(white, black);
 }
+
+/* Fix for time/date inputs overflow on mobile */
+input[type="time"],
+input[type="date"] {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+@media (max-width: 640px) {
+
+    input[type="time"],
+    input[type="date"] {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+}

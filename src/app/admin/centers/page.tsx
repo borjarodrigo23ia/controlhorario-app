@@ -353,7 +353,7 @@ export default function CentersPage() {
                 className={`group relative flex items-center gap-5 bg-white p-5 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-500 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 overflow-hidden ${color.hover}`}
             >
                 {/* Decorative Gradient Background */}
-                <div className={`absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl ${color.gradient} blur-2xl rounded-tl-full opacity-100 pointer-events-none`} />
+                <div className={`absolute -bottom-8 -right-8 w-32 h-32 bg-gradient-to-tl ${color.gradient} blur-3xl rounded-full opacity-60 pointer-events-none transition-opacity group-hover:opacity-100`} />
 
                 {/* Icon Container - Left */}
                 <div className={`relative shrink-0 flex h-16 w-16 items-center justify-center rounded-[1.2rem] bg-gray-50 border border-gray-100 text-black transition-all duration-500 group-hover:scale-110 group-hover:bg-white group-hover:shadow-md z-10`}>

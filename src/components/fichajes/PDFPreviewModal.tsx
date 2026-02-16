@@ -115,12 +115,17 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({ isOpen, onClos
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Cargando visualizador...</p>
                         </div>
                     ) : pdfUrl ? (
-                        <div className="flex-1 w-full h-full bg-slate-500 p-2 md:p-6 overflow-hidden flex items-center justify-center">
-                            <div className="w-full h-full max-w-4xl bg-white shadow-2xl rounded-sm overflow-hidden relative">
+                        <div className="flex-1 w-full h-full bg-slate-600 p-0 md:p-6 overflow-hidden flex items-center justify-center">
+                            <div className="w-full h-full max-w-5xl bg-white shadow-2xl md:rounded-lg overflow-hidden relative">
                                 <iframe
                                     id="pdf-preview-iframe"
-                                    src={`${pdfUrl}#toolbar=0&navpanes=0`}
+                                    src={`${pdfUrl}#view=FitH&toolbar=0&navpanes=0`}
                                     className="w-full h-full border-none"
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        minWidth: '100%'
+                                    }}
                                     title="Previsualización de Informe"
                                 />
                             </div>

@@ -31,17 +31,11 @@ export default function AdminPage() {
     }
 
     const cards = [
+        { title: 'Datos Empresa', icon: HouseHeart, href: '/admin/empresa', desc: 'Configurar identidad y logo', color: 'purple' },
         { title: 'Usuarios', icon: Users, href: '/admin/users', desc: 'Gestionar configuración de empleados', color: 'primary' },
         { title: 'Centros de Trabajo', icon: MapPinHouse, href: '/admin/centers', desc: 'Configurar geolocalización y ubicaciones', color: 'blue' },
         { title: 'Historial Global', icon: CalendarClock, href: '/admin/fichajes', desc: 'Consulta los registros de todos los usuarios', color: 'indigo' },
-        {
-            title: 'Solicitudes',
-            icon: BadgeCheck,
-            href: '/admin/corrections',
-            desc: 'Aprobar cambios de jornada',
-            color: 'primary',
-            badge: corrections.length
-        },
+        { title: 'Gestión de Jornadas', icon: CalendarRange, href: '/admin/jornadas', desc: 'Asignar jornadas a trabajadores', color: 'orange' },
         {
             title: 'Gestión de Vacaciones',
             icon: Palmtree,
@@ -50,8 +44,14 @@ export default function AdminPage() {
             color: 'green',
             badge: pendingVacations
         },
-        { title: 'Gestión de Jornadas', icon: CalendarRange, href: '/admin/jornadas', desc: 'Asignar jornadas a trabajadores', color: 'orange' },
-        { title: 'Datos Empresa', icon: HouseHeart, href: '/admin/empresa', desc: 'Configurar identidad y logo', color: 'purple' },
+        {
+            title: 'Solicitudes',
+            icon: BadgeCheck,
+            href: '/admin/corrections',
+            desc: 'Aprobar cambios de jornada',
+            color: 'primary',
+            badge: corrections.length
+        },
     ];
 
     return (
