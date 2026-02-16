@@ -36,6 +36,11 @@ interface UserDetailsProps {
         birth?: string;
         admin?: string;
         note_private?: string;
+        array_options?: {
+            options_dni?: string | null;
+            options_seguridadsocial?: string | null;
+            [key: string]: any;
+        };
     };
     onEdit?: () => void;
 }
@@ -76,7 +81,9 @@ export default function UserDetailsCard({ user, onEdit }: UserDetailsProps) {
 
     // Extract DNI from note_private if available
     const dniMatch = user.note_private?.match(/DNI:\s*([^\n]*)/i);
-    const dni = dniMatch ? dniMatch[1].trim() : null;
+    const dni = user.array_options?.options_dni || (dniMatch ? dniMatch[1].trim() : null);
+    const naf = user.array_options?.options_seguridadsocial || null;
+
 
     return (
         <div className="bg-white rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:shadow-md group/card">
@@ -204,6 +211,24 @@ export default function UserDetailsCard({ user, onEdit }: UserDetailsProps) {
                                     <Fingerprint size={16} />
                                 </div>
                                 <span className="text-sm font-bold text-gray-900">{dni || 'No registrado'}</span>
+                            </div>
+                        </div>
+
+                        {/* NAF */}
+                        <div className="group p-4 rounded-2xl bg-gray-50/50 border border-transparent hover:border-gray-100 hover:bg-white hover:shadow-sm transition-all">
+                            <div className="flex items-center justify-between mb-1">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Nº Seguridad Social</span>
+                                {naf && (
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => copyToClipboard(naf, 'NAF')} className="p-1 hover:text-blue-600 transition-colors"><Copy size={12} /></button>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-white rounded-lg text-gray-400 shadow-sm shrink-0">
+                                    <Shield size={16} />
+                                </div>
+                                <span className="text-sm font-bold text-gray-900">{naf || 'No registrado'}</span>
                             </div>
                         </div>
                     </div>

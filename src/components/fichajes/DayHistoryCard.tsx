@@ -45,22 +45,81 @@ export const DayHistoryCard: React.FC<DayHistoryCardProps> = ({ date, cycles, sh
         );
     }, [cycles]);
 
+    // Calculate totals helper
+    const calculateTotals = useCallback((targetCycles: WorkCycle[]) => {
+        let totalWorkedMinutes = 0;
+        let totalPauseMinutes = 0;
+
+        targetCycles.forEach(cycle => {
+            // Use pre-calculated values if available, otherwise calculate on the fly
+            let effective = cycle.duracion_efectiva || 0;
+            let pauses = cycle.duracion_pausas || 0;
+
+            // Fallback calculation if backend didn't provide it (e.g. active cycle)
+            if (effective === 0 && pauses === 0) {
+                const start = new Date(cycle.entrada.fecha_creacion).getTime();
+                const end = cycle.salida ? new Date(cycle.salida.fecha_creacion).getTime() : new Date().getTime();
+
+                let pauseDuration = 0;
+                cycle.pausas.forEach(p => {
+                    if (p.inicio && p.fin) {
+                        pauseDuration += (new Date(p.fin.fecha_creacion).getTime() - new Date(p.inicio.fecha_creacion).getTime());
+                    } else if (p.inicio && !p.fin) {
+                        // Active pause
+                        pauseDuration += (new Date().getTime() - new Date(p.inicio.fecha_creacion).getTime());
+                    }
+                });
+
+                const totalDuration = end - start;
+                pauses = Math.floor(pauseDuration / 60000);
+                effective = Math.floor((totalDuration - pauseDuration) / 60000);
+            }
+
+            totalWorkedMinutes += effective;
+            totalPauseMinutes += pauses;
+        });
+
+        // Helper to format minutes to HH:mm
+        const formatDuration = (minutes: number) => {
+            const h = Math.floor(minutes / 60);
+            const m = Math.floor(minutes % 60);
+            return `${h}h ${m}m`;
+        };
+
+        return {
+            worked: formatDuration(totalWorkedMinutes),
+            paused: formatDuration(totalPauseMinutes),
+            workedMinutes: totalWorkedMinutes, // keeping raw for potential styling logic
+            pausedMinutes: totalPauseMinutes
+        };
+    }, []);
+
+    // Get Daily Totals for the header (sum of all cycles in this card)
+    const dailyTotals = useMemo(() => calculateTotals(cycles), [cycles, calculateTotals]);
+
     // Group by user for Global view
     const cyclesByUser = useMemo(() => {
         if (!isGlobal) return null;
-        const groups: Record<string, { name: string, cycles: WorkCycle[] }> = {};
+        const groups: Record<string, { name: string, cycles: WorkCycle[], totals: { worked: string, paused: string } }> = {};
         sortedCycles.forEach(c => {
             const userId = (c.entrada as any).fk_user || c.entrada.usuario || 'unknown';
             if (!groups[userId]) {
                 groups[userId] = {
                     name: c.entrada.usuario_nombre || c.entrada.usuario || 'Usuario',
-                    cycles: []
+                    cycles: [],
+                    totals: { worked: '0h 0m', paused: '0h 0m' } // init
                 };
             }
             groups[userId].cycles.push(c);
         });
+
+        // Calculate totals per user
+        Object.keys(groups).forEach(userId => {
+            groups[userId].totals = calculateTotals(groups[userId].cycles);
+        });
+
         return groups;
-    }, [sortedCycles, isGlobal]);
+    }, [sortedCycles, isGlobal, calculateTotals]);
 
     const formatTime = (date: Date) => format(date, 'HH:mm');
 
@@ -81,9 +140,29 @@ export const DayHistoryCard: React.FC<DayHistoryCardProps> = ({ date, cycles, sh
                     </div>
                     <div>
                         <h3 className="text-gray-900 font-bold text-lg">{displayDate}</h3>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5">
-                            {cycles.length} registro{cycles.length !== 1 ? 's' : ''}
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                                {cycles.length} registro{cycles.length !== 1 ? 's' : ''}
+                            </p>
+
+                            {/* Daily Totals Summary - Only show if NOT global view */}
+                            {!isGlobal && (
+                                <div className="flex items-center gap-3 pl-3 ml-3 border-l-2 border-gray-100">
+                                    <div className="flex items-center gap-1.5" title="Tiempo trabajado">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
+                                        <span className="text-xs font-bold text-gray-700 tabular-nums tracking-tight">
+                                            {dailyTotals.worked}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5" title="Tiempo de pausa">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                        <span className="text-xs font-medium text-gray-400 tabular-nums tracking-tight">
+                                            {dailyTotals.paused}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
                 <div className={`text-gray-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
@@ -104,15 +183,27 @@ export const DayHistoryCard: React.FC<DayHistoryCardProps> = ({ date, cycles, sh
                                         onClick={() => toggleUser(userId)}
                                         className="w-full flex items-center justify-between p-4 hover:bg-gray-50/50 transition-colors"
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-black uppercase">
-                                                {group.name.substring(0, 2)}
-                                            </div>
-                                            <div>
-                                                <h4 className="text-sm font-black text-gray-900 tracking-tight">{group.name}</h4>
+                                        <div className="flex flex-col gap-1 items-start">
+                                            <h4 className="text-sm font-black text-gray-900 tracking-tight leading-none">{group.name}</h4>
+                                            <div className="flex items-center gap-2">
                                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                                                     {group.cycles.length} sesión{group.cycles.length !== 1 ? 'es' : ''}
                                                 </p>
+
+                                                {/* User Totals - Redesigned */}
+                                                <span className="text-gray-200">|</span>
+                                                <div className="flex items-center gap-1">
+                                                    <div className="w-1 h-1 rounded-full bg-emerald-500" />
+                                                    <span className="text-[10px] font-bold text-gray-600 tabular-nums">
+                                                        {group.totals.worked}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <div className="w-1 h-1 rounded-full bg-amber-400" />
+                                                    <span className="text-[10px] font-medium text-gray-400 tabular-nums">
+                                                        {group.totals.paused}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                         <div className={`text-gray-300 transition-transform duration-300 ${userIsExpanded ? 'rotate-180' : ''}`}>

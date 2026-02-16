@@ -65,7 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         user_mobile: userData.user_mobile,
                         admin: userData.admin === '1' || userData.admin === true,
                         workplace_center_id: userData.workplace_center_id,
-                        work_centers_ids: userData.work_centers_ids
+                        work_centers_ids: userData.work_centers_ids,
+                        array_options: userData.array_options
                     });
 
                     // Extend session by updating login time on successful refresh

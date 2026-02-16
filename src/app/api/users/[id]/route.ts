@@ -26,8 +26,8 @@ export async function PUT(
         }
 
 
-        // Use custom endpoint that ensures fields like mobile and note_private are updated
-        const response = await fetch(`${apiUrl}/setupusuariosapi/updateUsuario/${id}`, {
+        // Use standard Dolibarr users endpoint which handles extrafields (array_options) correctly
+        const response = await fetch(`${apiUrl}/users/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',

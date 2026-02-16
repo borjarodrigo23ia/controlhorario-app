@@ -379,6 +379,7 @@ export default function AdminFichajesPage() {
 
                                 <ExportActions
                                     cycles={workCycles}
+                                    user={selectedUsers.length === 1 && selectedUsers[0] !== '0' ? users.find(u => u.id === selectedUsers[0]) : undefined}
                                     userName={selectedUsers.length === 1 && selectedUsers[0] !== '0' ? getLabel() : undefined}
                                 />
                             </div>

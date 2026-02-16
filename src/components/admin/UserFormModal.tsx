@@ -22,6 +22,7 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
         email: '',
         password: '',
         dni: '',
+        naf: '',
         user_mobile: '',
         office_phone: '',
         isAdmin: false
@@ -42,7 +43,8 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
                     login: initialData.login || '',
                     email: initialData.email || '',
                     password: '', // Password empty on edit
-                    dni: dni,
+                    dni: initialData.array_options?.options_dni || dni, // Prefer extrafield, fallback to note parse
+                    naf: initialData.array_options?.options_seguridadsocial || '',
                     user_mobile: initialData.user_mobile || '',
                     office_phone: initialData.office_phone || '',
                     isAdmin: initialData.admin === '1'
@@ -56,6 +58,7 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
                     email: '',
                     password: '',
                     dni: '',
+                    naf: '',
                     user_mobile: '',
                     office_phone: '',
                     isAdmin: false
@@ -89,7 +92,11 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
             // Clean data for submission
             const payload: any = {
                 ...formData,
-                admin: formData.isAdmin ? 1 : 0
+                admin: formData.isAdmin ? 1 : 0,
+                array_options: {
+                    options_dni: formData.dni,
+                    options_seguridadsocial: formData.naf
+                }
             };
 
             // If editing and password is empty, remove it to avoid overwriting
@@ -200,6 +207,21 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
                                 value={formData.dni}
                                 onChange={handleChange}
                                 placeholder="12345678X"
+                                className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-3 text-sm text-gray-900 placeholder:text-gray-300 font-bold focus:outline-none focus:ring-2 focus:ring-black/10 transition-all"
+                            />
+                        </div>
+
+                        {/* NAF Field */}
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-wider px-1">
+                                <Shield size={12} /> Nº Seguridad Social (NAF)
+                            </label>
+                            <input
+                                type="text"
+                                name="naf"
+                                value={formData.naf}
+                                onChange={handleChange}
+                                placeholder="00/00000000/00"
                                 className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-3 text-sm text-gray-900 placeholder:text-gray-300 font-bold focus:outline-none focus:ring-2 focus:ring-black/10 transition-all"
                             />
                         </div>

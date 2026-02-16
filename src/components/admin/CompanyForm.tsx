@@ -6,13 +6,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-hot-toast';
 import { CompanyService, CompanySetup } from '@/lib/company-service';
 import { companySchema, CompanyFormData } from '@/lib/schemas/company-schema';
-import { Loader2, Save, Upload, Trash2, Check, Building2, Globe, Phone, Mail, X, CircleCheck, BadgeInfo, MapPin } from 'lucide-react';
+import { Loader2, Save, Check, Building2, Globe, Phone, Mail, X, CircleCheck, BadgeInfo, MapPin, HouseHeart, MapPinHouse } from 'lucide-react';
 
 export default function CompanyForm() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [companyData, setCompanyData] = useState<CompanySetup | null>(null);
-    const [token, setToken] = useState<string>('');
 
     const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<CompanyFormData>({
         resolver: zodResolver(companySchema)
@@ -24,9 +23,6 @@ export default function CompanyForm() {
     const watchedTown = watch('town');
 
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            setToken(localStorage.getItem('dolibarr_token') || '');
-        }
         loadData();
     }, []);
 
@@ -69,112 +65,31 @@ export default function CompanyForm() {
         }
     };
 
-    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, squarred: boolean = false) => {
-        if (!e.target.files?.[0]) return;
-        const file = e.target.files[0];
-
-        try {
-            toast.loading('Subiendo logo...', { id: 'upload' });
-            await CompanyService.uploadLogo(file, squarred);
-            toast.success('Logo actualizado', { id: 'upload' });
-            loadData();
-        } catch (error) {
-            console.error(error);
-            toast.error('Error al subir logo', { id: 'upload' });
-        }
-    };
-
-    const handleDeleteLogo = async (squarred: boolean = false) => {
-        if (!confirm('¿Estás seguro de querer borrar este logo?')) return;
-        try {
-            await CompanyService.deleteLogo(squarred);
-            toast.success('Logo borrado');
-            loadData();
-        } catch (error) {
-            console.error(error);
-            toast.error('Error al borrar logo');
-        }
-    }
-
-    const [imageError, setImageError] = useState(false);
-
-    useEffect(() => {
-        setImageError(false);
-    }, [companyData?.logo_small]);
-
     if (loading) {
         return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary" size={32} /></div>;
     }
-
-    // Logo URL for preview
-    const logoUrl = companyData?.logo_small && token
-        ? `/api/setupempresa/logo?file=${companyData.logo_small}&token=${token}`
-        : null;
 
     return (
         <div className="max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
             <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden transition-all duration-500 hover:shadow-[0_20px_40px_rgb(0,0,0,0.04)]">
 
-                {/* REFINED INTEGRATED HEADER: LEFT LOGO | RIGHT INFO */}
-                <div className="px-10 py-10 border-b border-gray-50 bg-gradient-to-br from-gray-50/50 to-white flex flex-col md:flex-row items-center md:items-start gap-10">
-
-                    {/* LEFT: Logo Section */}
-                    <div className="relative group shrink-0">
-                        <div className="w-32 h-32 bg-white rounded-[2rem] border-2 border-dashed border-gray-100 shadow-md flex items-center justify-center transition-all group-hover:border-black/10 group-hover:shadow-xl group-hover:-translate-y-1 overflow-hidden relative">
-                            {logoUrl && !imageError ? (
-                                <img
-                                    src={logoUrl}
-                                    alt="Logo Empresa"
-                                    className="w-full h-full object-contain p-4 transition-opacity duration-300"
-                                    onError={() => setImageError(true)}
-                                />
-                            ) : (
-                                <div className="text-center space-y-2 opacity-20 group-hover:opacity-40 transition-opacity">
-                                    <Upload size={24} strokeWidth={1.5} className="mx-auto" />
-                                    <p className="text-[8px] font-black uppercase tracking-widest">Añadir Logo</p>
-                                </div>
-                            )}
-
-                            <input
-                                type="file"
-                                id="logo-header"
-                                className="hidden"
-                                accept="image/*"
-                                onChange={(e) => handleLogoUpload(e, false)}
-                            />
-                            <label
-                                htmlFor="logo-header"
-                                className="absolute inset-0 cursor-pointer z-10"
-                                title="Haga clic para subir logotipo"
-                            />
-                        </div>
-                        {companyData?.logo_small && (
-                            <button
-                                type="button"
-                                onClick={() => handleDeleteLogo(false)}
-                                className="absolute -top-2 -right-2 p-2 bg-white text-red-500 shadow-lg border border-red-50 rounded-xl hover:bg-red-500 hover:text-white transition-all z-20 scale-90 group-hover:scale-100"
-                            >
-                                <Trash2 size={12} />
-                            </button>
-                        )}
-                    </div>
-
-                    {/* RIGHT: Company Primary Info */}
-                    <div className="flex-1 text-center md:text-left pt-2">
-                        <div className="space-y-3">
+                {/* REFINED INTEGRATED HEADER: INFO ONLY */}
+                <div className="px-10 py-10 border-b border-gray-50 bg-gradient-to-br from-gray-50/50 to-white">
+                    <div className="text-center md:text-left">
+                        <div className="space-y-4">
                             <div>
-                                <h2 className="text-3xl font-black text-[#121726] tracking-tighter leading-none mb-2">
+                                <h2 className="text-3xl font-black text-[#121726] tracking-tighter leading-none mb-3">
                                     {watchedName || 'Nombre de la Empresa'}
                                 </h2>
                                 <div className="flex flex-wrap justify-center md:justify-start items-center gap-4">
                                     <div className="flex items-center gap-2 px-3 py-1 bg-black text-white rounded-full">
-                                        <Building2 size={10} strokeWidth={3} />
+                                        <HouseHeart size={10} strokeWidth={3} />
                                         <span className="text-[10px] font-black uppercase tracking-widest">
                                             {watchedSiren || 'CIF pendiente'}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-500 rounded-full border border-gray-200">
-                                        <Globe size={10} strokeWidth={3} />
+                                        <MapPinHouse size={10} strokeWidth={3} />
                                         <span className="text-[10px] font-black uppercase tracking-widest">
                                             {watchedTown || 'Ubicación'}
                                         </span>
@@ -182,7 +97,7 @@ export default function CompanyForm() {
                                 </div>
                             </div>
 
-                            <p className="text-sm text-gray-400 font-medium max-w-xl line-clamp-2 italic">
+                            <p className="text-sm text-gray-400 font-medium max-w-2xl italic">
                                 {companyData?.socialobject || 'Configure el objeto social de su empresa para completar el perfil institucional.'}
                             </p>
                         </div>

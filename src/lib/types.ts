@@ -15,6 +15,12 @@ export interface User {
   workplace_center_id?: number | string;
   work_centers_ids?: string;
   permissions?: any[];
+  array_options?: {
+    options_dni?: string | null;
+    options_seguridadsocial?: string | null;
+    // Add other custom fields here if needed
+    [key: string]: any;
+  };
 }
 
 export type FichajeTipo = 'entrar' | 'salir' | 'pausa' | 'finp' | 'iniciar_pausa' | 'terminar_pausa';
@@ -114,3 +120,33 @@ export interface WorkCycle {
   duracion_efectiva?: number;
 }
 
+export interface AuditLog {
+  id_log: string;
+  id_fichaje: string;
+  usuario_editor: string;
+  usuario_nombre: string;
+  fecha_modificacion: string;
+  campo_modificado: string;
+  valor_anterior: string | null;
+  valor_nuevo: string | null;
+  comentario: string;
+}
+export interface BreakPeriod {
+  id?: number;
+  hora_inicio: string;
+  hora_fin: string;
+  descripcion?: string;
+  orden?: number;
+}
+
+export interface Shift {
+  id: number;
+  fk_user: number;
+  tipo_jornada: 'intensiva' | 'partida';
+  tipo_turno: 'fijo' | 'rotativo';
+  hora_inicio_jornada: string;
+  hora_fin_jornada: string;
+  pausas: BreakPeriod[];
+  observaciones?: string;
+  active: number;
+}

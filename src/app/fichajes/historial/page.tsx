@@ -14,7 +14,8 @@ import { cn } from '@/lib/utils';
 import UserCorrectionsPanel from '@/components/fichajes/UserCorrectionsPanel';
 import { useUserCorrections } from '@/hooks/useUserCorrections';
 
-import { getDailyEvents, TimelineEvent } from '@/lib/fichajes-utils';
+import { ExportActions } from '@/components/fichajes/ExportActions';
+import { TimelineEvent } from '@/lib/fichajes-utils';
 
 export default function HistorialPage() {
     const { user } = useAuth();
@@ -47,6 +48,18 @@ export default function HistorialPage() {
         setSelectedDate(event.dateStr);
         setModalOpen(true);
     };
+
+    // --- Derived filtered (but non-paginated) cycles for export ---
+    const filteredCycles = useMemo(() => {
+        if (!workCycles) return [];
+        return workCycles.filter(cycle => {
+            if (!cycle.fecha) return false;
+            const dateKey = cycle.fecha.substring(0, 10);
+            const effectiveStart = startDate || '1900-01-01';
+            const effectiveEnd = endDate || '2099-12-31';
+            return dateKey >= effectiveStart && dateKey <= effectiveEnd;
+        });
+    }, [workCycles, startDate, endDate]);
 
     // Derived data for filters and pagination
     const { paginatedCycles, totalPages } = useMemo(() => {
@@ -204,32 +217,42 @@ export default function HistorialPage() {
             />
 
             <div className="max-w-5xl space-y-8">
-                {/* Tab Switcher */}
-                <div className="flex p-1.5 bg-gray-100/50 backdrop-blur-sm rounded-2xl w-full border border-gray-200/30">
-                    <button
-                        onClick={() => setActiveTab('activity')}
-                        className={cn(
-                            "flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300",
-                            activeTab === 'activity'
-                                ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
-                                : "text-gray-400 hover:text-gray-600"
-                        )}
-                    >
-                        <ClipboardList size={16} />
-                        Actividad
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('audit')}
-                        className={cn(
-                            "flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300",
-                            activeTab === 'audit'
-                                ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
-                                : "text-gray-400 hover:text-gray-600"
-                        )}
-                    >
-                        <History size={16} />
-                        Cambios
-                    </button>
+                {/* Tab Switcher & Export */}
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                    <div className="flex p-1.5 bg-gray-100/50 backdrop-blur-sm rounded-2xl flex-1 border border-gray-200/30 w-full md:w-auto">
+                        <button
+                            onClick={() => setActiveTab('activity')}
+                            className={cn(
+                                "flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300",
+                                activeTab === 'activity'
+                                    ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+                                    : "text-gray-400 hover:text-gray-600"
+                            )}
+                        >
+                            <ClipboardList size={16} />
+                            Actividad
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('audit')}
+                            className={cn(
+                                "flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300",
+                                activeTab === 'audit'
+                                    ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+                                    : "text-gray-400 hover:text-gray-600"
+                            )}
+                        >
+                            <History size={16} />
+                            Cambios
+                        </button>
+                    </div>
+
+                    {activeTab === 'activity' && (
+                        <ExportActions
+                            cycles={filteredCycles}
+                            user={user}
+                            userName={`${user?.firstname || ''} ${user?.lastname || ''}`}
+                        />
+                    )}
                 </div>
 
                 {activeTab === 'activity' ? (

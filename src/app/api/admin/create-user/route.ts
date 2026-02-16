@@ -39,7 +39,11 @@ export async function POST(request: Request) {
                 password,
                 employee: 1, // Default to employee
                 admin: isAdmin ? 1 : 0,
-                note_private: dni ? `DNI: ${dni}` : ''
+                note_private: dni ? `DNI: ${dni}` : '',
+                array_options: body.array_options || {
+                    options_dni: dni,
+                    options_seguridadsocial: body.naf
+                }
             })
         });
 

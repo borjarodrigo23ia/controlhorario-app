@@ -7,17 +7,7 @@ import { es } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 
-interface AuditLog {
-    id_log: string;
-    id_fichaje: string;
-    usuario_editor: string;
-    usuario_nombre: string;
-    fecha_modificacion: string;
-    campo_modificado: string;
-    valor_anterior: string | null;
-    valor_nuevo: string | null;
-    comentario: string;
-}
+import { AuditLog } from '@/lib/types';
 
 interface AuditHistoryListProps {
     userId?: string;
