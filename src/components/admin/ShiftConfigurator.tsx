@@ -388,113 +388,119 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-5 px-1">
+                            {/* Hours Flow: Entrada -> Pausas -> Salida */}
+                            <div className="space-y-6 px-1">
+                                {/* Entrada */}
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Entrada</label>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1 flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full shadow-sm shadow-emerald-200"></div>
+                                        Entrada
+                                    </label>
                                     <TimePicker
                                         value={newShift.hora_inicio_jornada!}
                                         onChange={v => setNewShift({ ...newShift, hora_inicio_jornada: v })}
                                     />
                                 </div>
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Salida</label>
-                                    <TimePicker
-                                        value={newShift.hora_fin_jornada!}
-                                        onChange={v => setNewShift({ ...newShift, hora_fin_jornada: v })}
-                                    />
-                                </div>
-                            </div>
 
-                            {newShift.tipo_jornada === 'partida' && (
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                                        <div className="flex items-center gap-2">
-                                            <Clock size={16} className="text-gray-400" />
-                                            <h4 className="text-sm font-bold text-gray-900">Pausas</h4>
+                                {/* Pausas (Partida only) */}
+                                {newShift.tipo_jornada === 'partida' && (
+                                    <div className="space-y-4 pt-2 border-t border-b border-gray-50 py-6">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2 pl-1">
+                                                <div className="w-1.5 h-1.5 bg-orange-400 rounded-full"></div>
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pausas / Descansos</label>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const pausas = newShift.pausas || [];
+                                                    setNewShift({
+                                                        ...newShift,
+                                                        pausas: [...pausas, { hora_inicio: '14:00', hora_fin: '15:00', descripcion: '' }]
+                                                    });
+                                                }}
+                                                className="px-3 py-1.5 bg-black text-white rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all hover:bg-gray-800 flex items-center gap-1.5"
+                                            >
+                                                <Plus size={12} />
+                                                <span>Añadir Pausa</span>
+                                            </button>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const pausas = newShift.pausas || [];
-                                                setNewShift({
-                                                    ...newShift,
-                                                    pausas: [...pausas, { hora_inicio: '14:00', hora_fin: '15:00', descripcion: '' }]
-                                                });
-                                            }}
-                                            className="px-3 py-1.5 bg-gray-50 hover:bg-black hover:text-white border border-gray-200 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5"
-                                        >
-                                            <Plus size={12} />
-                                            <span>Añadir Pausa</span>
-                                        </button>
-                                    </div>
 
-                                    <div className="grid gap-4">
-                                        {newShift.pausas && newShift.pausas.map((pausa, index) => (
-                                            <div key={index} className="group relative bg-white border border-gray-200 rounded-[1.5rem] p-5 hover:border-black transition-all">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const pausas = (newShift.pausas || []).filter((_, i) => i !== index);
-                                                        setNewShift({ ...newShift, pausas });
-                                                    }}
-                                                    className="absolute -top-2 -right-2 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-100 shadow-sm opacity-0 group-hover:opacity-100 transition-all z-10"
-                                                >
-                                                    <X size={14} />
-                                                </button>
+                                        <div className="grid gap-4">
+                                            {newShift.pausas && newShift.pausas.map((pausa, index) => (
+                                                <div key={index} className="group relative bg-gray-50/50 border border-gray-100 rounded-[1.5rem] p-5 hover:border-black transition-all">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const pausas = (newShift.pausas || []).filter((_, i) => i !== index);
+                                                            setNewShift({ ...newShift, pausas });
+                                                        }}
+                                                        className="absolute -top-2 -right-2 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-100 shadow-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all z-10"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
 
-                                                <div className="space-y-4">
-                                                    <div>
-                                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1 block mb-1.5">Etiqueta</label>
+                                                    <div className="space-y-4">
+                                                        <div className="flex flex-col gap-4">
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Inicio Pausa</label>
+                                                                <TimePicker
+                                                                    value={pausa.hora_inicio}
+                                                                    onChange={(v) => {
+                                                                        const pausas = [...(newShift.pausas || [])];
+                                                                        pausas[index] = { ...pausas[index], hora_inicio: v };
+                                                                        setNewShift({ ...newShift, pausas });
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Fin Pausa</label>
+                                                                <TimePicker
+                                                                    value={pausa.hora_fin}
+                                                                    onChange={(v) => {
+                                                                        const pausas = [...(newShift.pausas || [])];
+                                                                        pausas[index] = { ...pausas[index], hora_fin: v };
+                                                                        setNewShift({ ...newShift, pausas });
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
                                                         <input
                                                             type="text"
-                                                            placeholder="Ej: Almuerzo, Comida..."
+                                                            placeholder="Descripción (ej: Comida)..."
                                                             value={pausa.descripcion || ''}
                                                             onChange={(e) => {
                                                                 const pausas = [...(newShift.pausas || [])];
                                                                 pausas[index] = { ...pausas[index], descripcion: e.target.value };
                                                                 setNewShift({ ...newShift, pausas });
                                                             }}
-                                                            className="w-full bg-gray-50/50 border-none focus:ring-0 rounded-xl p-3 text-sm font-medium"
+                                                            className="w-full bg-transparent border-b border-gray-200 focus:border-black text-[11px] font-medium py-1 px-1 outline-none transition-colors placeholder:text-gray-300"
                                                         />
                                                     </div>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="space-y-1">
-                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Desde</label>
-                                                            <TimePicker
-                                                                value={pausa.hora_inicio}
-                                                                onChange={(v) => {
-                                                                    const pausas = [...(newShift.pausas || [])];
-                                                                    pausas[index] = { ...pausas[index], hora_inicio: v };
-                                                                    setNewShift({ ...newShift, pausas });
-                                                                }}
-                                                                compact
-                                                            />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Hasta</label>
-                                                            <TimePicker
-                                                                value={pausa.hora_fin}
-                                                                onChange={(v) => {
-                                                                    const pausas = [...(newShift.pausas || [])];
-                                                                    pausas[index] = { ...pausas[index], hora_fin: v };
-                                                                    setNewShift({ ...newShift, pausas });
-                                                                }}
-                                                                compact
-                                                            />
-                                                        </div>
-                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                            ))}
 
-                                    {(!newShift.pausas || newShift.pausas.length === 0) && (
-                                        <div className="text-center py-6 border-2 border-dashed border-gray-100 rounded-[1.5rem]">
-                                            <p className="text-xs text-gray-400 font-medium">Sin pausas configuradas</p>
+                                            {(!newShift.pausas || newShift.pausas.length === 0) && (
+                                                <div className="text-center py-6 border-2 border-dashed border-gray-100 rounded-[1.5rem] text-gray-300 text-[10px] font-bold uppercase tracking-widest">
+                                                    Sin pausas configuradas
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
+                                    </div>
+                                )}
+
+                                {/* Salida */}
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1 flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full shadow-sm shadow-red-200"></div>
+                                        Salida
+                                    </label>
+                                    <TimePicker
+                                        value={newShift.hora_fin_jornada!}
+                                        onChange={v => setNewShift({ ...newShift, hora_fin_jornada: v })}
+                                    />
                                 </div>
-                            )}
+                            </div>
 
                             {/* Days of Week Selector - Redesigned to match admin/jornadas */}
                             <div className="space-y-3 bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">

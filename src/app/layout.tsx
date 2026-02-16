@@ -4,6 +4,7 @@ import { Outfit, JetBrains_Mono, Roboto } from "next/font/google";
 import { AuthProvider } from '@/context/AuthContext';
 import { NetworkStatusBanner } from '@/components/ui/NetworkStatusBanner';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
+import SecurityGuard from '@/components/SecurityGuard';
 import "./globals.css";
 import 'leaflet/dist/leaflet.css';
 
@@ -65,6 +66,7 @@ export default function RootLayout({
                 suppressHydrationWarning={true}
             >
                 <ServiceWorkerRegister />
+                <SecurityGuard />
                 <NetworkStatusBanner />
                 <AuthProvider>
                     <Toaster position="top-center" />

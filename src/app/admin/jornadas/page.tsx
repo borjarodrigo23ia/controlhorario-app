@@ -299,9 +299,9 @@ export default function ScheduleManagementPage() {
 
                                 {/* Hours Configuration */}
                                 <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest pl-1 flex items-center gap-1">
-                                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1 flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full shadow-sm shadow-emerald-200"></div>
                                             Entrada
                                         </label>
                                         <TimePicker
