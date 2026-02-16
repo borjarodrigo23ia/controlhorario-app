@@ -13,7 +13,7 @@ interface VacationDaysIndividualAssignProps {
 export default function VacationDaysIndividualAssign({ userId }: VacationDaysIndividualAssignProps) {
     const currentYear = new Date().getFullYear();
     const [selectedYear, setSelectedYear] = useState(currentYear);
-    const [days, setDays] = useState<number>(22);
+    const [days, setDays] = useState<number | string>(22);
     const [currentData, setCurrentData] = useState<UserVacationDays | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -105,7 +105,7 @@ export default function VacationDaysIndividualAssign({ userId }: VacationDaysInd
         setIsSaving(true);
         setIsSuccess(false);
         try {
-            const result = await setVacationDays(parseInt(userId), selectedYear, days);
+            const result = await setVacationDays(parseInt(userId), selectedYear, Number(days) || 0);
             if (result.success) {
                 toast.success(`Días asignados correctamente para ${selectedYear}`);
                 setIsSuccess(true);
@@ -173,7 +173,7 @@ export default function VacationDaysIndividualAssign({ userId }: VacationDaysInd
                             <input
                                 type="number"
                                 value={days}
-                                onChange={(e) => setDays(parseInt(e.target.value) || 0)}
+                                onChange={(e) => setDays(e.target.value)}
                                 className="bg-transparent text-lg font-black text-gray-900 dark:text-white outline-none w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 placeholder="0"
                             />
@@ -186,7 +186,10 @@ export default function VacationDaysIndividualAssign({ userId }: VacationDaysInd
             {isEditing ? (
                 <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
                     <button
-                        onClick={() => setIsEditing(false)}
+                        onClick={() => {
+                            setDays(currentData?.dias || 22);
+                            setIsEditing(false);
+                        }}
                         className="w-14 h-[54px] flex items-center justify-center rounded-2xl border border-red-200 bg-red-50 hover:bg-red-100 transition-colors"
                         title="Cancelar"
                     >
@@ -233,7 +236,7 @@ export default function VacationDaysIndividualAssign({ userId }: VacationDaysInd
                         <div className="relative overflow-hidden bg-white p-4 rounded-2xl border border-gray-200 flex flex-col items-center justify-center text-center space-y-1 group hover:border-yellow-200 transition-colors">
                             <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-yellow-500/80 blur-xl rounded-full group-hover:bg-yellow-500 transition-all" />
                             <span className="relative z-10 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Disponibles</span>
-                            <span className="relative z-10 text-2xl font-black text-black">{days - consumedDays}</span>
+                            <span className="relative z-10 text-2xl font-black text-black">{Number(days) - consumedDays}</span>
                         </div>
                     </div>
 

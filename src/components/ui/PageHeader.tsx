@@ -110,12 +110,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             )}
 
             {/* Global Notification Bell - Absolutely positioned to match icon center */}
-            <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 z-40">
+            <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 z-[60]">
                 <NotificationBell />
             </div>
 
             {/* Mobile Notification Bell - Integrated in flow if no children handle it */}
-            <div className="lg:hidden absolute top-2 right-0 z-40">
+            <div className="lg:hidden absolute top-2 right-0 z-[60]">
                 <NotificationBell />
             </div>
         </header>

@@ -230,7 +230,7 @@ export default function AdminFichajesPage() {
     return (
         <div className="flex min-h-screen bg-[#FAFBFC]">
             <div className="hidden md:block"><Sidebar /></div>
-            <main className="flex-1 ml-0 md:ml-64 p-4 md:p-12 pb-32">
+            <main className="flex-1 ml-0 md:ml-64 px-4 md:px-12 py-6 md:py-12 pb-32">
                 <PageHeader
                     title={<>Historial <span className="text-primary italic">Global</span></>}
                     subtitle="Consulta los registros de jornada de todos los usuarios"
@@ -242,23 +242,23 @@ export default function AdminFichajesPage() {
 
 
                 {/* Stats Section - Small Square Badges with Refined Gradient Effect */}
-                <div className="flex flex-nowrap gap-4 mb-3 overflow-x-auto pb-4 scrollbar-hide px-1">
-                    <div className="relative overflow-hidden w-32 aspect-square bg-gradient-to-br from-white from-60% to-[#A1F2FF]/20 p-4 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all hover:shadow-md group flex flex-col items-center justify-center text-center shrink-0">
-                        <p className="relative z-10 text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-2 group-hover:text-[#4AC6DA] transition-colors leading-none">Horas</p>
-                        <span className="relative z-10 text-3xl font-black text-[#121726] leading-none mb-1">{stats.totalHours}</span>
-                        <span className="relative z-10 text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Totales</span>
+                <div className="flex flex-nowrap gap-3 md:gap-4 mb-3 overflow-x-auto pb-4 scrollbar-hide">
+                    <div className="relative overflow-hidden w-28 md:w-32 aspect-square bg-gradient-to-br from-white from-60% to-[#A1F2FF]/20 p-3 md:p-4 rounded-2xl md:rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all hover:shadow-md group flex flex-col items-center justify-center text-center shrink-0">
+                        <p className="relative z-10 text-[8px] md:text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-2 group-hover:text-[#4AC6DA] transition-colors leading-none">Horas</p>
+                        <span className="relative z-10 text-2xl md:text-3xl font-black text-[#121726] leading-none mb-1">{stats.totalHours}</span>
+                        <span className="relative z-10 text-[8px] md:text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Totales</span>
                     </div>
 
-                    <div className="relative overflow-hidden w-32 aspect-square bg-gradient-to-br from-white from-60% to-[#C5FFA1]/20 p-4 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all hover:shadow-md group flex flex-col items-center justify-center text-center shrink-0">
-                        <p className="relative z-10 text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-2 group-hover:text-[#88C464] transition-colors leading-none">Activos</p>
-                        <span className="relative z-10 text-3xl font-black text-[#88C464] leading-none mb-1">{stats.activeNow}</span>
-                        <span className="relative z-10 text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Ahora</span>
+                    <div className="relative overflow-hidden w-28 md:w-32 aspect-square bg-gradient-to-br from-white from-60% to-[#C5FFA1]/20 p-3 md:p-4 rounded-2xl md:rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all hover:shadow-md group flex flex-col items-center justify-center text-center shrink-0">
+                        <p className="relative z-10 text-[8px] md:text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-2 group-hover:text-[#88C464] transition-colors leading-none">Activos</p>
+                        <span className="relative z-10 text-2xl md:text-3xl font-black text-[#88C464] leading-none mb-1">{stats.activeNow}</span>
+                        <span className="relative z-10 text-[8px] md:text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Ahora</span>
                     </div>
 
-                    <div className="relative overflow-hidden w-32 aspect-square bg-gradient-to-br from-white from-60% to-[#FFFCA1]/20 p-4 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all hover:shadow-md group flex flex-col items-center justify-center text-center shrink-0">
-                        <p className="relative z-10 text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-2 group-hover:text-[#D4C34D] transition-colors leading-none">Sesiones</p>
-                        <span className="relative z-10 text-3xl font-black text-[#121726] leading-none mb-1">{stats.totalSessions}</span>
-                        <span className="relative z-10 text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Jornadas</span>
+                    <div className="relative overflow-hidden w-28 md:w-32 aspect-square bg-gradient-to-br from-white from-60% to-[#FFFCA1]/20 p-3 md:p-4 rounded-2xl md:rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all hover:shadow-md group flex flex-col items-center justify-center text-center shrink-0">
+                        <p className="relative z-10 text-[8px] md:text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-2 group-hover:text-[#D4C34D] transition-colors leading-none">Sesiones</p>
+                        <span className="relative z-10 text-2xl md:text-3xl font-black text-[#121726] leading-none mb-1">{stats.totalSessions}</span>
+                        <span className="relative z-10 text-[8px] md:text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Jornadas</span>
                     </div>
                 </div>
 
@@ -336,7 +336,7 @@ export default function AdminFichajesPage() {
                             />
                         </div>
 
-                        <div className="relative z-20 flex flex-col items-center justify-center gap-4 bg-white/80 p-4 md:p-6 rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm mx-auto w-full max-w-xl animate-in fade-in slide-in-from-top-4 duration-700">
+                        <div className="relative z-20 flex flex-col items-center justify-center gap-4 bg-white/80 p-4 md:p-6 rounded-2xl md:rounded-[2.5rem] border border-gray-100 shadow-sm mx-auto w-full max-w-xl animate-in fade-in slide-in-from-top-4 duration-700">
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none">Filtrar por Período</p>
                             <HistoryDateRangePicker
                                 startDate={filter.startDate || ''}
@@ -351,7 +351,7 @@ export default function AdminFichajesPage() {
 
                 {
                     activeTab === 'activity' ? (
-                        <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative animate-in fade-in duration-500">
+                        <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-gray-100 shadow-sm relative animate-in fade-in duration-500">
                             <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
                                 <div className="flex items-center gap-4">
                                     <div className="p-2.5 bg-primary/5 text-primary rounded-xl">

@@ -74,21 +74,21 @@ export default function CompanyForm() {
             <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden transition-all duration-500 hover:shadow-[0_20px_40px_rgb(0,0,0,0.04)]">
 
                 {/* REFINED INTEGRATED HEADER: INFO ONLY */}
-                <div className="px-10 py-10 border-b border-gray-50 bg-gradient-to-br from-gray-50/50 to-white">
+                <div className="px-5 md:px-10 py-8 md:py-10 border-b border-gray-50 bg-gradient-to-br from-gray-50/50 to-white">
                     <div className="text-center md:text-left">
                         <div className="space-y-4">
                             <div>
-                                <h2 className="text-3xl font-black text-[#121726] tracking-tighter leading-none mb-3">
+                                <h2 className="text-2xl md:text-3xl font-black text-[#121726] tracking-tighter leading-none mb-3">
                                     {watchedName || 'Nombre de la Empresa'}
                                 </h2>
-                                <div className="flex flex-wrap justify-center md:justify-start items-center gap-4">
-                                    <div className="flex items-center gap-2 px-3 py-1 bg-black text-white rounded-full">
+                                <div className="flex flex-wrap justify-center md:justify-start items-center gap-3">
+                                    <div className="flex items-center gap-2 px-3 py-1 bg-black text-white rounded-full shrink-0">
                                         <HouseHeart size={10} strokeWidth={3} />
                                         <span className="text-[10px] font-black uppercase tracking-widest">
                                             {watchedSiren || 'CIF pendiente'}
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-500 rounded-full border border-gray-200">
+                                    <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-500 rounded-full border border-gray-200 shrink-0">
                                         <MapPinHouse size={10} strokeWidth={3} />
                                         <span className="text-[10px] font-black uppercase tracking-widest">
                                             {watchedTown || 'Ubicación'}
@@ -97,7 +97,7 @@ export default function CompanyForm() {
                                 </div>
                             </div>
 
-                            <p className="text-sm text-gray-400 font-medium max-w-2xl italic">
+                            <p className="text-xs md:text-sm text-gray-400 font-medium max-w-2xl italic mx-auto md:mx-0">
                                 {companyData?.socialobject || 'Configure el objeto social de su empresa para completar el perfil institucional.'}
                             </p>
                         </div>
@@ -105,7 +105,7 @@ export default function CompanyForm() {
                 </div>
 
                 {/* FORM CONTENT */}
-                <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                <div className="p-5 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 md:gap-y-8">
                     {/* Section 1: Identity */}
                     <div className="md:col-span-2">
                         <div className="flex items-center gap-2 mb-2">
@@ -205,11 +205,11 @@ export default function CompanyForm() {
                 </div>
 
                 {/* FOOTER ACTIONS */}
-                <div className="px-10 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row items-center justify-end gap-3">
+                <div className="px-5 md:px-10 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
                     <button
                         type="button"
                         onClick={() => window.history.back()}
-                        className="px-6 py-2.5 rounded-xl font-black text-red-500 border border-red-200 hover:bg-red-50 hover:border-red-500 transition-all text-[10px] uppercase tracking-widest flex items-center gap-2"
+                        className="px-6 py-3 md:py-2.5 rounded-xl font-black text-red-500 border border-red-200 hover:bg-red-50 hover:border-red-500 transition-all text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"
                     >
                         <X size={14} strokeWidth={3} />
                         Descartar
@@ -217,7 +217,7 @@ export default function CompanyForm() {
                     <button
                         type="submit"
                         disabled={saving}
-                        className="bg-black text-white px-8 py-2.5 rounded-xl font-black flex items-center justify-center gap-2 shadow-xl shadow-black/10 hover:-translate-y-0.5 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed text-[10px] uppercase tracking-widest"
+                        className="bg-black text-white px-8 py-3 md:py-2.5 rounded-xl font-black flex items-center justify-center gap-2 shadow-xl shadow-black/10 hover:-translate-y-0.5 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed text-[10px] uppercase tracking-widest"
                     >
                         {saving ? <Loader2 className="animate-spin" size={14} /> : <CircleCheck size={14} strokeWidth={3} className="text-white" />}
                         <span>{saving ? 'Procesando...' : 'Guardar'}</span>

@@ -89,15 +89,15 @@ export default function UserDetailsCard({ user, onEdit }: UserDetailsProps) {
         <div className="bg-white rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:shadow-md group/card">
             <div
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between p-6 text-left cursor-pointer"
+                className="w-full flex items-center justify-between px-4 md:px-6 py-5 md:py-6 text-left cursor-pointer"
             >
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-black text-white rounded-2xl relative overflow-hidden">
-                        <UserCircle size={24} className="relative z-10" />
+                <div className="flex items-center gap-3 md:gap-4">
+                    <div className="p-2.5 md:p-3 bg-black text-white rounded-xl md:rounded-2xl relative overflow-hidden">
+                        <UserCircle size={20} className="md:w-6 md:h-6 relative z-10" />
                         <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity"></div>
                     </div>
-                    <div>
-                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <div className="min-w-0">
+                        <h3 className="text-base md:text-lg font-bold text-gray-900 flex flex-wrap items-center gap-2 truncate">
                             {user.firstname} {user.lastname}
                             {user.admin === '1' && (
                                 <span className="bg-black text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -129,10 +129,10 @@ export default function UserDetailsCard({ user, onEdit }: UserDetailsProps) {
             </div>
 
             <div
-                className={`transition-[max-height,opacity] duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+                className={`transition-[max-height,opacity] duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
                     }`}
             >
-                <div className="p-6 pt-0 border-t border-gray-50">
+                <div className="px-4 md:px-6 pb-6 pt-0 border-t border-gray-50">
 
 
 

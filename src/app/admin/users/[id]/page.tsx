@@ -141,7 +141,7 @@ export default function UserConfigPage({ params }: { params: Promise<{ id: strin
     return (
         <div className="flex min-h-screen bg-[#FAFBFC]">
             <div className="hidden md:block"><Sidebar /></div>
-            <main className="flex-1 ml-0 md:ml-64 p-6 md:p-12 pb-32">
+            <main className="flex-1 ml-0 md:ml-64 p-4 md:p-12 pb-32">
                 <PageHeader
                     title="Ajustes de Empleado"
                     subtitle={userData ? `${userData.firstname || userData.login} ${userData.lastname || ''}` : ''}
@@ -151,7 +151,7 @@ export default function UserConfigPage({ params }: { params: Promise<{ id: strin
                     badge="Administración"
                 />
 
-                <div className="max-w-2xl space-y-8">
+                <div className="max-w-2xl space-y-6 md:space-y-8">
 
                     {userData && (
                         <UserDetailsCard
@@ -207,7 +207,7 @@ export default function UserConfigPage({ params }: { params: Promise<{ id: strin
                     </div>
 
                     {/* Work Centers Section */}
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-6">
+                    <div className="bg-white p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-6">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                                 <HousePlus size={20} className="text-primary" />
@@ -420,12 +420,12 @@ export default function UserConfigPage({ params }: { params: Promise<{ id: strin
 
                     {/* Shift Management Section */}
                     {/* We separate this because logic is complex and decoupled from simple key-value config */}
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                    <div className="bg-white p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
                         <ShiftConfigurator userId={id} />
                     </div>
 
                     {/* Vacation Days Assignment (Individual) */}
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-6">
+                    <div className="bg-white p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-6">
                         <div>
                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                                 <Palmtree size={20} className="text-primary" />

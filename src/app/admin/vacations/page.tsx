@@ -49,8 +49,8 @@ export default function AdminVacationsPage() {
                         title={showPersonalView ? "Mis Vacaciones" : "Gestión de Vacaciones"}
                         subtitle={showPersonalView ? "Gestiona tus propios días libres y ausencias" : "Administración y aprobación de solicitudes"}
                         icon={Palmtree}
-                        showBack={showPersonalView}
-                        backUrl="#" // We handle back button logic via state below, but this prop affects styling
+                        showBack={true}
+                        backUrl="/admin" // Volver al panel de administración
                         badge="Administración"
                     >
                         {/* Header Action: Toggle Personal View */}
@@ -58,8 +58,8 @@ export default function AdminVacationsPage() {
                             <button
                                 onClick={() => setShowPersonalView(!showPersonalView)}
                                 className={`hidden md:flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-lg transition-all text-sm font-bold active:scale-95 ${showPersonalView
-                                        ? 'bg-white text-gray-900 border border-gray-200 hover:bg-gray-50'
-                                        : 'bg-black hover:bg-gray-800 text-white shadow-gray-200'
+                                    ? 'bg-white text-gray-900 border border-gray-200 hover:bg-gray-50'
+                                    : 'bg-black hover:bg-gray-800 text-white shadow-gray-200'
                                     }`}
                             >
                                 {showPersonalView ? (

@@ -10,6 +10,7 @@ import { DatePicker } from '@/components/ui/DatePicker';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { TimelineEvent } from '@/lib/fichajes-utils';
+import { Portal } from '../ui/Portal';
 
 type Pausa = { inicio: string; fin: string };
 
@@ -283,205 +284,207 @@ export default function ManualFichajeModal({
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <div
-                className="absolute inset-0 bg-[#0F172A]/40 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in"
-                onClick={() => !saving && onClose()}
-            />
+        <Portal>
+            <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+                <div
+                    className="absolute inset-0 bg-[#0F172A]/40 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in"
+                    onClick={() => !saving && onClose()}
+                />
 
-            <div className={cn(
-                "relative bg-white w-full rounded-3xl md:rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200",
-                isSimpleMode ? "max-w-md" : "max-w-2xl",
-                "max-h-[90vh] md:max-h-none"
-            )}>
-                {/* Header */}
-                <div className="p-4 md:p-8 md:pb-4 flex items-start justify-between">
-                    <div className="flex items-center gap-3 md:gap-5">
-                        <div className="p-3 md:p-4 bg-primary/5 text-primary rounded-2xl md:rounded-[1.5rem]">
-                            <History size={20} className="md:w-6 md:h-6" />
+                <div className={cn(
+                    "relative bg-white w-full rounded-3xl md:rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200",
+                    isSimpleMode ? "max-w-md" : "max-w-2xl",
+                    "max-h-[90vh] md:max-h-none"
+                )}>
+                    {/* Header */}
+                    <div className="p-4 md:p-8 md:pb-4 flex items-start justify-between">
+                        <div className="flex items-center gap-3 md:gap-5">
+                            <div className="p-3 md:p-4 bg-primary/5 text-primary rounded-2xl md:rounded-[1.5rem]">
+                                <History size={20} className="md:w-6 md:h-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg md:text-xl font-black text-gray-900 tracking-tight">
+                                    {isSimpleMode
+                                        ? `Editar ${targetEvent?.label}`
+                                        : (user?.admin ? 'Fichaje manual' : 'Solicitar corrección')}
+                                </h3>
+                                <p className="text-[10px] md:text-sm text-gray-400 font-bold uppercase tracking-wider mt-0.5 md:mt-1">
+                                    {isSimpleMode ? 'Corrección rápida' : (user?.admin ? 'Administración' : 'Revisión necesaria')}
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="text-lg md:text-xl font-black text-gray-900 tracking-tight">
+                        <button
+                            onClick={() => !saving && onClose()}
+                            className="p-1.5 md:p-2 rounded-xl hover:bg-gray-50 transition-colors"
+                        >
+                            <X className="w-5 h-5 md:w-6 md:h-6 text-gray-400" />
+                        </button>
+                    </div>
+
+                    {/* Form Content */}
+                    <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-5 md:pb-8 custom-scrollbar">
+                        {/* Info */}
+                        <div className="mb-6 md:mb-8 p-3 md:p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 flex gap-2 md:gap-3">
+                            <Info size={16} className="text-indigo-500 shrink-0 mt-0.5 md:w-[18px] md:h-[18px]" />
+                            <p className="text-xs md:text-sm text-indigo-700/80 font-medium leading-relaxed">
                                 {isSimpleMode
-                                    ? `Editar ${targetEvent?.label}`
-                                    : (user?.admin ? 'Fichaje manual' : 'Solicitar corrección')}
-                            </h3>
-                            <p className="text-[10px] md:text-sm text-gray-400 font-bold uppercase tracking-wider mt-0.5 md:mt-1">
-                                {isSimpleMode ? 'Corrección rápida' : (user?.admin ? 'Administración' : 'Revisión necesaria')}
+                                    ? `Ajusta la hora oficial de ${targetEvent?.label?.toLowerCase()} para este registro.`
+                                    : (user?.admin
+                                        ? 'La solicitud será enviada al usuario para su aprobación.'
+                                        : 'Tu solicitud será enviada para validación administrativa.')}
                             </p>
                         </div>
-                    </div>
-                    <button
-                        onClick={() => !saving && onClose()}
-                        className="p-1.5 md:p-2 rounded-xl hover:bg-gray-50 transition-colors"
-                    >
-                        <X className="w-5 h-5 md:w-6 md:h-6 text-gray-400" />
-                    </button>
-                </div>
-
-                {/* Form Content */}
-                <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-5 md:pb-8 custom-scrollbar">
-                    {/* Info */}
-                    <div className="mb-6 md:mb-8 p-3 md:p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 flex gap-2 md:gap-3">
-                        <Info size={16} className="text-indigo-500 shrink-0 mt-0.5 md:w-[18px] md:h-[18px]" />
-                        <p className="text-xs md:text-sm text-indigo-700/80 font-medium leading-relaxed">
-                            {isSimpleMode
-                                ? `Ajusta la hora oficial de ${targetEvent?.label?.toLowerCase()} para este registro.`
-                                : (user?.admin
-                                    ? 'La solicitud será enviada al usuario para su aprobación.'
-                                    : 'Tu solicitud será enviada para validación administrativa.')}
-                        </p>
-                    </div>
 
 
-                    <div className="space-y-8">
-                        {isSimpleMode ? (
-                            /* Simple view */
-                            <div className="space-y-6">
-                                <div className="p-6 bg-white rounded-[2rem] border border-gray-100">
-                                    <div className="flex items-center gap-3 mb-4 text-gray-900">
-                                        <Calendar size={16} />
-                                        <span className="text-xs font-black uppercase tracking-widest">
-                                            {format(new Date(fecha), "EEEE, d 'de' MMMM", { locale: es })}
-                                        </span>
-                                    </div>
-                                    <div className="flex flex-col sm:flex-row items-center sm:items-end gap-3 md:gap-4">
-                                        <div className="w-full sm:flex-1 space-y-2 opacity-60 pointer-events-none">
-                                            <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">
-                                                <Clock size={16} /> Actual
-                                            </label>
-                                            <div className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-3 md:py-4 text-sm md:text-base h-12 md:h-14 font-bold text-gray-500 flex items-center tracking-tight shadow-sm">
-                                                {targetEvent ? format(targetEvent.time, 'HH:mm') : '--:--'}
-                                            </div>
-                                        </div>
-                                        <div className="pb-0 sm:pb-4 text-gray-300 rotate-90 sm:rotate-0">
-                                            <ArrowRight className="w-5 h-5 md:w-6 md:h-6" />
-                                        </div>
-                                        <div className="w-full sm:flex-1">
-                                            <InputField
-                                                label="Nueva"
-                                                icon={<Clock size={16} />}
-                                                type="time"
-                                                value={isPauseEvent ? pausaTime : (targetEvent?.type === 'entrada' ? entrada : salida)}
-                                                onChange={isPauseEvent ? setPausaTime : (targetEvent?.type === 'entrada' ? setEntrada : setSalida)}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                <CustomSelect
-                                    label={<span>Motivo del cambio <span className="text-red-500">*</span></span>}
-                                    icon={FileText}
-                                    options={MOTIVO_OPTIONS}
-                                    value={motivo}
-                                    onChange={setMotivo}
-                                    onOpenChange={setDropdownOpen}
-                                />
-                                <div className="space-y-2">
-                                    <label className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest px-1">
-                                        <MessageCircle size={14} /> Justificación <span className="text-red-500 ml-0.5">*</span>
-                                    </label>
-                                    <textarea
-                                        className="w-full bg-white border border-gray-100 shadow-sm rounded-2xl px-5 py-4 text-sm text-gray-900 placeholder:text-gray-300 focus:ring-2 focus:ring-primary/20 transition-all min-h-[100px] resize-none"
-                                        value={observaciones}
-                                        onChange={e => setObservaciones(e.target.value)}
-                                        placeholder="Indica la justificación detallada de este cambio..."
-                                    />
-                                    <p className="text-[10px] text-gray-400 mt-1 px-1 font-bold italic">
-                                        * El motivo y la justificación son obligatorios según la Ley de Control Horario 2026
-                                    </p>
-                                </div>
-                            </div>
-                        ) : (
-                            /* Full View */
-                            <>
+                        <div className="space-y-8">
+                            {isSimpleMode ? (
+                                /* Simple view */
                                 <div className="space-y-6">
-                                    <InputField label="Fecha" icon={<Calendar size={16} />} type="date" value={fecha} onChange={setFecha} />
-
-                                    <div className="p-5 bg-gray-50/50 rounded-[2rem] border border-gray-100 space-y-6">
-                                        <InputField label="Entrada" icon={<Clock size={16} />} type="time" value={entrada} onChange={setEntrada} />
-
-                                        {/* Pausas Section - Moved here */}
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between px-1">
-                                                <h4 className="text-sm font-black text-gray-900 tracking-tight">Pausas</h4>
-                                                <button onClick={addPausa} className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-gray-900 text-white rounded-xl text-[10px] md:text-xs font-bold hover:bg-black transition-all">
-                                                    <Plus size={14} /> Añadir
-                                                </button>
-                                            </div>
-                                            {pausas.length === 0 ? (
-                                                <div className="p-6 md:p-8 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center bg-white/50">
-                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Sin pausas registradas</p>
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-3">
-                                                    {pausas.map((p, idx) => (
-                                                        <div key={idx} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm relative group">
-                                                            <div className="absolute -top-2.5 left-4 bg-white px-2 text-[10px] font-black text-primary uppercase tracking-wider border border-gray-100 rounded-md shadow-sm">
-                                                                Pausa #{idx + 1}
-                                                            </div>
-                                                            <button
-                                                                onClick={() => removePausa(idx)}
-                                                                className="absolute -top-2 -right-2 p-1.5 bg-white text-gray-300 hover:text-red-500 hover:bg-red-50 border border-gray-100 rounded-full shadow-sm transition-all"
-                                                                title="Eliminar pausa"
-                                                            >
-                                                                <Trash2 size={14} />
-                                                            </button>
-                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
-                                                                <InputField type="time" label="Inicio" value={p.inicio} onChange={v => updatePausa(idx, { inicio: v })} compact />
-                                                                <InputField type="time" label="Fin" value={p.fin} onChange={v => updatePausa(idx, { fin: v })} compact />
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
+                                    <div className="p-6 bg-white rounded-[2rem] border border-gray-100">
+                                        <div className="flex items-center gap-3 mb-4 text-gray-900">
+                                            <Calendar size={16} />
+                                            <span className="text-xs font-black uppercase tracking-widest">
+                                                {format(new Date(fecha), "EEEE, d 'de' MMMM", { locale: es })}
+                                            </span>
                                         </div>
-
-                                        <InputField label="Salida" icon={<Clock size={16} />} type="time" value={salida} onChange={setSalida} />
+                                        <div className="flex flex-col sm:flex-row items-center sm:items-end gap-3 md:gap-4">
+                                            <div className="w-full sm:flex-1 space-y-2 opacity-60 pointer-events-none">
+                                                <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">
+                                                    <Clock size={16} /> Actual
+                                                </label>
+                                                <div className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-3 md:py-4 text-sm md:text-base h-12 md:h-14 font-bold text-gray-500 flex items-center tracking-tight shadow-sm">
+                                                    {targetEvent ? format(targetEvent.time, 'HH:mm') : '--:--'}
+                                                </div>
+                                            </div>
+                                            <div className="pb-0 sm:pb-4 text-gray-300 rotate-90 sm:rotate-0">
+                                                <ArrowRight className="w-5 h-5 md:w-6 md:h-6" />
+                                            </div>
+                                            <div className="w-full sm:flex-1">
+                                                <InputField
+                                                    label="Nueva"
+                                                    icon={<Clock size={16} />}
+                                                    type="time"
+                                                    value={isPauseEvent ? pausaTime : (targetEvent?.type === 'entrada' ? entrada : salida)}
+                                                    onChange={isPauseEvent ? setPausaTime : (targetEvent?.type === 'entrada' ? setEntrada : setSalida)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <CustomSelect
+                                        label={<span>Motivo del cambio <span className="text-red-500">*</span></span>}
+                                        icon={FileText}
+                                        options={MOTIVO_OPTIONS}
+                                        value={motivo}
+                                        onChange={setMotivo}
+                                        onOpenChange={setDropdownOpen}
+                                    />
+                                    <div className="space-y-2">
+                                        <label className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest px-1">
+                                            <MessageCircle size={14} /> Justificación <span className="text-red-500 ml-0.5">*</span>
+                                        </label>
+                                        <textarea
+                                            className="w-full bg-white border border-gray-100 shadow-sm rounded-2xl px-5 py-4 text-sm text-gray-900 placeholder:text-gray-300 focus:ring-2 focus:ring-primary/20 transition-all min-h-[100px] resize-none"
+                                            value={observaciones}
+                                            onChange={e => setObservaciones(e.target.value)}
+                                            placeholder="Indica la justificación detallada de este cambio..."
+                                        />
+                                        <p className="text-[10px] text-gray-400 mt-1 px-1 font-bold italic">
+                                            * El motivo y la justificación son obligatorios según la Ley de Control Horario 2026
+                                        </p>
                                     </div>
                                 </div>
+                            ) : (
+                                /* Full View */
+                                <>
+                                    <div className="space-y-6">
+                                        <InputField label="Fecha" icon={<Calendar size={16} />} type="date" value={fecha} onChange={setFecha} />
 
-                                <CustomSelect
-                                    label={<span>Motivo del cambio <span className="text-red-500">*</span></span>}
-                                    icon={FileText}
-                                    options={MOTIVO_OPTIONS}
-                                    value={motivo}
-                                    onChange={setMotivo}
-                                />
-                                <div className="space-y-2">
-                                    <label className="flex items-center gap-2 text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest px-1">
-                                        <MessageCircle size={14} /> Justificación <span className="text-red-500 ml-0.5">*</span>
-                                    </label>
-                                    <textarea
-                                        className="w-full bg-white border border-gray-100 shadow-sm rounded-2xl px-5 py-3 md:py-4 text-sm text-gray-900 placeholder:text-gray-300 focus:ring-2 focus:ring-primary/20 transition-all min-h-[80px] md:min-h-[100px] resize-none"
-                                        value={observaciones}
-                                        onChange={e => setObservaciones(e.target.value)}
-                                        placeholder="Indica la justificación detallada de este cambio..."
+                                        <div className="p-5 bg-gray-50/50 rounded-[2rem] border border-gray-100 space-y-6">
+                                            <InputField label="Entrada" icon={<Clock size={16} />} type="time" value={entrada} onChange={setEntrada} />
+
+                                            {/* Pausas Section - Moved here */}
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between px-1">
+                                                    <h4 className="text-sm font-black text-gray-900 tracking-tight">Pausas</h4>
+                                                    <button onClick={addPausa} className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-gray-900 text-white rounded-xl text-[10px] md:text-xs font-bold hover:bg-black transition-all">
+                                                        <Plus size={14} /> Añadir
+                                                    </button>
+                                                </div>
+                                                {pausas.length === 0 ? (
+                                                    <div className="p-6 md:p-8 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center bg-white/50">
+                                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Sin pausas registradas</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-3">
+                                                        {pausas.map((p, idx) => (
+                                                            <div key={idx} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm relative group">
+                                                                <div className="absolute -top-2.5 left-4 bg-white px-2 text-[10px] font-black text-primary uppercase tracking-wider border border-gray-100 rounded-md shadow-sm">
+                                                                    Pausa #{idx + 1}
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => removePausa(idx)}
+                                                                    className="absolute -top-2 -right-2 p-1.5 bg-white text-gray-300 hover:text-red-500 hover:bg-red-50 border border-gray-100 rounded-full shadow-sm transition-all"
+                                                                    title="Eliminar pausa"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+                                                                    <InputField type="time" label="Inicio" value={p.inicio} onChange={v => updatePausa(idx, { inicio: v })} compact />
+                                                                    <InputField type="time" label="Fin" value={p.fin} onChange={v => updatePausa(idx, { fin: v })} compact />
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <InputField label="Salida" icon={<Clock size={16} />} type="time" value={salida} onChange={setSalida} />
+                                        </div>
+                                    </div>
+
+                                    <CustomSelect
+                                        label={<span>Motivo del cambio <span className="text-red-500">*</span></span>}
+                                        icon={FileText}
+                                        options={MOTIVO_OPTIONS}
+                                        value={motivo}
+                                        onChange={setMotivo}
                                     />
-                                    <p className="text-[10px] text-gray-400 mt-1 px-1 font-bold italic">
-                                        * El motivo y la justificación son obligatorios según la Ley de Control Horario 2026
-                                    </p>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                    {error && (
-                        <div className="mt-8 p-4 bg-red-50 text-red-600 rounded-2xl flex items-center gap-3">
-                            <X size={18} className="shrink-0" />
-                            <p className="text-sm font-bold">{error}</p>
+                                    <div className="space-y-2">
+                                        <label className="flex items-center gap-2 text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest px-1">
+                                            <MessageCircle size={14} /> Justificación <span className="text-red-500 ml-0.5">*</span>
+                                        </label>
+                                        <textarea
+                                            className="w-full bg-white border border-gray-100 shadow-sm rounded-2xl px-5 py-3 md:py-4 text-sm text-gray-900 placeholder:text-gray-300 focus:ring-2 focus:ring-primary/20 transition-all min-h-[80px] md:min-h-[100px] resize-none"
+                                            value={observaciones}
+                                            onChange={e => setObservaciones(e.target.value)}
+                                            placeholder="Indica la justificación detallada de este cambio..."
+                                        />
+                                        <p className="text-[10px] text-gray-400 mt-1 px-1 font-bold italic">
+                                            * El motivo y la justificación son obligatorios según la Ley de Control Horario 2026
+                                        </p>
+                                    </div>
+                                </>
+                            )}
                         </div>
-                    )}
+                        {error && (
+                            <div className="mt-8 p-4 bg-red-50 text-red-600 rounded-2xl flex items-center gap-3">
+                                <X size={18} className="shrink-0" />
+                                <p className="text-sm font-bold">{error}</p>
+                            </div>
+                        )}
 
-                    {/* Spacer to allow modal scrolling when dropdown is open */}
-                    <div className={cn("transition-all duration-300", dropdownOpen ? "h-64" : "h-0")} />
-                </div>
-                <div className="p-4 md:p-8 pt-2 md:pt-4 flex gap-3 bg-white border-t border-gray-50">
-                    <button onClick={() => !saving && onClose()} className="flex-1 py-3 md:py-4 rounded-xl md:rounded-[1.2rem] border border-gray-100 text-gray-500 text-xs md:text-sm font-black uppercase tracking-widest hover:bg-gray-50 transition-all" disabled={saving}>Cancelar</button>
-                    <button onClick={submit} disabled={saving} className="flex-[2] py-3 md:py-4 rounded-xl md:rounded-[1.2rem] bg-gray-900 text-white text-xs md:text-sm font-black uppercase tracking-[0.15em] hover:bg-black shadow-lg shadow-gray-200 transition-all flex items-center justify-center gap-2 group disabled:opacity-50">
-                        {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <span>{isSimpleMode ? 'Actualizar' : (user?.admin ? 'Guardar' : 'Solicitar')}</span>}
-                    </button>
+                        {/* Spacer to allow modal scrolling when dropdown is open */}
+                        <div className={cn("transition-all duration-300", dropdownOpen ? "h-64" : "h-0")} />
+                    </div>
+                    <div className="p-4 md:p-8 pt-2 md:pt-4 flex gap-3 bg-white border-t border-gray-50">
+                        <button onClick={() => !saving && onClose()} className="flex-1 py-3 md:py-4 rounded-xl md:rounded-[1.2rem] border border-gray-100 text-gray-500 text-xs md:text-sm font-black uppercase tracking-widest hover:bg-gray-50 transition-all" disabled={saving}>Cancelar</button>
+                        <button onClick={submit} disabled={saving} className="flex-[2] py-3 md:py-4 rounded-xl md:rounded-[1.2rem] bg-gray-900 text-white text-xs md:text-sm font-black uppercase tracking-[0.15em] hover:bg-black shadow-lg shadow-gray-200 transition-all flex items-center justify-center gap-2 group disabled:opacity-50">
+                            {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <span>{isSimpleMode ? 'Actualizar' : (user?.admin ? 'Guardar' : 'Solicitar')}</span>}
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </Portal>
     );
 }
 
