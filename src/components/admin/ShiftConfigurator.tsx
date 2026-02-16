@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Clock, Calendar as CalendarIcon, Save, X, AlertCircle, Users, LayoutGrid, PencilLine } from 'lucide-react';
+import { Plus, Trash2, Clock, Calendar as CalendarIcon, Save, X, AlertCircle, Users, LayoutGrid, PencilLine, CalendarDays, CalendarMinus2, CalendarRange, LocateFixed, RefreshCcw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { TimePicker } from '@/components/ui/TimePicker';
 
@@ -15,12 +15,13 @@ interface BreakPeriod {
 interface Shift {
     id: number;
     fk_user: number;
-    tipo_jornada: 'intensiva' | 'partida';
+    tipo_jornada: 'intensiva' | 'partida' | 'flexible';
     tipo_turno: 'fijo' | 'rotativo';
     hora_inicio_jornada: string;
     hora_fin_jornada: string;
     pausas: BreakPeriod[];
     observaciones?: string;
+    dias_semana?: number[];
     active: number;
 }
 
@@ -76,7 +77,8 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
         tipo_turno: 'fijo',
         hora_inicio_jornada: '09:00',
         hora_fin_jornada: '18:00',
-        pausas: []
+        pausas: [],
+        dias_semana: [1, 2, 3, 4, 5]
     });
 
     const fetchShifts = async () => {
@@ -87,7 +89,11 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
             });
             if (res.ok) {
                 const data = await res.json();
-                setShifts(Array.isArray(data) ? data : []);
+                const normalizedData = Array.isArray(data) ? data.map((s: any) => ({
+                    ...s,
+                    dias_semana: s.active_days || [1, 2, 3, 4, 5] // Map backend to frontend
+                })) : [];
+                setShifts(normalizedData);
             }
         } catch (error) {
             console.error('Error fetching shifts:', error);
@@ -106,7 +112,8 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
             const token = localStorage.getItem('dolibarr_token');
             const payload = {
                 ...newShift,
-                fk_user: userId
+                fk_user: userId,
+                active_days: newShift.dias_semana // Map frontend to backend
             };
 
             const url = editingId ? `/api/jornadas/${editingId}` : '/api/jornadas';
@@ -146,7 +153,8 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                 ...p,
                 hora_inicio: p.hora_inicio.substring(0, 5),
                 hora_fin: p.hora_fin.substring(0, 5)
-            }))
+            })),
+            dias_semana: shift.dias_semana || [1, 2, 3, 4, 5]
         });
         setEditingId(shift.id);
         setIsCreating(true);
@@ -195,7 +203,7 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                         <div
                             className={`absolute -bottom-12 -right-12 w-32 h-32 rounded-full blur-2xl transition-all duration-500 opacity-40 group-hover:opacity-70 group-hover:scale-110`}
                             style={{
-                                backgroundColor: shift.tipo_jornada === 'intensiva' ? '#AEF5B4' : '#F5E7AE'
+                                backgroundColor: shift.tipo_jornada === 'intensiva' ? '#AEF5B4' : shift.tipo_jornada === 'flexible' ? '#C5A3FF' : '#F5E7AE'
                             }}
                         />
 
@@ -204,9 +212,9 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                                 <span
                                     className="text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider border transition-colors"
                                     style={{
-                                        backgroundColor: shift.tipo_jornada === 'intensiva' ? '#AEF5B4' : '#F5E7AE',
-                                        color: shift.tipo_jornada === 'intensiva' ? '#1b4d21' : '#5c4d1a',
-                                        borderColor: shift.tipo_jornada === 'intensiva' ? '#8de696' : '#dec47c'
+                                        backgroundColor: shift.tipo_jornada === 'intensiva' ? '#AEF5B4' : shift.tipo_jornada === 'flexible' ? '#E9D5FF' : '#F5E7AE',
+                                        color: shift.tipo_jornada === 'intensiva' ? '#1b4d21' : shift.tipo_jornada === 'flexible' ? '#581c87' : '#5c4d1a',
+                                        borderColor: shift.tipo_jornada === 'intensiva' ? '#8de696' : shift.tipo_jornada === 'flexible' ? '#c084fc' : '#dec47c'
                                     }}
                                 >
                                     {shift.tipo_jornada}
@@ -277,7 +285,8 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                         tipo_turno: 'fijo',
                         hora_inicio_jornada: '09:00',
                         hora_fin_jornada: '18:00',
-                        pausas: []
+                        pausas: [],
+                        dias_semana: [1, 2, 3, 4, 5]
                     });
                     setIsCreating(true);
                 }}
@@ -327,21 +336,23 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                             <div className="space-y-6">
                                 <div className="space-y-3">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Tipo de Jornada</label>
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-3 gap-3">
                                         {[
-                                            { id: 'partida', label: 'Partida', icon: LayoutGrid },
-                                            { id: 'intensiva', label: 'Intensiva', icon: Clock }
+                                            { id: 'partida', label: 'Partida', icon: CalendarDays },
+                                            { id: 'intensiva', label: 'Intensiva', icon: CalendarMinus2 },
+                                            { id: 'flexible', label: 'Flexible', icon: CalendarRange }
                                         ].map(opt => (
                                             <button
                                                 key={opt.id}
+                                                type="button"
                                                 onClick={() => setNewShift({ ...newShift, tipo_jornada: opt.id as any })}
-                                                className={`flex items-center justify-center gap-2 p-4 rounded-2xl border-2 transition-all ${newShift.tipo_jornada === opt.id
+                                                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border-2 transition-all ${newShift.tipo_jornada === opt.id
                                                     ? 'border-black bg-white text-black shadow-sm'
                                                     : 'border-gray-50 bg-gray-50/50 text-gray-400 hover:border-gray-100 hover:bg-gray-100/50'
                                                     }`}
                                             >
                                                 <opt.icon size={16} />
-                                                <span className="text-xs font-bold uppercase tracking-wide">{opt.label}</span>
+                                                <span className="text-[10px] font-bold uppercase tracking-wide">{opt.label}</span>
                                             </button>
                                         ))}
                                     </div>
@@ -351,8 +362,8 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Sistema de Turno</label>
                                     <div className="grid grid-cols-2 gap-3">
                                         {[
-                                            { id: 'fijo', label: 'Fijo', icon: Users },
-                                            { id: 'rotativo', label: 'Rotativo', icon: LayoutGrid }
+                                            { id: 'fijo', label: 'Fijo', icon: LocateFixed },
+                                            { id: 'rotativo', label: 'Rotativo', icon: RefreshCcw }
                                         ].map(opt => (
                                             <button
                                                 key={opt.id}
@@ -483,6 +494,46 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                                     )}
                                 </div>
                             )}
+
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                                    <CalendarIcon size={16} className="text-gray-400" />
+                                    <h4 className="text-sm font-bold text-gray-900">Días de la semana</h4>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {[
+                                        { id: 1, label: 'L', name: 'Lunes' },
+                                        { id: 2, label: 'M', name: 'Martes' },
+                                        { id: 3, label: 'X', name: 'Miércoles' },
+                                        { id: 4, label: 'J', name: 'Jueves' },
+                                        { id: 5, label: 'V', name: 'Viernes' },
+                                        { id: 6, label: 'S', name: 'Sábado' },
+                                        { id: 0, label: 'D', name: 'Domingo' }
+                                    ].map(day => {
+                                        const isSelected = newShift.dias_semana?.includes(day.id);
+                                        return (
+                                            <button
+                                                key={day.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    const currentDays = newShift.dias_semana || [];
+                                                    const newDays = isSelected
+                                                        ? currentDays.filter(d => d !== day.id)
+                                                        : [...currentDays, day.id].sort();
+                                                    setNewShift({ ...newShift, dias_semana: newDays });
+                                                }}
+                                                className={`w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-black transition-all border ${isSelected
+                                                    ? 'bg-black border-black text-white shadow-md'
+                                                    : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'
+                                                    }`}
+                                                title={day.name}
+                                            >
+                                                {day.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
 
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
