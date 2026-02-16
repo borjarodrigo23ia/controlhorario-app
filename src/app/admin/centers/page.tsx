@@ -10,6 +10,7 @@ import { DolibarrUser } from '@/lib/admin-types';
 import dynamic from 'next/dynamic';
 import { isProject, getCleanLabel, formatLabelForSave } from '@/lib/center-utils';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { cn } from '@/lib/utils';
 
 const LocationMapPicker = dynamic(() => import('@/components/ui/LocationMapPicker'), {
     ssr: false,
@@ -352,8 +353,12 @@ export default function CentersPage() {
                 key={center.rowid}
                 className={`group relative flex items-center gap-5 bg-white p-5 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-500 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 overflow-hidden ${color.hover}`}
             >
-                {/* Decorative Gradient Background */}
-                <div className={`absolute -bottom-8 -right-8 w-32 h-32 bg-gradient-to-tl ${color.gradient} blur-3xl rounded-full opacity-60 pointer-events-none transition-opacity group-hover:opacity-100`} />
+                {/* Intense Glow Effect - Matching Auditoría style */}
+                <div className={cn(
+                    "absolute bottom-0 right-0 w-32 h-32 blur-2xl rounded-tl-full transition-all duration-500 pointer-events-none z-0",
+                    "opacity-40 group-hover:opacity-100",
+                    `bg-gradient-to-tl ${color.gradient}`
+                )} />
 
                 {/* Icon Container - Left */}
                 <div className={`relative shrink-0 flex h-16 w-16 items-center justify-center rounded-[1.2rem] bg-gray-50 border border-gray-100 text-black transition-all duration-500 group-hover:scale-110 group-hover:bg-white group-hover:shadow-md z-10`}>

@@ -20,7 +20,7 @@ export default function VacationQuotaCard({ refreshTrigger }: VacationQuotaCardP
         try {
             const [daysData, vacationsData] = await Promise.all([
                 fetchVacationDays(year),
-                fetchVacations()
+                fetchVacations({ usuario: user.login })
             ]);
 
             const userDays = daysData.find((d: any) => d.fk_user === user.id || d.rowid === user.id);
@@ -28,8 +28,11 @@ export default function VacationQuotaCard({ refreshTrigger }: VacationQuotaCardP
             setAssignedDays(quota);
 
             const yearStr = year.toString();
+            // Filter by year, current user (defensive), and non-rejected status
             const currentYearVacs = vacationsData.filter(v =>
-                v.fecha_inicio.startsWith(yearStr) && v.estado !== 'rechazado'
+                v.usuario === user.login &&
+                v.fecha_inicio.startsWith(yearStr) &&
+                v.estado !== 'rechazado'
             );
 
             let totalUsed = 0;

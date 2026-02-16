@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useVacations, VacationRequest } from '@/hooks/useVacations';
+import { useAuth } from '@/context/AuthContext';
 import { CalendarCheck, CalendarX, Clock, Trash2, Palmtree, HeartPulse, ContactRound, Filter, ChevronDown, ChevronUp, MessageSquare, CalendarClock } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -11,6 +12,7 @@ interface VacationListProps {
 }
 
 export default function VacationList({ refreshTrigger, compact = false, limit }: VacationListProps) {
+    const { user } = useAuth();
     const { fetchVacations, deleteVacation } = useVacations();
     const [vacations, setVacations] = useState<VacationRequest[]>([]);
     const [loading, setLoading] = useState(true);
@@ -24,8 +26,9 @@ export default function VacationList({ refreshTrigger, compact = false, limit }:
     const historyRef = React.useRef<HTMLDivElement>(null);
 
     const loadVacations = async () => {
+        if (!user) return;
         setLoading(true);
-        const data = await fetchVacations();
+        const data = await fetchVacations({ usuario: user.login });
         setVacations(data);
         setLoading(false);
     };

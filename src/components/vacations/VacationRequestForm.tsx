@@ -94,15 +94,9 @@ export default function VacationRequestForm({ onSuccess }: VacationRequestFormPr
                                 "relative overflow-hidden flex-1 px-3 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap border-2",
                                 selectedType === 'vacaciones'
                                     ? "bg-[#9EE8FF] border-[#9EE8FF] text-blue-900 shadow-[0_8px_25px_rgba(158,232,255,0.5)] scale-[1.02]"
-                                    : "bg-white border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50/50"
+                                    : "bg-gradient-to-br from-white from-50% to-[#9EE8FF]/60 border-gray-100 text-gray-500 hover:text-gray-700 hover:to-[#9EE8FF]/80"
                             )}
                         >
-                            {/* Permanent Diagonal Glow - More Visible */}
-                            <div className={cn(
-                                "absolute -bottom-6 -right-6 w-24 h-24 bg-gradient-to-tl from-[#9EE8FF] to-transparent blur-2xl rounded-tl-full pointer-events-none z-0 transition-opacity duration-500",
-                                selectedType === 'vacaciones' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                            )} />
-
                             <Palmtree size={16} className="relative z-10 shrink-0 text-black" />
                             <span className="relative z-10 hidden sm:inline">Vacaciones</span>
                         </button>
@@ -113,15 +107,9 @@ export default function VacationRequestForm({ onSuccess }: VacationRequestFormPr
                                 "relative overflow-hidden flex-1 px-3 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap border-2",
                                 selectedType === 'enfermedad'
                                     ? "bg-[#EA9EFF] border-[#EA9EFF] text-purple-900 shadow-[0_8px_25px_rgba(234,158,255,0.5)] scale-[1.02]"
-                                    : "bg-white border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50/50"
+                                    : "bg-gradient-to-br from-white from-50% to-[#EA9EFF]/60 border-gray-100 text-gray-500 hover:text-gray-700 hover:to-[#EA9EFF]/80"
                             )}
                         >
-                            {/* Permanent Diagonal Glow - More Visible */}
-                            <div className={cn(
-                                "absolute -bottom-6 -right-6 w-24 h-24 bg-gradient-to-tl from-[#EA9EFF] to-transparent blur-2xl rounded-tl-full pointer-events-none z-0 transition-opacity duration-500",
-                                selectedType === 'enfermedad' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                            )} />
-
                             <HeartPulse size={16} className="relative z-10 shrink-0 text-black" />
                             <span className="relative z-10 hidden sm:inline">Enfermedad</span>
                         </button>
@@ -132,15 +120,9 @@ export default function VacationRequestForm({ onSuccess }: VacationRequestFormPr
                                 "relative overflow-hidden flex-1 px-3 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap border-2",
                                 selectedType === 'asuntos_propios'
                                     ? "bg-[#FFCE8A] border-[#FFCE8A] text-amber-900 shadow-[0_8px_25px_rgba(255,206,138,0.5)] scale-[1.02]"
-                                    : "bg-white border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50/50"
+                                    : "bg-gradient-to-br from-white from-50% to-[#FFCE8A]/60 border-gray-100 text-gray-500 hover:text-gray-700 hover:to-[#FFCE8A]/80"
                             )}
                         >
-                            {/* Permanent Diagonal Glow - More Visible */}
-                            <div className={cn(
-                                "absolute -bottom-6 -right-6 w-24 h-24 bg-gradient-to-tl from-[#FFCE8A] to-transparent blur-2xl rounded-tl-full pointer-events-none z-0 transition-opacity duration-500",
-                                selectedType === 'asuntos_propios' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                            )} />
-
                             <ContactRound size={16} className="relative z-10 shrink-0 text-black" />
                             <span className="relative z-10 hidden sm:inline">Asuntos</span>
                         </button>
