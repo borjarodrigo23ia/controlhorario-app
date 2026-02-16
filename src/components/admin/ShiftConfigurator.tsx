@@ -334,73 +334,74 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                         {/* Scrollable Content */}
                         <div className="overflow-y-auto px-8 py-6 space-y-8 flex-1">
                             <div className="space-y-6">
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Tipo de Jornada</label>
-                                    <div className="grid grid-cols-3 gap-3">
-                                        {[
-                                            { id: 'partida', label: 'Partida', icon: CalendarDays },
-                                            { id: 'intensiva', label: 'Intensiva', icon: CalendarMinus2 },
-                                            { id: 'flexible', label: 'Flexible', icon: CalendarRange }
-                                        ].map(opt => (
-                                            <button
-                                                key={opt.id}
-                                                type="button"
-                                                onClick={() => setNewShift({ ...newShift, tipo_jornada: opt.id as any })}
-                                                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border-2 transition-all ${newShift.tipo_jornada === opt.id
-                                                    ? 'border-black bg-white text-black shadow-sm'
-                                                    : 'border-gray-50 bg-gray-50/50 text-gray-400 hover:border-gray-100 hover:bg-gray-100/50'
-                                                    }`}
-                                            >
-                                                <opt.icon size={16} />
-                                                <span className="text-[10px] font-bold uppercase tracking-wide">{opt.label}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                        {/* Tipo de Jornada */}
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Tipo de Jornada</label>
+                                            <div className="grid grid-cols-3 gap-2 bg-gray-50 p-1 rounded-2xl border border-gray-100/50">
+                                                {[
+                                                    { id: 'partida', label: 'Partida', icon: CalendarDays },
+                                                    { id: 'intensiva', label: 'Intensiva', icon: CalendarMinus2 },
+                                                    { id: 'flexible', label: 'Flexible', icon: CalendarRange }
+                                                ].map(opt => (
+                                                    <button
+                                                        key={opt.id}
+                                                        type="button"
+                                                        onClick={() => setNewShift({ ...newShift, tipo_jornada: opt.id as any })}
+                                                        className={`flex items-center justify-center gap-1.5 py-3 rounded-xl transition-all duration-200 ${newShift.tipo_jornada === opt.id
+                                                            ? 'bg-white text-black shadow-sm font-bold'
+                                                            : 'text-gray-400 hover:text-gray-600 font-medium'
+                                                            }`}
+                                                    >
+                                                        <opt.icon size={13} />
+                                                        <span className="text-[10px] uppercase tracking-wide">{opt.label}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
 
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Sistema de Turno</label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {[
-                                            { id: 'fijo', label: 'Fijo', icon: LocateFixed },
-                                            { id: 'rotativo', label: 'Rotativo', icon: RefreshCcw }
-                                        ].map(opt => (
-                                            <button
-                                                key={opt.id}
-                                                onClick={() => setNewShift({ ...newShift, tipo_turno: opt.id as any })}
-                                                className={`flex items-center justify-center gap-2 p-4 rounded-2xl border-2 transition-all ${newShift.tipo_turno === opt.id
-                                                    ? 'border-black bg-white text-black shadow-sm'
-                                                    : 'border-gray-50 bg-gray-50/50 text-gray-400 hover:border-gray-100 hover:bg-gray-100/50'
-                                                    }`}
-                                            >
-                                                <opt.icon size={16} />
-                                                <span className="text-xs font-bold uppercase tracking-wide">{opt.label}</span>
-                                            </button>
-                                        ))}
+                                        {/* Sistema de Turno (Modalidad) */}
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Modalidad</label>
+                                            <div className="grid grid-cols-2 gap-2 bg-gray-50 p-1 rounded-2xl border border-gray-100/50">
+                                                {[
+                                                    { id: 'fijo', label: 'Fijo', icon: LocateFixed },
+                                                    { id: 'rotativo', label: 'Rotativo', icon: RefreshCcw }
+                                                ].map(opt => (
+                                                    <button
+                                                        key={opt.id}
+                                                        type="button"
+                                                        onClick={() => setNewShift({ ...newShift, tipo_turno: opt.id as any })}
+                                                        className={`flex items-center justify-center gap-2 py-3 rounded-xl transition-all duration-200 ${newShift.tipo_turno === opt.id
+                                                            ? 'bg-white text-black shadow-sm font-bold'
+                                                            : 'text-gray-400 hover:text-gray-600 font-medium'
+                                                            }`}
+                                                    >
+                                                        <opt.icon size={14} />
+                                                        <span className="text-[11px] uppercase tracking-wide">{opt.label}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                                    <Clock size={16} className="text-gray-400" />
-                                    <h4 className="text-sm font-bold text-gray-900">Horario de trabajo</h4>
+                            <div className="grid grid-cols-2 gap-5 px-1">
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Entrada</label>
+                                    <TimePicker
+                                        value={newShift.hora_inicio_jornada!}
+                                        onChange={v => setNewShift({ ...newShift, hora_inicio_jornada: v })}
+                                    />
                                 </div>
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Entrada</label>
-                                        <TimePicker
-                                            value={newShift.hora_inicio_jornada!}
-                                            onChange={v => setNewShift({ ...newShift, hora_inicio_jornada: v })}
-                                        />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Salida</label>
-                                        <TimePicker
-                                            value={newShift.hora_fin_jornada!}
-                                            onChange={v => setNewShift({ ...newShift, hora_fin_jornada: v })}
-                                        />
-                                    </div>
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Salida</label>
+                                    <TimePicker
+                                        value={newShift.hora_fin_jornada!}
+                                        onChange={v => setNewShift({ ...newShift, hora_fin_jornada: v })}
+                                    />
                                 </div>
                             </div>
 
@@ -495,10 +496,11 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                                 </div>
                             )}
 
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                                    <CalendarIcon size={16} className="text-gray-400" />
-                                    <h4 className="text-sm font-bold text-gray-900">Días de la semana</h4>
+                            {/* Days of Week Selector - Redesigned to match admin/jornadas */}
+                            <div className="space-y-3 bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <CalendarIcon size={14} className="text-gray-400" />
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Días de la semana</label>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     {[
@@ -522,9 +524,9 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                                                         : [...currentDays, day.id].sort();
                                                     setNewShift({ ...newShift, dias_semana: newDays });
                                                 }}
-                                                className={`w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-black transition-all border ${isSelected
-                                                    ? 'bg-black border-black text-white shadow-md'
-                                                    : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'
+                                                className={`w-8 h-8 rounded-lg flex items-center justify-center text-[12px] font-black transition-all border shadow-sm active:scale-95 ${isSelected
+                                                    ? 'bg-black border-black text-white shadow-lg shadow-black/10'
+                                                    : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300 hover:text-gray-600'
                                                     }`}
                                                 title={day.name}
                                             >
@@ -533,6 +535,9 @@ export default function ShiftConfigurator({ userId }: ShiftConfiguratorProps) {
                                         );
                                     })}
                                 </div>
+                                <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest pl-1">
+                                    Selección para cálculo de horas esperadas
+                                </p>
                             </div>
 
                             <div className="space-y-3">
