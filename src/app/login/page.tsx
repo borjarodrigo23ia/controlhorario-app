@@ -139,7 +139,7 @@ export default function LoginPage() {
             <div className="w-full max-w-[400px] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
                 <div className="p-8 pb-6">
                     <div className="flex flex-col items-center mb-8">
-                        <div className="w-64 h-64 relative mb-4">
+                        <div className="w-48 h-48 relative mb-4">
                             {/* Placeholder for user-provided logo */}
                             {/* Dynamic Company Logo */}
                             <CompanyLogo

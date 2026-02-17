@@ -46,7 +46,7 @@ interface UserDetailsProps {
 }
 
 export default function UserDetailsCard({ user, onEdit }: UserDetailsProps) {
-    const [isOpen, setIsOpen] = useState(true); // Open by default
+    const [isOpen, setIsOpen] = useState(false); // Collapsed by default
     const [isDeleting, setIsDeleting] = useState(false);
     const router = useRouter();
 
