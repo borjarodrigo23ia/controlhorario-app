@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { authService } from '@/services/auth';
 import { Loader2, Eye, EyeOff, Info, X } from 'lucide-react';
 import LoginInstallPrompt from '@/components/pwa/LoginInstallPrompt';
+import CompanyLogo from '@/components/ui/CompanyLogo';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -140,13 +141,10 @@ export default function LoginPage() {
                     <div className="flex flex-col items-center mb-8">
                         <div className="w-64 h-64 relative mb-4">
                             {/* Placeholder for user-provided logo */}
-                            <img
-                                src="/logo.png"
+                            {/* Dynamic Company Logo */}
+                            <CompanyLogo
                                 alt="Logo App"
                                 className="w-full h-full object-contain"
-                                onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                }}
                             />
                         </div>
                         <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
