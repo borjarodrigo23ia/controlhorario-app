@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import usePushNotifications from '@/hooks/usePushNotifications';
-import { Bell, BellOff, Calendar, Clock, RotateCw, Loader2 } from 'lucide-react';
+import { Bell, BellOff, Calendar, Clock, RotateCw, Loader2, Send } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function NotificationPreferences() {
     const { user } = useAuth();
@@ -49,6 +50,30 @@ export default function NotificationPreferences() {
         }
     };
 
+    const handleTestNotification = async () => {
+        const loadingToast = toast.loading('Enviando notificación de prueba...');
+        try {
+            const res = await fetch('/api/web-push/test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'DOLAPIKEY': localStorage.getItem('dolibarr_token') || '',
+                    'X-User-Id': user?.id || ''
+                }
+            });
+
+            if (res.ok) {
+                toast.success('Notificación de prueba enviada', { id: loadingToast });
+            } else {
+                const data = await res.json();
+                toast.error(data.error || 'Error al enviar prueba', { id: loadingToast });
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Error de conexión', { id: loadingToast });
+        }
+    };
+
     if (!isSubscribed && permission !== 'granted') {
         return (
             <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-[0_20px_60px_rgb(0,0,0,0.03)]">
@@ -76,14 +101,23 @@ export default function NotificationPreferences() {
     return (
         <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-[0_20px_60px_rgb(0,0,0,0.03)] overflow-hidden">
             <div className="p-8 md:p-10">
-                <div className="flex items-center gap-3 mb-8">
-                    <div className="bg-slate-50 p-3 rounded-2xl">
-                        <Bell className="text-slate-900" size={24} />
+                <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-slate-50 p-3 rounded-2xl">
+                            <Bell className="text-slate-900" size={24} />
+                        </div>
+                        <div>
+                            <h3 className="font-black text-slate-900 text-lg">Estado: Conectado</h3>
+                            <p className="text-sm text-slate-500 font-medium">Gestiona tus avisos o prueba el sistema</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="font-black text-slate-900 text-lg">Preferencias de Notificaciones</h3>
-                        <p className="text-sm text-slate-500 font-medium">Gestiona qué avisos quieres recibir</p>
-                    </div>
+                    <button
+                        onClick={handleTestNotification}
+                        className="p-3 bg-slate-50 text-slate-400 hover:text-black hover:bg-slate-100 rounded-2xl transition-all active:scale-95 group"
+                        title="Probar notificación"
+                    >
+                        <Send size={20} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </button>
                 </div>
 
                 <div className="space-y-6">

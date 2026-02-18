@@ -11,5 +11,19 @@
     },
     "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1",
     "updatedAt": "2026-02-10T18:37:15.480Z"
+  },
+  {
+    "userId": "1",
+    "subscription": {
+      "endpoint": "https://fcm.googleapis.com/fcm/send/fSsxsv0CpWY:APA91bFgqVCYchHKWMEo-IdSrVuUtcl7Yk-D8Q-OtWzl-qyyA_mLJ30mCYOSoOKCTmhh6TDutjm9-X3MdSpNKQYOwHRWE99K86Vw109fC9yWKjd5Ju-_eBeSrvjy3SZLh2r9tsINSA2i",
+      "expirationTime": null,
+      "keys": {
+        "p256dh": "BH6Qq3NIpnlnhSR3LN3Vb6-T0KW28sBDiFH8ieXdjzV0AsrSfl_PMZbqHQF_9q88M5UT3-ZeBHUMt6jjXc9FsQA",
+        "auth": "DMM46jQ8E_GdbSGnCnsW2g"
+      }
+    },
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1",
+    "isAdmin": true,
+    "updatedAt": "2026-02-18T11:30:09.998Z"
   }
 ]

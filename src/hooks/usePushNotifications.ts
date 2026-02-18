@@ -95,15 +95,29 @@ export default function PushNotificationManager() {
         }
 
         try {
+            console.log('[Push] Starting subscription process...');
+
+            // Explicitly request permission first
+            const permissionResult = await Notification.requestPermission();
+            console.log('[Push] Permission result:', permissionResult);
+            setPermission(permissionResult);
+
+            if (permissionResult === 'denied') {
+                throw new Error('Permiso de notificaciones denegado. Por favor, actívalo en los ajustes de tu navegador.');
+            }
+
             const registration = await withTimeout(
                 navigator.serviceWorker.ready,
                 10000,
                 'Service Worker no disponible'
             );
+            console.log('[Push] Service worker ready');
+
             const subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
             });
+            console.log('[Push] Subscription object obtained:', subscription.endpoint);
 
             // Send subscription to backend
             const res = await fetch('/api/web-push/subscribe', {
@@ -118,6 +132,7 @@ export default function PushNotificationManager() {
 
             if (res.ok) {
                 const data = await res.json();
+                console.log('[Push] Backend response ok:', data);
                 setIsSubscribed(true);
                 setPermission(Notification.permission);
                 if (data.isAdmin) {
@@ -126,11 +141,13 @@ export default function PushNotificationManager() {
                     toast.success('Notificaciones activadas');
                 }
             } else {
-                throw new Error('Failed to save subscription in backend');
+                const errorData = await res.json().catch(() => ({ error: 'Unknown terminal error' }));
+                console.error('[Push] Backend error response:', res.status, errorData);
+                throw new Error(errorData.error || 'Failed to save subscription in backend');
             }
-        } catch (error) {
-            console.error('Error subscribing to push:', error);
-            toast.error('Error al activar notificaciones');
+        } catch (error: any) {
+            console.error('[Push] Critical error subscribing to push:', error);
+            toast.error(`Error: ${error.message || 'al activar notificaciones'}`);
         }
     };
 
