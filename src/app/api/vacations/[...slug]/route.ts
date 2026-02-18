@@ -102,8 +102,24 @@ async function handleRequest(request: NextRequest, params: { slug: string[] }, m
         // --- Post-Success Notification Logic ---
         if (response.ok && method === 'POST') {
             const lastSegment = params.slug[params.slug.length - 1];
-            // Check for approve/reject actions
-            if (lastSegment === 'approve' || lastSegment === 'reject') {
+
+            // CASE 1: Creation (crear) -> Notify Admin
+            if (lastSegment === 'crear') {
+                try {
+                    const { sendPushNotificationToAdmin } = await import('@/lib/push-sender');
+                    const debugResult = await sendPushNotificationToAdmin({
+                        title: 'Nueva solicitud de vacaciones',
+                        body: `Un usuario ha solicitado vacaciones.`,
+                        url: '/admin/vacaciones'
+                    });
+                    responseData.notificationDebug = debugResult;
+                } catch (err: any) {
+                    console.error('Error sending admin notification for vacation:', err);
+                    responseData.notificationDebug = { error: err.message };
+                }
+            }
+            // CASE 2: Approval/Rejection -> Notify User
+            else if (lastSegment === 'approve' || lastSegment === 'reject') {
                 const vacationId = params.slug[params.slug.length - 2];
                 // Run async without blocking response
                 try {
