@@ -63,7 +63,11 @@ export default function NotificationPreferences() {
             });
 
             if (res.ok) {
-                toast.success('Notificación de prueba enviada', { id: loadingToast });
+                const data = await res.json();
+                const adminMsg = data.debug_admin_count !== undefined
+                    ? ` (Admins detectados: ${data.debug_admin_count})`
+                    : '';
+                toast.success(`Prueba enviada${adminMsg}`, { id: loadingToast });
             } else {
                 const data = await res.json();
                 toast.error(data.error || 'Error al enviar prueba', { id: loadingToast });

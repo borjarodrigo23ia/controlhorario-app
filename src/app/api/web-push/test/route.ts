@@ -16,7 +16,16 @@ export async function POST(request: NextRequest) {
         });
 
         if (result.sent > 0) {
-            return NextResponse.json({ success: true, sent: result.sent });
+            // Debug: Check admin count
+            const { getAllSubscriptions } = await import('@/lib/push-db');
+            const allSubs = await getAllSubscriptions();
+            const adminCount = allSubs.filter(s => s.isAdmin).length;
+
+            return NextResponse.json({
+                success: true,
+                sent: result.sent,
+                debug_admin_count: adminCount
+            });
         } else {
             return NextResponse.json({
                 error: 'No se enviaron notificaciones. Asegúrate de estar suscrito en este dispositivo.',
