@@ -14,6 +14,8 @@ function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
+import { TriangleAlert } from 'lucide-react';
+
 interface UserWithStatus extends DolibarrUser {
     workStatus: 'working' | 'paused' | 'out';
     lastFichajeType?: string;
@@ -23,6 +25,7 @@ export default function AdminUsersPage() {
     const [users, setUsers] = useState<UserWithStatus[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [missingDataCount, setMissingDataCount] = useState(0);
 
     const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -44,6 +47,16 @@ export default function AdminUsersPage() {
 
             const usersData = await usersRes.json();
             const usersList: DolibarrUser[] = Array.isArray(usersData) ? usersData : [];
+
+            // Calculate missing data count
+            const missingCount = usersList.filter((u) => {
+                const isActive = u.statut === '1' || u.status === '1' || u.active === '1';
+                if (!isActive) return false;
+                const dni = u.array_options?.options_dni;
+                const naf = u.array_options?.options_naf;
+                return !dni || !naf;
+            }).length;
+            setMissingDataCount(missingCount);
 
             // Fetch all fichajes (admin sees all)
             const fichajesRes = await fetch('/api/fichajes', {
@@ -83,10 +96,18 @@ export default function AdminUsersPage() {
                 const lastFichaje = lastFichajeByUser.get(user.id);
 
                 let workStatus: 'working' | 'paused' | 'out' = 'out';
+
+                // If last action was entry or end of pause -> working
                 if (lastFichaje?.tipo === 'entrar' || lastFichaje?.tipo === 'finp') {
                     workStatus = 'working';
-                } else if (lastFichaje?.tipo === 'pausa') {
+                }
+                // If last action was pause start -> paused
+                else if (lastFichaje?.tipo === 'pausa') {
                     workStatus = 'paused';
+                }
+                // If last action was exit -> out
+                else if (lastFichaje?.tipo === 'salida') {
+                    workStatus = 'out';
                 }
 
                 return {
@@ -135,6 +156,22 @@ export default function AdminUsersPage() {
                         Crear Usuario
                     </button>
                 </div>
+
+                {missingDataCount > 0 && (
+                    <div className="mb-8 p-4 rounded-2xl bg-red-50 border border-red-100 flex items-center gap-4 animate-in fade-in slide-in-from-top-2">
+                        <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0 animate-pulse">
+                            <TriangleAlert size={20} />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-red-900">
+                                Faltan datos en {missingDataCount} usuario{missingDataCount !== 1 ? 's' : ''}
+                            </h3>
+                            <p className="text-xs text-red-700 font-medium">
+                                Es necesario completar la información laboral (DNI y NAF) para cumplir con la legalidad de los informes.
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 <div className="mb-8 relative group max-w-md">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={20} />

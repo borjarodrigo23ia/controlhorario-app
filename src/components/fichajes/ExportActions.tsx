@@ -114,7 +114,7 @@ export const ExportActions: React.FC<ExportActionsProps> = ({ cycles, user, user
             // Match logic from UserDetailsCard.tsx
             const dniMatch = fullUser?.note_private?.match(/DNI:\s*([^\n]*)/i);
             const extractedDni = fullUser?.array_options?.options_dni || (dniMatch ? dniMatch[1].trim() : '---');
-            const extractedNaf = fullUser?.array_options?.options_seguridadsocial || '---';
+            const extractedNaf = fullUser?.array_options?.options_naf || '---';
 
             // Prepare userData
             const userData = fullUser ? {

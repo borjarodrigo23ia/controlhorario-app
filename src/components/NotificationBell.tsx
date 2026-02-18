@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useVacations, VacationRequest } from '@/hooks/useVacations';
 import { useCorrections } from '@/hooks/useCorrections';
 import { CorrectionRequest } from '@/lib/admin-types';
+import { CompanyService } from '@/lib/company-service';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 
@@ -33,7 +34,7 @@ export default function NotificationBell() {
 
             if (user.admin) {
                 // Admin Notifications
-                const [vacs, corrs] = await Promise.all([
+                const [vacs, corrs, companySetup] = await Promise.all([
                     fetchVacations({ estado: 'pendiente' }),
                     // Fetch corrections separately
                     (async () => {
@@ -42,8 +43,26 @@ export default function NotificationBell() {
                             headers: { 'DOLAPIKEY': token || '' }
                         });
                         return res.ok ? await res.json() : [];
-                    })()
+                    })(),
+                    CompanyService.getSetup().catch(() => null)
                 ]);
+
+                // 0. System Alerts (High Priority)
+                if (companySetup && (!companySetup.name || !companySetup.siren)) {
+                    const id = 'sys-config-required';
+                    if (!readSet.has(id)) {
+                        allNotifications.push({
+                            id,
+                            type: 'system-alert',
+                            title: 'Configuración Requerida',
+                            description: 'Faltan datos de la empresa (Razón Social o CIF)',
+                            href: '/admin/empresa',
+                            date: new Date().toISOString(),
+                            icon: Info,
+                            color: 'text-red-500 bg-red-50'
+                        });
+                    }
+                }
 
                 vacs.forEach((v: VacationRequest) => {
                     const id = `vac-${v.rowid}`;

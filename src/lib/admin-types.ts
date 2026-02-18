@@ -41,14 +41,17 @@ export interface DolibarrUser {
     firstname: string;
     lastname: string;
     active: string;
+    statut?: string;
+    status?: string;
     admin: string;
     email?: string;
+    phone?: string;
     user_mobile?: string;
     office_phone?: string;
     note_private?: string;
     array_options?: {
         options_dni?: string | null;
-        options_seguridadsocial?: string | null;
+        options_naf?: string | null;
         [key: string]: any;
     };
 }

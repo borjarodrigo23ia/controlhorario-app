@@ -26,8 +26,8 @@ export async function PUT(
         }
 
 
-        // Use standard Dolibarr users endpoint which handles extrafields (array_options) correctly
-        const response = await fetch(`${apiUrl}/users/${id}`, {
+        // Use custom SetupUsuarios API which handles setPassword and extrafields correctly
+        const response = await fetch(`${apiUrl}/setupusuariosapi/updateUsuario/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',

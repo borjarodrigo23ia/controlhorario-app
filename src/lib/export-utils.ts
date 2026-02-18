@@ -129,7 +129,7 @@ export const exportToPDF = async (
     // Company Side
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8.5);
-    doc.text(companyData?.name || 'Talleres Vilamarxant S.L.', 14, 47, { maxWidth: 85 });
+    doc.text(companyData?.name || 'Nombre de Empresa', 14, 47, { maxWidth: 85 });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     doc.setTextColor(mutedColor[0], mutedColor[1], mutedColor[2]);

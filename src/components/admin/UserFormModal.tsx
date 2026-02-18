@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, User as UserIcon, Mail, Lock, Shield, Check, Loader2, Fingerprint, Phone, Smartphone } from 'lucide-react';
+import { X, User as UserIcon, Mail, Lock, Shield, Check, Loader2, Fingerprint, Phone, Smartphone, Eye, EyeOff, MapPin, MapPinOff } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { DolibarrUser } from '@/lib/admin-types';
@@ -25,8 +25,10 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
         naf: '',
         user_mobile: '',
         office_phone: '',
-        isAdmin: false
+        isAdmin: false,
+        requireGeolocation: false
     });
+    const [showPassword, setShowPassword] = useState(false);
 
     const isEditMode = !!initialData;
 
@@ -44,11 +46,30 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
                     email: initialData.email || '',
                     password: '', // Password empty on edit
                     dni: initialData.array_options?.options_dni || dni, // Prefer extrafield, fallback to note parse
-                    naf: initialData.array_options?.options_seguridadsocial || '',
+                    naf: initialData.array_options?.options_naf || '',
                     user_mobile: initialData.user_mobile || '',
-                    office_phone: initialData.office_phone || '',
-                    isAdmin: initialData.admin === '1'
+                    office_phone: initialData.phone || initialData.office_phone || '',
+                    isAdmin: initialData.admin === '1',
+                    requireGeolocation: false // Will be updated by fetch
                 });
+
+                // Fetch current geolocation config for the user
+                const fetchUserConfig = async () => {
+                    try {
+                        const token = localStorage.getItem('dolibarr_token');
+                        const res = await fetch(`/api/users/${initialData.id}/config`, {
+                            headers: { 'DOLAPIKEY': token || '' }
+                        });
+                        if (res.ok) {
+                            const config = await res.json();
+                            const isGeolocationEnabled = config.require_geolocation === '1' || config.require_geolocation === 1;
+                            setFormData(prev => ({ ...prev, requireGeolocation: isGeolocationEnabled }));
+                        }
+                    } catch (err) {
+                        console.error('Error fetching user config:', err);
+                    }
+                };
+                fetchUserConfig();
             } else {
                 // Reset for create
                 setFormData({
@@ -61,7 +82,8 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
                     naf: '',
                     user_mobile: '',
                     office_phone: '',
-                    isAdmin: false
+                    isAdmin: false,
+                    requireGeolocation: false
                 });
             }
         }
@@ -93,9 +115,11 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
             const payload: any = {
                 ...formData,
                 admin: formData.isAdmin ? 1 : 0,
+                user_mobile: formData.user_mobile,
+                office_phone: formData.office_phone,
                 array_options: {
                     options_dni: formData.dni,
-                    options_seguridadsocial: formData.naf
+                    options_naf: formData.naf
                 }
             };
 
@@ -115,7 +139,34 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
 
             if (!res.ok) {
                 const errorData = await res.json();
-                throw new Error(errorData.message || errorData.error || 'Error al guardar usuario');
+                console.error('User save technical details:', errorData.details || errorData.message || errorData);
+                throw new Error(errorData.message || 'Error al guardar el usuario. Verfique los campos.');
+            }
+
+            const savedUser = await res.json();
+            // Handle both flat response or nested { data: { ... } } from our API route
+            const userId = isEditMode
+                ? initialData?.id
+                : (savedUser.data?.id || savedUser.data?.log_id || savedUser.id || savedUser.log_id);
+
+            // Persist geolocation preference if we have a user ID
+            if (userId) {
+                try {
+                    await fetch(`/api/users/${userId}/config`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'DOLAPIKEY': token || ''
+                        },
+                        body: JSON.stringify({
+                            param_name: 'require_geolocation',
+                            value: formData.requireGeolocation ? '1' : '0'
+                        })
+                    });
+                } catch (configErr) {
+                    console.error('Error persisting geolocation config:', configErr);
+                    // We don't throw here as the main user save was successful
+                }
             }
 
             toast.success(isEditMode ? 'Usuario actualizado' : 'Usuario creado');
@@ -296,15 +347,24 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
                             <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-wider px-1">
                                 <Lock size={12} /> {isEditMode ? 'Nueva Contraseña (Opcional)' : 'Contraseña'}
                             </label>
-                            <input
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                required={!isEditMode}
-                                placeholder={isEditMode ? "Dejar en blanco para no cambiar" : "••••••••"}
-                                className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-3 text-sm text-gray-900 placeholder:text-gray-300 font-bold focus:outline-none focus:ring-2 focus:ring-black/10 transition-all"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required={!isEditMode}
+                                    placeholder={isEditMode ? "Dejar en blanco para no cambiar" : "••••••••"}
+                                    className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-3 pr-12 text-sm text-gray-900 placeholder:text-gray-300 font-bold focus:outline-none focus:ring-2 focus:ring-black/10 transition-all"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                         </div>
 
                         {/* Admin Toggle */}
@@ -323,6 +383,38 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
                                 formData.isAdmin ? "bg-black border-black text-white" : "bg-white border-gray-300"
                             )}>
                                 {formData.isAdmin && <Check size={14} strokeWidth={3} />}
+                            </div>
+                        </div>
+
+                        {/* Geolocation Toggle */}
+                        <div
+                            className="p-4 rounded-2xl border flex items-center justify-between cursor-pointer bg-white transition-all duration-300"
+                            style={{ borderColor: formData.requireGeolocation ? '#A7F2AC' : '#F07873' }}
+                            onClick={() => setFormData(prev => ({ ...prev, requireGeolocation: !prev.requireGeolocation }))}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div
+                                    className={cn("p-2 rounded-xl transition-colors")}
+                                    style={{
+                                        backgroundColor: formData.requireGeolocation ? '#A7F2AC20' : '#F0787320',
+                                        color: formData.requireGeolocation ? '#2D6A4F' : '#9B2226'
+                                    }}
+                                >
+                                    {formData.requireGeolocation ? <MapPin size={18} /> : <MapPinOff size={18} />}
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-gray-900">Requerir Geolocalización</p>
+                                    <p className="text-[10px] text-gray-500 font-medium italic">Solicitar GPS al realizar fichajes</p>
+                                </div>
+                            </div>
+                            <div
+                                className="w-10 h-5 rounded-full relative transition-all duration-300"
+                                style={{ backgroundColor: formData.requireGeolocation ? '#A7F2AC' : '#F07873' }}
+                            >
+                                <div className={cn(
+                                    "absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 shadow-sm",
+                                    formData.requireGeolocation ? "left-6" : "left-1"
+                                )} />
                             </div>
                         </div>
 

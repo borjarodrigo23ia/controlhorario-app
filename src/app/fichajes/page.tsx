@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useFichajes } from '@/hooks/useFichajes';
 import { TimerCard } from '@/components/TimerCard';
@@ -17,6 +17,8 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/ui/RefreshIndicator';
 import { SoftBlockModal } from '@/components/fichajes/SoftBlockModal';
 import { toast } from 'react-hot-toast';
+import { CompanyService } from '@/lib/company-service';
+import { ConfigurationModal } from '@/components/admin/ConfigurationModal';
 
 export default function FichajesPage() {
     const { user } = useAuth();
@@ -47,6 +49,24 @@ export default function FichajesPage() {
     const [softBlockOpen, setSoftBlockOpen] = useState(false);
     const [softBlockData, setSoftBlockData] = useState<{ distance: number, centerName: string } | null>(null);
     const [pendingAction, setPendingAction] = useState<((justification: string, coords?: { lat: string, lng: string }) => Promise<void>) | null>(null);
+
+    const [showConfigModal, setShowConfigModal] = useState(false);
+
+    useEffect(() => {
+        const checkCompanySetup = async () => {
+            if (user?.admin) {
+                try {
+                    const setup = await CompanyService.getSetup();
+                    if (!setup.name || !setup.siren) {
+                        setShowConfigModal(true);
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        };
+        checkCompanySetup();
+    }, [user]);
 
 
     const { pullProgress, isRefreshing } = usePullToRefresh(async () => {
@@ -203,6 +223,10 @@ export default function FichajesPage() {
                 centerName={softBlockData?.centerName}
             />
             <AdminChangeRequestModal />
+            <ConfigurationModal
+                isOpen={showConfigModal}
+                onClose={() => setShowConfigModal(false)}
+            />
         </>
     );
 }

@@ -72,15 +72,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     // Extend session by updating login time on successful refresh
                     localStorage.setItem('dolibarr_login_time', Date.now().toString());
                 } else {
+                    if (res.status === 401) {
+                        console.log('Session expired or invalid (401), logging out.');
+                        logout();
+                        return; // Stop here to avoid setting invalid user state
+                    }
+
                     const errDetail = await res.text();
                     console.error('Failed to fetch user profile:', res.status, errDetail);
-                    setUser({
-                        id: '0',
-                        login: storedUser,
-                        entity: '1',
-                        firstname: storedUser,
-                        admin: false
-                    });
+                    // Do not set a dummy user if we failed to authenticate
+                    setUser(null);
                 }
             } catch (e) {
                 console.error(e);

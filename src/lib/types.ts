@@ -10,6 +10,8 @@ export interface User {
   email?: string;
   user_mobile?: string;
   entity: string;
+  statut?: string;
+  status?: string;
   dolapikey?: string;
   admin?: boolean;
   workplace_center_id?: number | string;
@@ -17,7 +19,7 @@ export interface User {
   permissions?: any[];
   array_options?: {
     options_dni?: string | null;
-    options_seguridadsocial?: string | null;
+    options_naf?: string | null;
     // Add other custom fields here if needed
     [key: string]: any;
   };

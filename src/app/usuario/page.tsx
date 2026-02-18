@@ -29,8 +29,10 @@ export default function UsuarioPage() {
         lastname: '',
         email: '',
         user_mobile: '',
+        office_phone: '',
         password: '',
-        dni: ''
+        dni: '',
+        naf: ''
     });
 
     // Initialize form with user data using API
@@ -65,7 +67,9 @@ export default function UsuarioPage() {
                         lastname: data.lastname || '',
                         email: data.email || '',
                         user_mobile: data.user_mobile || '',
-                        dni: data.note_private?.match(/DNI:\s*([^\n]*)/i)?.[1].trim() || ''
+                        office_phone: data.phone || data.office_phone || '',
+                        dni: data.array_options?.options_dni || data.note_private?.match(/DNI:\s*([^\n]*)/i)?.[1].trim() || '',
+                        naf: data.array_options?.options_naf || ''
                     }));
                 }
             } catch (error) {
@@ -89,14 +93,16 @@ export default function UsuarioPage() {
                     'DOLAPIKEY': token || ''
                 },
                 body: JSON.stringify({
-                    // Dolibarr often requires login to be present/unchanged to validate the user
-                    login: user.login,
                     firstname: formData.firstname,
                     lastname: formData.lastname,
                     email: formData.email,
-                    mobile: formData.user_mobile,
-                    user_mobile: formData.user_mobile, // Send both to cover field name variations
+                    user_mobile: formData.user_mobile,
+                    office_phone: formData.office_phone,
                     note_private: formData.dni ? `DNI: ${formData.dni}` : '',
+                    array_options: {
+                        options_dni: formData.dni,
+                        options_naf: formData.naf
+                    },
                     ...(formData.password ? { password: formData.password } : {})
                 })
             });
@@ -108,8 +114,15 @@ export default function UsuarioPage() {
                 setIsEditing(false);
             } else {
                 const err = await res.json();
-                console.error("Error updating profile:", err);
-                toast.error(`Error: ${err.message || err.details || 'No se pudo actualizar'}`);
+                console.error("Profile update failed details:", err.details || err.message || err);
+
+                // If the message contains technical strings like "Dolibarr" or "Error 500", override it
+                let userMessage = err.message || 'No se pudo actualizar el perfil. Por favor, inténtelo de nuevo.';
+                if (userMessage.includes('Dolibarr') || userMessage.includes('500') || userMessage.includes('Internal Server Error')) {
+                    userMessage = 'Error al guardar los datos. Por favor, revise la información e intente de nuevo.';
+                }
+
+                toast.error(userMessage);
             }
         } catch (error) {
             toast.error('Error de conexión');
@@ -259,6 +272,40 @@ export default function UsuarioPage() {
                                     )}
                                 </div>
 
+                                <div className="group">
+                                    <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 transition-colors">
+                                        Teléfono oficina / fijo
+                                    </label>
+                                    {isEditing ? (
+                                        <input
+                                            type="tel"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all underline decoration-slate-300 decoration-2 underline-offset-4"
+                                            value={formData.office_phone}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, office_phone: e.target.value }))}
+                                            placeholder="Extensión o fijo"
+                                        />
+                                    ) : (
+                                        <p className="text-base font-bold text-slate-700 px-1">{formData.office_phone || 'No registrado'}</p>
+                                    )}
+                                </div>
+
+                                <div className="group">
+                                    <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 transition-colors">
+                                        Nº Seguridad Social (NAF)
+                                    </label>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all underline decoration-slate-300 decoration-2 underline-offset-4"
+                                            value={formData.naf}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, naf: e.target.value }))}
+                                            placeholder="00/00000000/00"
+                                        />
+                                    ) : (
+                                        <p className="text-base font-bold text-slate-700 px-1">{formData.naf || 'No especificado'}</p>
+                                    )}
+                                </div>
+
 
 
                                 {isEditing && (
@@ -272,9 +319,6 @@ export default function UsuarioPage() {
                                                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 pr-12 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all placeholder:text-slate-300 placeholder:font-medium underline decoration-slate-300 decoration-2 underline-offset-4"
                                                 value={formData.password}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                                                onFocus={() => setIsPasswordFocused(true)}
-                                                onBlur={() => setIsPasswordFocused(false)}
-                                                placeholder="Dejar en blanco para no cambiar"
                                             />
                                             <button
                                                 type="button"
@@ -284,11 +328,6 @@ export default function UsuarioPage() {
                                                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                             </button>
                                         </div>
-                                        {isPasswordFocused && (
-                                            <p className="text-[10px] font-bold text-amber-600 mt-2 flex items-center gap-1.5 uppercase tracking-wider animate-in fade-in slide-in-from-top-1">
-                                                <span className="text-base">⚠️</span> Mínimo 12 caracteres requeridos
-                                            </p>
-                                        )}
                                     </div>
                                 )}
                             </div>

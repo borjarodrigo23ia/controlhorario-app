@@ -3,9 +3,9 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { firstname, lastname, email, login, password, dni, user_mobile } = body;
+        const { firstname, lastname, email, login, password, dni, user_mobile, naf } = body;
 
-        // Validation
+        // Validation - DNI and user_mobile are mandatory for this app
         if (!firstname || !lastname || !login || !password || !dni || !user_mobile) {
             return NextResponse.json(
                 { success: false, message: 'Faltan campos obligatorios' },
@@ -25,7 +25,6 @@ export async function POST(request: Request) {
         }
 
         // Construct Dolibarr API URL
-        // Endpoint identified: POST /setupusuarios/crearUsuario
         const endpoint = `${apiUrl}/setupusuariosapi/crearUsuario`;
 
         const response = await fetch(endpoint, {
@@ -44,7 +43,12 @@ export async function POST(request: Request) {
                 employee: 1, // Default to employee
                 admin: 0,     // Default to non-admin
                 note_private: dni ? `DNI: ${dni}` : '',
-                mobile: user_mobile
+                mobile: user_mobile,
+                user_mobile: user_mobile,
+                array_options: {
+                    options_dni: dni,
+                    options_naf: naf || ''
+                }
             })
         });
 
@@ -62,8 +66,15 @@ export async function POST(request: Request) {
         const data = await response.json();
 
         if (!response.ok) {
+            const rawError = data.error?.message || data.message || 'Error desconocido';
+            console.error("Dolibarr API Error:", rawError);
+
             return NextResponse.json(
-                { success: false, message: data.error?.message || data.message || 'Error al crear usuario' },
+                {
+                    success: false,
+                    message: 'No se pudo crear el usuario. Por favor, verifique los datos e intente de nuevo.',
+                    details: rawError
+                },
                 { status: response.status }
             );
         }
@@ -107,7 +118,11 @@ export async function POST(request: Request) {
     } catch (error: any) {
         console.error("Register API Error:", error);
         return NextResponse.json(
-            { success: false, message: 'Error interno del servidor' },
+            {
+                success: false,
+                message: 'Error temporal en el sistema. Inténtelo más tarde.',
+                details: error.message
+            },
             { status: 500 }
         );
     }

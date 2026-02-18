@@ -27,6 +27,7 @@ export default function LoginPage() {
         email: '',
         password: '',
         dni: '',
+        naf: '',
         user_mobile: '',
         center_ids: [] as number[]
     });
@@ -112,7 +113,8 @@ export default function LoginPage() {
                         setFormData(prev => ({ ...prev, password: '' }));
                     }
                 } else {
-                    setError(data.message || "Error al crear la cuenta");
+                    console.error("Registration failed details:", data.details || data.message || data);
+                    setError(data.message || "No se pudo crear la cuenta. Por favor, revise los datos e inténtelo de nuevo.");
                 }
 
             } else {
@@ -217,18 +219,33 @@ export default function LoginPage() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider ml-1">Móvil *</label>
+                                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider ml-1">Nº Seg. Social (NAF)</label>
                                     <input
-                                        type="tel"
-                                        name="user_mobile"
-                                        placeholder="600123456"
+                                        type="text"
+                                        name="naf"
+                                        placeholder="00/00000000/00"
                                         className="w-full h-11 px-4 rounded-xl bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white/20 transition-all text-sm"
-                                        value={formData.user_mobile}
+                                        value={formData.naf}
                                         onChange={handleChange}
                                         onFocus={handleFocus}
-                                        required
                                     />
                                 </div>
+                            </div>
+                        )}
+
+                        {state === "register" && (
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-gray-500 uppercase tracking-wider ml-1">Móvil *</label>
+                                <input
+                                    type="tel"
+                                    name="user_mobile"
+                                    placeholder="600123456"
+                                    className="w-full h-11 px-4 rounded-xl bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white/20 transition-all text-sm"
+                                    value={formData.user_mobile}
+                                    onChange={handleChange}
+                                    onFocus={handleFocus}
+                                    required
+                                />
                             </div>
                         )}
 

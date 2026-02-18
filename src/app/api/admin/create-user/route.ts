@@ -8,7 +8,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { firstname, lastname, email, login, password, dni, isAdmin } = body;
+        const { firstname, lastname, email, login, password, dni, isAdmin, user_mobile, office_phone, naf } = body;
 
         // Validation
         if (!firstname || !login || !password) {
@@ -40,9 +40,12 @@ export async function POST(request: Request) {
                 employee: 1, // Default to employee
                 admin: isAdmin ? 1 : 0,
                 note_private: dni ? `DNI: ${dni}` : '',
+                mobile: user_mobile,
+                user_mobile: user_mobile,
+                phone: office_phone,
                 array_options: body.array_options || {
                     options_dni: dni,
-                    options_seguridadsocial: body.naf
+                    options_naf: naf || body.naf
                 }
             })
         });
@@ -63,8 +66,15 @@ export async function POST(request: Request) {
         const data = await response.json();
 
         if (!response.ok) {
+            const rawError = data.error?.message || data.message || 'Error desconocido';
+            console.error("Dolibarr API Error:", rawError);
+
             return NextResponse.json(
-                { success: false, message: data.error?.message || data.message || 'Error al crear usuario' },
+                {
+                    success: false,
+                    message: 'Error al crear el usuario en el sistema. Revise los datos técnicos.',
+                    details: rawError
+                },
                 { status: response.status }
             );
         }
@@ -77,7 +87,11 @@ export async function POST(request: Request) {
     } catch (error: any) {
         console.error("Create User API Error:", error);
         return NextResponse.json(
-            { success: false, message: 'Error interno del servidor' },
+            {
+                success: false,
+                message: 'No se pudo procesar la solicitud de creación.',
+                details: error.message
+            },
             { status: 500 }
         );
     }

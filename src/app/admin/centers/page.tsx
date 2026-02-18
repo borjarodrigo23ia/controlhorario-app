@@ -509,7 +509,7 @@ export default function CentersPage() {
                             <div className="space-y-3">
                                 <div className="relative">
                                     <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1 flex items-center gap-1">
-                                        Nombre {selectedType === 'project' ? 'del Proyecto' : 'del Centro'}
+                                        Nombre {selectedType === 'project' ? 'del Proyecto' : 'del Centro'} <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
@@ -549,6 +549,14 @@ export default function CentersPage() {
                                     <span>Obtener coordenadas actuales</span>
                                 </button>
 
+                                <button
+                                    onClick={() => document.getElementById('assign-employees-section')?.scrollIntoView({ behavior: 'smooth' })}
+                                    className="w-full py-2.5 text-[10px] font-bold text-white bg-black rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-black/5"
+                                >
+                                    <Users size={12} strokeWidth={2.5} />
+                                    <span>Asignar Trabajadores</span>
+                                </button>
+
                                 <div className="pt-2">
                                     <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1 block">
                                         Seleccionar en Mapa
@@ -581,7 +589,7 @@ export default function CentersPage() {
                             </div>
 
                             {/* Section: Assignments */}
-                            <div className="pt-1">
+                            <div className="pt-1" id="assign-employees-section">
                                 <div className="flex items-center justify-between mb-2">
                                     <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                                         <Users size={12} />

@@ -38,7 +38,7 @@ interface UserDetailsProps {
         note_private?: string;
         array_options?: {
             options_dni?: string | null;
-            options_seguridadsocial?: string | null;
+            options_naf?: string | null;
             [key: string]: any;
         };
     };
@@ -82,7 +82,7 @@ export default function UserDetailsCard({ user, onEdit }: UserDetailsProps) {
     // Extract DNI from note_private if available
     const dniMatch = user.note_private?.match(/DNI:\s*([^\n]*)/i);
     const dni = user.array_options?.options_dni || (dniMatch ? dniMatch[1].trim() : null);
-    const naf = user.array_options?.options_seguridadsocial || null;
+    const naf = user.array_options?.options_naf || null;
 
 
     return (
@@ -108,8 +108,6 @@ export default function UserDetailsCard({ user, onEdit }: UserDetailsProps) {
                         </h3>
                         <p className="text-xs text-gray-500 font-medium flex items-center gap-2">
                             <span>{user.login}</span>
-                            <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                            <span>Información Personal</span>
                         </p>
                     </div>
                 </div>

@@ -6,6 +6,7 @@ import { Clock, LayoutDashboard, User, CalendarClock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCorrections } from '@/hooks/useCorrections';
 import { useVacations } from '@/hooks/useVacations';
+import { CompanyService } from '@/lib/company-service';
 import { useEffect, useState } from 'react';
 
 export default function MobileNav() {
@@ -25,7 +26,19 @@ export default function MobileNav() {
                     // Fix: use the returned data directly instead of relying on state
                     const pendingCorrections = await fetchCorrections(undefined, 'pendiente') || [];
                     const pendingVacs = await fetchVacations({ estado: 'pendiente' }) || [];
-                    setHasNotifications(pendingVacs.length > 0 || pendingCorrections.length > 0);
+
+                    // Check Company Config
+                    let configMissing = false;
+                    try {
+                        const setup = await CompanyService.getSetup();
+                        if (!setup.name || !setup.siren) {
+                            configMissing = true;
+                        }
+                    } catch (e) {
+                        console.error('Error checking company config in MobileNav', e);
+                    }
+
+                    setHasNotifications(pendingVacs.length > 0 || pendingCorrections.length > 0 || configMissing);
                 } else {
                     // User: Check for pending admin-initiated corrections
                     const token = localStorage.getItem('dolibarr_token');

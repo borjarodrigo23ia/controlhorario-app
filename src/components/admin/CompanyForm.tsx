@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-hot-toast';
 import { CompanyService, CompanySetup } from '@/lib/company-service';
 import { companySchema, CompanyFormData } from '@/lib/schemas/company-schema';
-import { Loader2, Save, Check, Building2, Globe, Phone, Mail, X, CircleCheck, BadgeInfo, MapPin, HouseHeart, MapPinHouse } from 'lucide-react';
+import { Loader2, Phone, Mail, X, CircleCheck, MapPin, HouseHeart, MapPinHouse } from 'lucide-react';
 
 export default function CompanyForm() {
     const [loading, setLoading] = useState(true);
@@ -109,7 +109,6 @@ export default function CompanyForm() {
                     {/* Section 1: Identity */}
                     <div className="md:col-span-2">
                         <div className="flex items-center gap-2 mb-2">
-                            <BadgeInfo size={16} className="text-black" />
                             <span className="text-[11px] font-black text-black uppercase tracking-[0.3em]">Identidad Corporativa</span>
                             <div className="h-px flex-1 bg-gray-50" />
                         </div>

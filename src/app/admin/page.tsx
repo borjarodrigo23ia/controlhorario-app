@@ -8,12 +8,18 @@ import { Users, BadgeCheck, Settings, LayoutDashboard, CalendarClock, ChevronRig
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useCorrections } from '@/hooks/useCorrections';
 import { useVacations } from '@/hooks/useVacations';
+import { CompanyService, CompanySetup } from '@/lib/company-service';
+
+import { ConfigurationModal } from '@/components/admin/ConfigurationModal';
 
 export default function AdminPage() {
     const { user } = useAuth();
     const { corrections, fetchCorrections } = useCorrections();
     const { fetchVacations } = useVacations();
     const [pendingVacations, setPendingVacations] = useState(0);
+    const [missingConfig, setMissingConfig] = useState(false);
+    const [showConfigModal, setShowConfigModal] = useState(false);
+    const [missingUserDataCount, setMissingUserDataCount] = useState(0);
 
     useEffect(() => {
         fetchCorrections(undefined, 'pendiente');
@@ -22,7 +28,53 @@ export default function AdminPage() {
             const data = await fetchVacations({ estado: 'pendiente' });
             setPendingVacations(data ? data.length : 0);
         };
+
+        const checkCompanySetup = async () => {
+            try {
+                const setup = await CompanyService.getSetup();
+                if (!setup.name || !setup.siren) {
+                    setMissingConfig(true);
+                    // Check if already dismissed in session storage ONLY if explicit dismissal logic added
+                    // For now, always show on mount if missing to be insistent as requested
+                    setShowConfigModal(true);
+                }
+            } catch (e) {
+                console.error('Error checking company setup', e);
+            }
+        };
+
+        const checkUsersData = async () => {
+            try {
+                const token = localStorage.getItem('dolibarr_token');
+                const res = await fetch('/api/users', {
+                    headers: { 'DOLAPIKEY': token || '' }
+                });
+                if (res.ok) {
+                    const users = await res.json();
+                    if (Array.isArray(users)) {
+                        const count = users.filter((u: any) => {
+                            // Check if active (handle multiple potential field names from API)
+                            const isActive = u.statut === '1' || u.status === '1' || u.active === '1';
+                            if (!isActive) return false;
+
+                            // Check missing fields (DNI or NAF)
+                            // Note: array_options might be null/undefined or incomplete
+                            const dni = u.array_options?.options_dni;
+                            const naf = u.array_options?.options_naf;
+
+                            return !dni || !naf;
+                        }).length;
+                        setMissingUserDataCount(count);
+                    }
+                }
+            } catch (e) {
+                console.error('Error checking users data', e);
+            }
+        };
+
         loadVacations();
+        checkCompanySetup();
+        checkUsersData();
     }, [fetchCorrections, fetchVacations]);
 
     // Simple protection
@@ -32,7 +84,14 @@ export default function AdminPage() {
 
     const cards = [
         { title: 'Datos Empresa', icon: HouseHeart, href: '/admin/empresa', desc: 'Configurar identidad y logo', color: 'purple' },
-        { title: 'Usuarios', icon: Users, href: '/admin/users', desc: 'Gestionar configuración de empleados', color: 'primary' },
+        {
+            title: 'Usuarios',
+            icon: Users,
+            href: '/admin/users',
+            desc: 'Gestionar configuración de empleados',
+            color: 'primary',
+            badge: missingUserDataCount
+        },
         { title: 'Centros de Trabajo', icon: MapPinHouse, href: '/admin/centers', desc: 'Configurar geolocalización y ubicaciones', color: 'blue' },
         { title: 'Historial Global', icon: CalendarClock, href: '/admin/fichajes', desc: 'Consulta los registros de todos los usuarios', color: 'indigo' },
         { title: 'Gestión de Jornadas', icon: CalendarRange, href: '/admin/jornadas', desc: 'Asignar jornadas a trabajadores', color: 'orange' },
@@ -64,6 +123,23 @@ export default function AdminPage() {
                     icon={LayoutDashboard}
                     badge="Sistemas"
                 />
+
+                <ConfigurationModal
+                    isOpen={showConfigModal}
+                    onClose={() => setShowConfigModal(false)}
+                />
+
+                {missingConfig && (
+                    <div className="mb-8 p-4 rounded-2xl bg-amber-50 border border-amber-100 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                        <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 animate-pulse">
+                            <HouseHeart size={20} />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-amber-900">Configuración Pendiente</h3>
+                            <p className="text-xs text-amber-700 font-medium">Es necesario configurar la Razón Social y el CIF de la empresa.</p>
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {cards.map((c) => (

@@ -146,8 +146,8 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({ isOpen, onClos
                         <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> Visualización Optimizada</span>
                         <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div> A4 Portrait</span>
                     </div>
-                    <div className="text-[10px] font-bold text-slate-300 uppercase italic">
-                        Talleres Vilamarxant S.L. · Software Gestor
+                    <div className="text-[10px] font-black text-slate-300 uppercase italic">
+                        Software Gestor
                     </div>
                 </div>
             </div>
