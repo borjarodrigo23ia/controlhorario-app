@@ -121,16 +121,24 @@ async function handleRequest(request: NextRequest, params: { slug: string[] }, m
                             const prefs = await getUserPreferences(userId);
                             if (prefs.vacaciones) {
                                 const action = lastSegment === 'approve' ? 'Aprobada' : 'Rechazada';
-                                await sendPushNotification(userId, {
+                                const debugResult = await sendPushNotification(userId, {
                                     title: `Vacaciones ${action}`,
                                     body: `Tu solicitud de vacaciones ha sido ${action.toLowerCase()}.`,
                                     url: '/vacaciones' // Or history
                                 });
+                                responseData.debug_notification = debugResult;
+                            } else {
+                                responseData.debug_notification = { skipped: true, reason: 'User disabled vacation notifications' };
                             }
+                        } else {
+                            responseData.debug_notification = { error: 'User ID not found in vacation details' };
                         }
+                    } else {
+                        responseData.debug_notification = { error: 'Failed to fetch vacation details', status: detailsRes.status };
                     }
-                } catch (bgError) {
+                } catch (bgError: any) {
                     console.error('Background notification error:', bgError);
+                    responseData.debug_notification = { error: bgError.message };
                 }
 
             }
