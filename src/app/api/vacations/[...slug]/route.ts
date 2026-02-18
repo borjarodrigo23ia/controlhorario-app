@@ -119,7 +119,7 @@ async function handleRequest(request: NextRequest, params: { slug: string[] }, m
                 }
             }
             // CASE 2: Approval/Rejection -> Notify User
-            else if (lastSegment === 'approve' || lastSegment === 'reject') {
+            else if (['approve', 'reject', 'aprobar', 'rechazar'].includes(lastSegment)) {
                 const vacationId = params.slug[params.slug.length - 2];
                 // Run async without blocking response
                 try {
@@ -136,7 +136,8 @@ async function handleRequest(request: NextRequest, params: { slug: string[] }, m
                         if (userId) {
                             const prefs = await getUserPreferences(userId);
                             if (prefs.vacaciones) {
-                                const action = lastSegment === 'approve' ? 'Aprobada' : 'Rechazada';
+                                const isApproval = ['approve', 'aprobar'].includes(lastSegment);
+                                const action = isApproval ? 'Aprobada' : 'Rechazada';
                                 const debugResult = await sendPushNotification(userId, {
                                     title: `Vacaciones ${action}`,
                                     body: `Tu solicitud de vacaciones ha sido ${action.toLowerCase()}.`,
