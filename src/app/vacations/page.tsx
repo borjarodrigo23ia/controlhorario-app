@@ -16,6 +16,11 @@ export default function VacationsPage() {
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [activeTab, setActiveTab] = useState<'requests' | 'calendar'>('requests');
 
+    // DEBUG: Version Check
+    React.useEffect(() => {
+        console.log("VERSION CHECK: 2026-02-18 T14:45 - Deployment Active");
+    }, []);
+
     const { pullProgress, isRefreshing } = usePullToRefresh(async () => {
         setRefreshTrigger(prev => prev + 1);
         // Add a small artificial delay for better UX if needed, 
