@@ -44,7 +44,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
             const { sendPushNotification } = await import('@/lib/push-sender');
             const { getUserPreferences } = await import('@/lib/push-db');
 
-            const prefs = getUserPreferences(userId);
+            const prefs = await getUserPreferences(userId);
             if (prefs.cambios) {
                 await sendPushNotification(userId, {
                     title: 'Solicitud Rechazada',

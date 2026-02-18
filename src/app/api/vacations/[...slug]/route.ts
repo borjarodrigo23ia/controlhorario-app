@@ -119,7 +119,7 @@ async function handleRequest(request: NextRequest, params: { slug: string[] }, m
                             const userId = details.fk_user;
 
                             if (userId) {
-                                const prefs = getUserPreferences(userId);
+                                const prefs = await getUserPreferences(userId);
                                 if (prefs.vacaciones) {
                                     const action = lastSegment === 'approve' ? 'Aprobada' : 'Rechazada';
                                     await sendPushNotification(userId, {
