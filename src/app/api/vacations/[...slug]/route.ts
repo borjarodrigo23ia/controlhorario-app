@@ -106,34 +106,33 @@ async function handleRequest(request: NextRequest, params: { slug: string[] }, m
             if (lastSegment === 'approve' || lastSegment === 'reject') {
                 const vacationId = params.slug[params.slug.length - 2];
                 // Run async without blocking response
-                (async () => {
-                    try {
-                        const { sendPushNotification } = await import('@/lib/push-sender');
-                        const { getUserPreferences } = await import('@/lib/push-db');
+                try {
+                    const { sendPushNotification } = await import('@/lib/push-sender');
+                    const { getUserPreferences } = await import('@/lib/push-db');
 
-                        // Fetch details to find user
-                        const detailsUrl = `${apiUrl}/fichajestrabajadoresapi/vacaciones/${vacationId}`;
-                        const detailsRes = await fetch(detailsUrl, { headers: { 'DOLAPIKEY': apiKey } });
-                        if (detailsRes.ok) {
-                            const details = await detailsRes.json();
-                            const userId = details.fk_user;
+                    // Fetch details to find user
+                    const detailsUrl = `${apiUrl}/fichajestrabajadoresapi/vacaciones/${vacationId}`;
+                    const detailsRes = await fetch(detailsUrl, { headers: { 'DOLAPIKEY': apiKey } });
+                    if (detailsRes.ok) {
+                        const details = await detailsRes.json();
+                        const userId = details.fk_user;
 
-                            if (userId) {
-                                const prefs = await getUserPreferences(userId);
-                                if (prefs.vacaciones) {
-                                    const action = lastSegment === 'approve' ? 'Aprobada' : 'Rechazada';
-                                    await sendPushNotification(userId, {
-                                        title: `Vacaciones ${action}`,
-                                        body: `Tu solicitud de vacaciones ha sido ${action.toLowerCase()}.`,
-                                        url: '/vacaciones' // Or history
-                                    });
-                                }
+                        if (userId) {
+                            const prefs = await getUserPreferences(userId);
+                            if (prefs.vacaciones) {
+                                const action = lastSegment === 'approve' ? 'Aprobada' : 'Rechazada';
+                                await sendPushNotification(userId, {
+                                    title: `Vacaciones ${action}`,
+                                    body: `Tu solicitud de vacaciones ha sido ${action.toLowerCase()}.`,
+                                    url: '/vacaciones' // Or history
+                                });
                             }
                         }
-                    } catch (bgError) {
-                        console.error('Background notification error:', bgError);
                     }
-                })();
+                } catch (bgError) {
+                    console.error('Background notification error:', bgError);
+                }
+
             }
         }
 

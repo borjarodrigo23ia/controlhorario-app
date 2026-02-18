@@ -88,18 +88,16 @@ export async function POST(request: NextRequest) {
         const data = await response.json();
 
         // --- Notify Admin ---
-        (async () => {
-            try {
-                const { sendPushNotificationToAdmin } = await import('@/lib/push-sender');
-                await sendPushNotificationToAdmin({
-                    title: 'Nueva solicitud de vacaciones',
-                    body: `Un usuario ha solicitado vacaciones.`,
-                    url: '/admin/vacaciones'
-                });
-            } catch (err) {
-                console.error('Error sending admin notification for vacation:', err);
-            }
-        })();
+        try {
+            const { sendPushNotificationToAdmin } = await import('@/lib/push-sender');
+            await sendPushNotificationToAdmin({
+                title: 'Nueva solicitud de vacaciones',
+                body: `Un usuario ha solicitado vacaciones.`,
+                url: '/admin/vacaciones'
+            });
+        } catch (err) {
+            console.error('Error sending admin notification for vacation:', err);
+        }
 
         return NextResponse.json(data);
 
