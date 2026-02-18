@@ -61,3 +61,50 @@ export async function GET(request: NextRequest) {
         );
     }
 }
+export async function POST(request: NextRequest) {
+    try {
+        const apiKey = request.headers.get('DOLAPIKEY');
+        if (!apiKey) {
+            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        }
+
+        const body = await request.json();
+        const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
+
+        const response = await fetch(`${apiUrl}/fichajestrabajadoresapi/vacaciones`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'DOLAPIKEY': apiKey
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            return NextResponse.json({ error: errorText }, { status: response.status });
+        }
+
+        const data = await response.json();
+
+        // --- Notify Admin ---
+        (async () => {
+            try {
+                const { sendPushNotificationToAdmin } = await import('@/lib/push-sender');
+                await sendPushNotificationToAdmin({
+                    title: 'Nueva solicitud de vacaciones',
+                    body: `Un usuario ha solicitado vacaciones.`,
+                    url: '/admin/vacaciones'
+                });
+            } catch (err) {
+                console.error('Error sending admin notification for vacation:', err);
+            }
+        })();
+
+        return NextResponse.json(data);
+
+    } catch (error: any) {
+        console.error('API Vacations POST Error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}

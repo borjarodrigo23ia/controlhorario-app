@@ -93,6 +93,7 @@ export default function LoginPage() {
                         email: formData.email,
                         password: formData.password,
                         dni: formData.dni,
+                        naf: formData.naf,
                         user_mobile: formData.user_mobile,
                         center_ids: formData.center_ids
                     })

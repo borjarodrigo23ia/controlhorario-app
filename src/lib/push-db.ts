@@ -24,16 +24,17 @@ export interface UserPreferences {
     cambios: boolean;    // Shift changes/correction requests
 }
 
-interface SubscriptionRecord {
+export interface SubscriptionRecord {
     userId: string;
     subscription: PushSubscription;
     userAgent?: string;
+    isAdmin: boolean;
     updatedAt: string;
 }
 
 // --- Subscriptions ---
 
-export function saveSubscription(userId: string, subscription: PushSubscription, userAgent?: string) {
+export function saveSubscription(userId: string, subscription: PushSubscription, isAdmin: boolean, userAgent?: string) {
     let data: SubscriptionRecord[] = [];
     if (fs.existsSync(SUBSCRIPTIONS_FILE)) {
         try {
@@ -50,6 +51,7 @@ export function saveSubscription(userId: string, subscription: PushSubscription,
         userId,
         subscription,
         userAgent,
+        isAdmin,
         updatedAt: new Date().toISOString()
     };
 

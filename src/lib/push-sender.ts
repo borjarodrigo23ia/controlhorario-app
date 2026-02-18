@@ -50,11 +50,32 @@ export async function sendPushNotification(userId: string, payload: Notification
 }
 
 export async function sendPushNotificationToAdmin(payload: NotificationPayload) {
-    // TODO: Determine how to identify admins. 
-    // For now, we might notify specific users or all users with 'admin' flag if we stored it.
-    // Since we don't store admin status in push-db, we might need to fetch it or rely on a hardcoded list/env var.
-    // Fallback: Notify NO ONE for now unless we implementation admin ID discovery.
-    // Or we could fetch logic from Dolibarr.
-    console.warn("sendPushNotificationToAdmin not fully implemented without admin user discovery");
-    return { success: false };
+    const allSubs = getAllSubscriptions();
+    const adminSubs = allSubs.filter(s => s.isAdmin);
+
+    if (adminSubs.length === 0) {
+        console.warn("No admin subscriptions found to notify");
+        return { success: false, sent: 0 };
+    }
+
+    let sentCount = 0;
+    const errors = [];
+
+    for (const record of adminSubs) {
+        try {
+            await webPush.sendNotification(
+                record.subscription as any,
+                JSON.stringify({
+                    ...payload,
+                    // Add distinctive icon or marker for admin notifications if desired
+                })
+            );
+            sentCount++;
+        } catch (error: any) {
+            console.error(`Error sending push to admin ${record.userId}:`, error.message);
+            errors.push(error);
+        }
+    }
+
+    return { success: true, sent: sentCount, total: adminSubs.length };
 }

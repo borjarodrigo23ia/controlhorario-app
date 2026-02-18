@@ -106,7 +106,7 @@ export default function PushNotificationManager() {
             });
 
             // Send subscription to backend
-            await fetch('/api/web-push/subscribe', {
+            const res = await fetch('/api/web-push/subscribe', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -116,9 +116,18 @@ export default function PushNotificationManager() {
                 body: JSON.stringify(subscription)
             });
 
-            setIsSubscribed(true);
-            setPermission(Notification.permission);
-            toast.success('Notificaciones activadas');
+            if (res.ok) {
+                const data = await res.json();
+                setIsSubscribed(true);
+                setPermission(Notification.permission);
+                if (data.isAdmin) {
+                    toast.success('Notificaciones de administrador activadas');
+                } else {
+                    toast.success('Notificaciones activadas');
+                }
+            } else {
+                throw new Error('Failed to save subscription in backend');
+            }
         } catch (error) {
             console.error('Error subscribing to push:', error);
             toast.error('Error al activar notificaciones');

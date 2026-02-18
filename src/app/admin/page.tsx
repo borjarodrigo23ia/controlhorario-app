@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import Sidebar from '@/components/Sidebar';
 import MobileNav from '@/components/MobileNav';
-import { Users, BadgeCheck, Settings, LayoutDashboard, CalendarClock, ChevronRight, MapPinHouse, CalendarRange, Palmtree, HouseHeart } from 'lucide-react';
+import { Users, BadgeCheck, Settings, LayoutDashboard, CalendarClock, ChevronRight, MapPinHouse, CalendarRange, Palmtree, HouseHeart, TriangleAlert } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useCorrections } from '@/hooks/useCorrections';
 import { useVacations } from '@/hooks/useVacations';
@@ -130,9 +130,9 @@ export default function AdminPage() {
                 />
 
                 {missingConfig && (
-                    <div className="mb-8 p-4 rounded-2xl bg-amber-50 border border-amber-100 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                        <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 animate-pulse">
-                            <HouseHeart size={20} />
+                    <div className="mb-8 p-4 rounded-2xl bg-amber-50 border border-amber-100 flex items-center gap-4 animate-in fade-in slide-in-from-top-2">
+                        <div className="w-14 h-14 rounded-[1.2rem] bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 animate-pulse border border-amber-200/50 shadow-sm">
+                            <TriangleAlert size={24} strokeWidth={2.2} />
                         </div>
                         <div>
                             <h3 className="text-sm font-bold text-amber-900">Configuración Pendiente</h3>

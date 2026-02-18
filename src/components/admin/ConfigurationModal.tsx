@@ -1,5 +1,5 @@
 import { Portal } from '@/components/ui/Portal';
-import { HouseHeart, ExternalLink, X } from 'lucide-react';
+import { TriangleAlert, ExternalLink, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface ConfigurationModalProps {
@@ -31,8 +31,8 @@ export function ConfigurationModal({ isOpen, onClose }: ConfigurationModalProps)
                             <X size={20} />
                         </button>
 
-                        <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center shrink-0 shadow-xl shadow-amber-500/10 animate-in zoom-in duration-300">
-                            <HouseHeart className="w-8 h-8 text-amber-600" strokeWidth={2.5} />
+                        <div className="w-14 h-14 bg-amber-100 rounded-[1.2rem] flex items-center justify-center shrink-0 shadow-xl shadow-amber-500/10 animate-in zoom-in duration-300">
+                            <TriangleAlert size={24} className="text-amber-600" strokeWidth={2.2} />
                         </div>
 
                         <div className="text-left">

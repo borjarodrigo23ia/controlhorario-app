@@ -59,6 +59,20 @@ export async function POST(request: NextRequest) {
 
         if (!response.ok) {
             console.error('[API Corrections POST] Dolibarr error:', data);
+        } else {
+            // --- Notify Admin ---
+            (async () => {
+                try {
+                    const { sendPushNotificationToAdmin } = await import('@/lib/push-sender');
+                    await sendPushNotificationToAdmin({
+                        title: 'Nueva solicitud de corrección',
+                        body: `Un usuario ha solicitado corregir un fichaje.`,
+                        url: '/admin/corrections'
+                    });
+                } catch (err) {
+                    console.error('Error sending admin notification for correction:', err);
+                }
+            })();
         }
 
         return NextResponse.json(data, { status: response.status });

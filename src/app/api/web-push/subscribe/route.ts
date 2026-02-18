@@ -17,10 +17,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
     try {
         const apiKey = request.headers.get('DOLAPIKEY');
-        const userId = request.headers.get('X-User-Id'); // Ideally passed or extracted from token. 
-        // For now we trust the client or could check session if implemented.
-        // Better: decode user from session/context if available in backend, 
-        // but here we rely on the client sending ID + valid API key as "auth"
+        const userId = request.headers.get('X-User-Id');
 
         if (!apiKey || !userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -33,9 +30,26 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid subscription object' }, { status: 400 });
         }
 
-        saveSubscription(userId, subscription, request.headers.get('user-agent') || 'unknown');
+        // --- Verify Admin Status ---
+        // We fetch user info to avoid trusting the client for the "isAdmin" flag
+        let isAdmin = false;
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
+            const infoRes = await fetch(`${apiUrl}/fichajestrabajadoresapi/info`, {
+                headers: { 'DOLAPIKEY': apiKey }
+            });
+            if (infoRes.ok) {
+                const userData = await infoRes.json();
+                isAdmin = userData.admin === '1' || userData.admin === true;
+            }
+        } catch (infoErr) {
+            console.error('Error verifying admin status for push subscription:', infoErr);
+            // Default to false if check fails
+        }
 
-        return NextResponse.json({ success: true });
+        saveSubscription(userId, subscription, isAdmin, request.headers.get('user-agent') || 'unknown');
+
+        return NextResponse.json({ success: true, isAdmin });
     } catch (error) {
         console.error('Error saving subscription:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

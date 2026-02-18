@@ -19,6 +19,7 @@ import { SoftBlockModal } from '@/components/fichajes/SoftBlockModal';
 import { toast } from 'react-hot-toast';
 import { CompanyService } from '@/lib/company-service';
 import { ConfigurationModal } from '@/components/admin/ConfigurationModal';
+import PushNotificationPrompt from '@/components/PushNotificationPrompt';
 
 export default function FichajesPage() {
     const { user } = useAuth();
@@ -227,6 +228,7 @@ export default function FichajesPage() {
                 isOpen={showConfigModal}
                 onClose={() => setShowConfigModal(false)}
             />
+            <PushNotificationPrompt />
         </>
     );
 }
