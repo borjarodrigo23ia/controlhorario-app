@@ -51,19 +51,19 @@ export default function NotificationPreferences() {
 
     if (!isSubscribed && permission !== 'granted') {
         return (
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
+            <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-[0_20px_60px_rgb(0,0,0,0.03)]">
                 <div className="flex items-start gap-4">
-                    <div className="bg-white p-3 rounded-xl shadow-sm">
-                        <BellOff className="text-slate-400" size={24} />
+                    <div className="bg-black p-3 rounded-2xl shadow-xl shadow-black/10 shrink-0">
+                        <BellOff className="text-white" size={24} />
                     </div>
                     <div className="flex-1">
-                        <h3 className="font-bold text-slate-900 mb-1">Activar Notificaciones</h3>
-                        <p className="text-sm text-slate-500 mb-4">
-                            Recibe avisos sobre tu horario, vacaciones y cambios en tus fichajes.
+                        <h3 className="font-black text-slate-900 text-lg mb-1 leading-tight">Activar Notificaciones</h3>
+                        <p className="text-sm text-slate-500 font-medium mb-5 leading-relaxed">
+                            Recibe avisos sobre tu horario, vacaciones y cambios en tus fichajes directamente en tu móvil.
                         </p>
                         <button
                             onClick={subscribeToPush}
-                            className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-black transition-colors"
+                            className="bg-black text-white px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-gray-900 transition-all active:scale-95 shadow-lg shadow-black/10"
                         >
                             Permitir Notificaciones
                         </button>

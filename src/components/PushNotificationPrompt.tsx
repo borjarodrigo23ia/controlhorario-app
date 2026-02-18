@@ -31,8 +31,8 @@ export default function PushNotificationPrompt() {
 
     return (
         <div className="fixed bottom-24 left-4 right-4 z-[100] md:left-auto md:right-8 md:bottom-8 md:w-96 animate-in slide-in-from-bottom-8 duration-500">
-            <div className="bg-white rounded-[2rem] shadow-2xl border border-slate-100 p-6 flex items-start gap-4">
-                <div className="bg-slate-900 p-3 rounded-2xl text-white shrink-0">
+            <div className="bg-white rounded-[2.5rem] shadow-[0_20px_60px_rgb(0,0,0,0.08)] border border-slate-100 p-6 flex items-start gap-4">
+                <div className="bg-black p-3.5 rounded-2xl text-white shrink-0 shadow-xl shadow-black/10">
                     <Bell size={24} />
                 </div>
                 <div className="flex-1 min-w-0">
