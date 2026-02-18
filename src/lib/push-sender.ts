@@ -23,7 +23,7 @@ export interface NotificationPayload {
 }
 
 export async function sendPushNotification(userId: string, payload: NotificationPayload) {
-    const subscriptions = getSubscriptionsForUser(userId);
+    const subscriptions = await getSubscriptionsForUser(userId);
 
     if (subscriptions.length === 0) return { success: false, sent: 0 };
 
@@ -50,7 +50,7 @@ export async function sendPushNotification(userId: string, payload: Notification
 }
 
 export async function sendPushNotificationToAdmin(payload: NotificationPayload) {
-    const allSubs = getAllSubscriptions();
+    const allSubs = await getAllSubscriptions();
     const adminSubs = allSubs.filter(s => s.isAdmin);
 
     if (adminSubs.length === 0) {

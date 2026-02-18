@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const subs = getSubscriptionsForUser(userId);
+    const subs = await getSubscriptionsForUser(userId);
     return NextResponse.json(subs);
 }
 
@@ -54,12 +54,15 @@ export async function POST(request: NextRequest) {
             console.error('[API/Subscribe] Error verifying admin status:', infoErr.message);
         }
 
-        saveSubscription(userId, subscription, isAdmin, request.headers.get('user-agent') || 'unknown');
+        await saveSubscription(userId, subscription, isAdmin, request.headers.get('user-agent') || 'unknown');
         console.log('[API/Subscribe] Subscription saved successfully');
 
         return NextResponse.json({ success: true, isAdmin });
     } catch (error: any) {
         console.error('[API/Subscribe] Exception in POST handler:', error);
-        return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+        return NextResponse.json({
+            error: 'Error interno en el servidor al guardar la suscripción',
+            details: error.message
+        }, { status: 500 });
     }
 }

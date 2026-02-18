@@ -74,7 +74,7 @@ export default function NotificationPreferences() {
         }
     };
 
-    if (!isSubscribed && permission !== 'granted') {
+    if (!isSubscribed) {
         return (
             <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-[0_20px_60px_rgb(0,0,0,0.03)]">
                 <div className="flex items-start gap-4">
@@ -82,15 +82,19 @@ export default function NotificationPreferences() {
                         <BellOff className="text-white" size={24} />
                     </div>
                     <div className="flex-1">
-                        <h3 className="font-black text-slate-900 text-lg mb-1 leading-tight">Activar Notificaciones</h3>
+                        <h3 className="font-black text-slate-900 text-lg mb-1 leading-tight">
+                            {permission === 'granted' ? 'Completar Configuración' : 'Activar Notificaciones'}
+                        </h3>
                         <p className="text-sm text-slate-500 font-medium mb-5 leading-relaxed">
-                            Recibe avisos sobre tu horario, vacaciones y cambios en tus fichajes directamente en tu móvil.
+                            {permission === 'granted'
+                                ? 'Has dado permiso, pero falta vincular este dispositivo con tu cuenta.'
+                                : 'Recibe avisos sobre tu horario, vacaciones y cambios en tus fichajes directamente en tu móvil.'}
                         </p>
                         <button
                             onClick={subscribeToPush}
                             className="bg-black text-white px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-gray-900 transition-all active:scale-95 shadow-lg shadow-black/10"
                         >
-                            Permitir Notificaciones
+                            {permission === 'granted' ? 'Vincular Dispositivo' : 'Permitir Notificaciones'}
                         </button>
                     </div>
                 </div>
@@ -108,7 +112,7 @@ export default function NotificationPreferences() {
                         </div>
                         <div>
                             <h3 className="font-black text-slate-900 text-lg">Estado: Conectado</h3>
-                            <p className="text-sm text-slate-500 font-medium">Gestiona tus avisos o prueba el sistema</p>
+                            <p className="text-sm text-slate-500 font-medium">Este dispositivo está vinculado correctamente</p>
                         </div>
                     </div>
                     <button

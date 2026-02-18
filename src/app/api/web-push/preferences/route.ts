@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const prefs = getUserPreferences(userId);
+    const prefs = await getUserPreferences(userId);
     return NextResponse.json(prefs);
 }
 
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
         ...(typeof cambios === 'boolean' ? { cambios } : {})
     };
 
-    saveUserPreferences(userId, update);
+    await saveUserPreferences(userId, update);
 
     return NextResponse.json({ success: true });
 }
