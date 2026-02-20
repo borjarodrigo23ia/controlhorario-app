@@ -5,7 +5,7 @@ import { WorkCycle } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
-import { MapPinCheck, ChevronDown, ChevronUp, PencilLine, CheckCircle, XCircle, Clock as ClockIcon, MapPin, MapPinCheckInside, MessageCircle, AlertTriangle } from 'lucide-react';
+import { MapPinCheck, ChevronDown, ChevronUp, PencilLine, CheckCircle, XCircle, Clock as ClockIcon, MapPin, MapPinCheckInside, MessageCircle, AlertTriangle, SquarePen } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { getDailyEvents, TimelineEvent } from '@/lib/fichajes-utils';
 import { toast } from 'react-hot-toast';
@@ -16,9 +16,10 @@ interface TodayFichajesProps {
     loading?: boolean;
     onEdit?: (event: TimelineEvent) => void;
     onLocation?: (lat: string, lng: string) => void;
+    onManualEntry?: () => void;
 }
 
-export const TodayFichajes: React.FC<TodayFichajesProps> = ({ cycles, loading, onEdit, onLocation }) => {
+export const TodayFichajes: React.FC<TodayFichajesProps> = ({ cycles, loading, onEdit, onLocation, onManualEntry }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     // Modal state for map and details
@@ -121,8 +122,20 @@ export const TodayFichajes: React.FC<TodayFichajesProps> = ({ cycles, loading, o
                         {format(new Date(), "EEEE, d 'de' MMMM", { locale: es }).charAt(0).toUpperCase() + format(new Date(), "EEEE, d 'de' MMMM", { locale: es }).slice(1)}
                     </p>
                 </div>
-                <div className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-sm font-bold tracking-wide">
-                    {cycles.length > 0 ? 'Activo' : 'Inactivo'}
+                <div className="flex items-center gap-3">
+                    {onManualEntry && (
+                        <button
+                            onClick={onManualEntry}
+                            className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl bg-gray-50 text-gray-500 hover:bg-black hover:text-white transition-all shadow-sm group"
+                            title="Fichaje manual"
+                        >
+                            <SquarePen size={18} className="transition-transform group-hover:scale-110" />
+                            <span className="text-xs font-bold hidden md:inline">Fichaje manual</span>
+                        </button>
+                    )}
+                    <div className="bg-black text-white px-4 py-1.5 rounded-full text-sm font-bold tracking-wide">
+                        {cycles.length > 0 ? 'Activo' : 'Inactivo'}
+                    </div>
                 </div>
             </div>
 

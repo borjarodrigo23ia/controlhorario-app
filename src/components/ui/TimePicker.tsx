@@ -88,11 +88,14 @@ export function TimePicker({ value, onChange, label, disabled = false, className
             </button>
 
             {isOpen && (
-                <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 p-4 flex gap-4 animate-in fade-in zoom-in-95 duration-200 min-w-[280px]">
+                <div className="absolute z-[110] top-full right-0 mt-2 bg-white rounded-[1.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-gray-100 p-4 flex gap-4 animate-in fade-in zoom-in-95 duration-200 w-64 md:w-72">
                     {/* Hours */}
-                    <div className="flex-1 flex flex-col items-center">
-                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">Hora</span>
-                        <div className="h-48 overflow-y-auto w-full custom-scrollbar scroll-smooth" ref={scrollRefHours}>
+                    <div className="flex-1 flex flex-col">
+                        <div className="flex items-center gap-2 px-2 mb-3">
+                            <Clock size={12} className="text-primary" />
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Hora</span>
+                        </div>
+                        <div className="h-56 overflow-y-auto w-full [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth pr-1" ref={scrollRefHours}>
                             <div className="space-y-1">
                                 {hoursList.map((h) => (
                                     <button
@@ -101,10 +104,10 @@ export function TimePicker({ value, onChange, label, disabled = false, className
                                         type="button"
                                         onClick={() => handleHourClick(h)}
                                         className={cn(
-                                            "w-full py-2 rounded-xl text-sm font-bold transition-colors",
+                                            "w-full py-2.5 rounded-xl text-sm font-bold transition-all duration-200",
                                             hours?.toString().padStart(2, '0') === h
-                                                ? "bg-gray-900 text-white"
-                                                : "text-gray-600 hover:bg-gray-50"
+                                                ? "bg-gray-900 text-white shadow-md scale-[1.02]"
+                                                : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                                         )}
                                     >
                                         {h}
@@ -114,13 +117,16 @@ export function TimePicker({ value, onChange, label, disabled = false, className
                         </div>
                     </div>
 
-                    {/* Separator */}
-                    <div className="h-48 w-px bg-gray-100 my-auto" />
+                    {/* Separator - Sleeker */}
+                    <div className="w-px bg-gradient-to-b from-transparent via-gray-100 to-transparent my-2" />
 
                     {/* Minutes */}
-                    <div className="flex-1 flex flex-col items-center">
-                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">Min</span>
-                        <div className="h-48 overflow-y-auto w-full custom-scrollbar scroll-smooth" ref={scrollRefMinutes}>
+                    <div className="flex-1 flex flex-col">
+                        <div className="flex items-center gap-2 px-2 mb-3">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Min</span>
+                        </div>
+                        <div className="h-56 overflow-y-auto w-full [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth pr-1" ref={scrollRefMinutes}>
                             <div className="space-y-1">
                                 {minutesListFull.map((m) => (
                                     <button
@@ -129,10 +135,10 @@ export function TimePicker({ value, onChange, label, disabled = false, className
                                         type="button"
                                         onClick={() => handleMinuteClick(m)}
                                         className={cn(
-                                            "w-full py-2 rounded-xl text-sm font-bold transition-colors",
+                                            "w-full py-2.5 rounded-xl text-sm font-bold transition-all duration-200",
                                             minutes?.toString().padStart(2, '0') === m
-                                                ? "bg-gray-900 text-white"
-                                                : "text-gray-600 hover:bg-gray-50"
+                                                ? "bg-gray-900 text-white shadow-md scale-[1.02]"
+                                                : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                                         )}
                                     >
                                         {m}

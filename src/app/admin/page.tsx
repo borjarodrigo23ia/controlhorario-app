@@ -8,9 +8,23 @@ import { Users, BadgeCheck, Settings, LayoutDashboard, CalendarClock, ChevronRig
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useCorrections } from '@/hooks/useCorrections';
 import { useVacations } from '@/hooks/useVacations';
+import { useFichajes } from '@/hooks/useFichajes';
 import { CompanyService, CompanySetup } from '@/lib/company-service';
 
 import { ConfigurationModal } from '@/components/admin/ConfigurationModal';
+import { TodayFichajes } from '@/components/fichajes/TodayFichajes';
+import ManualFichajeModal from '@/components/fichajes/ManualFichajeModal';
+import AdminChangeRequestModal from '@/components/fichajes/AdminChangeRequestModal';
+import { TimelineEvent } from '@/lib/fichajes-utils';
+import { toast } from 'react-hot-toast';
+
+// Desktop dashboard widgets
+import WelcomeCard from '@/components/admin/dashboard/WelcomeCard';
+import ClockWidget from '@/components/admin/dashboard/ClockWidget';
+import WhosWorkingWidget from '@/components/admin/dashboard/WhosWorkingWidget';
+import CorrectionRequestsWidget from '@/components/admin/dashboard/CorrectionRequestsWidget';
+import VacationRequestsWidget from '@/components/admin/dashboard/VacationRequestsWidget';
+import VacationCalendarWidget from '@/components/admin/dashboard/VacationCalendarWidget';
 
 export default function AdminPage() {
     const { user } = useAuth();
@@ -20,6 +34,22 @@ export default function AdminPage() {
     const [missingConfig, setMissingConfig] = useState(false);
     const [showConfigModal, setShowConfigModal] = useState(false);
     const [missingUserDataCount, setMissingUserDataCount] = useState(0);
+
+    // Fichajes state for the integrated history
+    const { workCycles, loading: fichajesLoading, refreshFichajes } = useFichajes();
+    const [manualModalOpen, setManualModalOpen] = useState(false);
+    const [targetEvent, setTargetEvent] = useState<TimelineEvent | undefined>(undefined);
+    const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
+
+    const handleEditFichaje = (event?: TimelineEvent) => {
+        setTargetEvent(event);
+        setSelectedDate(event?.dateStr);
+        setManualModalOpen(true);
+    };
+
+    const handleLocation = (lat: string, lng: string) => {
+        window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+    };
 
     useEffect(() => {
         fetchCorrections(undefined, 'pendiente');
@@ -34,8 +64,6 @@ export default function AdminPage() {
                 const setup = await CompanyService.getSetup();
                 if (!setup.name || !setup.siren) {
                     setMissingConfig(true);
-                    // Check if already dismissed in session storage ONLY if explicit dismissal logic added
-                    // For now, always show on mount if missing to be insistent as requested
                     setShowConfigModal(true);
                 }
             } catch (e) {
@@ -53,15 +81,10 @@ export default function AdminPage() {
                     const users = await res.json();
                     if (Array.isArray(users)) {
                         const count = users.filter((u: any) => {
-                            // Check if active (handle multiple potential field names from API)
                             const isActive = u.statut === '1' || u.status === '1' || u.active === '1';
                             if (!isActive) return false;
-
-                            // Check missing fields (DNI or NAF)
-                            // Note: array_options might be null/undefined or incomplete
                             const dni = u.array_options?.options_dni;
                             const naf = u.array_options?.options_naf;
-
                             return !dni || !naf;
                         }).length;
                         setMissingUserDataCount(count);
@@ -82,41 +105,42 @@ export default function AdminPage() {
         return <div className="p-8">Acceso denegado</div>;
     }
 
-    const cards = [
-        { title: 'Datos Empresa', icon: HouseHeart, href: '/admin/empresa', desc: 'Configurar identidad y logo', color: 'purple' },
-        {
-            title: 'Usuarios',
-            icon: Users,
-            href: '/admin/users',
-            desc: 'Gestionar configuración de empleados',
-            color: 'primary',
-            badge: missingUserDataCount
-        },
-        { title: 'Centros de Trabajo', icon: MapPinHouse, href: '/admin/centers', desc: 'Configurar geolocalización y ubicaciones', color: 'blue' },
-        { title: 'Historial Global', icon: CalendarClock, href: '/admin/fichajes', desc: 'Consulta los registros de todos los usuarios', color: 'indigo' },
-        { title: 'Gestión de Jornadas', icon: CalendarRange, href: '/admin/jornadas', desc: 'Asignar jornadas a trabajadores', color: 'orange' },
-        {
-            title: 'Gestión de Vacaciones',
-            icon: Palmtree,
-            href: '/admin/vacations',
-            desc: 'Aprobar/rechazar días libres',
-            color: 'green',
-            badge: pendingVacations
-        },
-        {
-            title: 'Solicitudes',
-            icon: BadgeCheck,
-            href: '/admin/corrections',
-            desc: 'Aprobar cambios de jornada',
-            color: 'primary',
-            badge: corrections.length
-        },
+    // Requests grid is now primary after removal of quick nav cards
+    const adminNavItems = [
+        { name: 'Dashboard', icon: LayoutDashboard, href: '/admin', desc: 'Panel de control global' },
+        { name: 'Empresa', icon: HouseHeart, href: '/admin/empresa', desc: 'Configuración corporativa' },
+        { name: 'Empleados', icon: Users, href: '/admin/users', desc: 'Gestión de personal', badge: missingUserDataCount },
+        { name: 'Centros', icon: MapPinHouse, href: '/admin/centers', desc: 'Ubicaciones y departamentos' },
+        { name: 'Historial', icon: CalendarClock, href: '/admin/fichajes', desc: 'Registros de todos los usuarios' },
+        { name: 'Jornadas', icon: CalendarRange, href: '/admin/jornadas', desc: 'Asignación de turnos' },
+        { name: 'Vacaciones', icon: Palmtree, href: '/admin/vacations', desc: 'Gestión de días libres', badge: pendingVacations },
+        { name: 'Solicitudes', icon: BadgeCheck, href: '/admin/corrections', desc: 'Revisiones de fichajes', badge: corrections.length },
+        { name: 'Configuración', icon: Settings, href: '/admin/settings', desc: 'Ajustes del sistema' },
     ];
 
     return (
-        <div className="flex min-h-screen bg-[#FAFBFC]">
-            <div className="hidden md:block"><Sidebar /></div>
-            <main className="flex-1 ml-0 md:ml-64 p-6 md:p-12 pb-32">
+        <>
+            <ConfigurationModal
+                isOpen={showConfigModal}
+                onClose={() => setShowConfigModal(false)}
+            />
+
+            {missingConfig && (
+                <div className="mb-8 p-4 rounded-2xl bg-amber-50 border border-amber-100 flex items-center gap-4 animate-in fade-in slide-in-from-top-2">
+                    <div className="w-14 h-14 rounded-[1.2rem] bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 animate-pulse border border-amber-200/50 shadow-sm">
+                        <TriangleAlert size={24} strokeWidth={2.2} />
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-bold text-amber-900">Configuración Pendiente</h3>
+                        <p className="text-xs text-amber-700 font-medium">Es necesario configurar la Razón Social y el CIF de la empresa.</p>
+                    </div>
+                </div>
+            )}
+
+            {/* ========================================
+                MOBILE LAYOUT — Preserved exactly as-is
+               ======================================== */}
+            <div className="block md:hidden">
                 <PageHeader
                     title="Panel de Administración"
                     subtitle="Gestión global de empleados y registros"
@@ -124,25 +148,8 @@ export default function AdminPage() {
                     badge="Sistemas"
                 />
 
-                <ConfigurationModal
-                    isOpen={showConfigModal}
-                    onClose={() => setShowConfigModal(false)}
-                />
-
-                {missingConfig && (
-                    <div className="mb-8 p-4 rounded-2xl bg-amber-50 border border-amber-100 flex items-center gap-4 animate-in fade-in slide-in-from-top-2">
-                        <div className="w-14 h-14 rounded-[1.2rem] bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 animate-pulse border border-amber-200/50 shadow-sm">
-                            <TriangleAlert size={24} strokeWidth={2.2} />
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-bold text-amber-900">Configuración Pendiente</h3>
-                            <p className="text-xs text-amber-700 font-medium">Es necesario configurar la Razón Social y el CIF de la empresa.</p>
-                        </div>
-                    </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {cards.map((c) => (
+                <div className="grid grid-cols-1 gap-4">
+                    {adminNavItems.filter(item => item.name !== 'Configuración').map((c) => (
                         <Link
                             key={c.href}
                             href={c.href}
@@ -165,7 +172,7 @@ export default function AdminPage() {
 
                                     <div>
                                         <h3 className="text-lg font-bold text-[#121726] tracking-tight group-hover:text-primary transition-colors flex items-center gap-2">
-                                            {c.title}
+                                            {c.name}
                                         </h3>
                                         <p className="text-xs font-semibold text-gray-400 leading-relaxed opacity-80">
                                             {c.desc}
@@ -180,8 +187,68 @@ export default function AdminPage() {
                         </Link>
                     ))}
                 </div>
-            </main>
-            <MobileNav />
-        </div>
+            </div>
+
+            {/* ========================================
+                DESKTOP / TABLET LAYOUT — New dashboard
+               ======================================== */}
+            <div className="hidden md:block">
+                {/* Welcome at the top spanning everything */}
+                <div className="mb-5">
+                    <WelcomeCard />
+                </div>
+
+                <div className="grid grid-cols-3 gap-5">
+                    {/* Side Column: Who's Working + Personal History */}
+                    <div className="col-span-1 space-y-5">
+                        <WhosWorkingWidget />
+
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            <TodayFichajes
+                                cycles={workCycles.filter(cycle => {
+                                    const cycleDate = new Date(cycle.fecha);
+                                    const today = new Date();
+                                    return cycleDate.getDate() === today.getDate() &&
+                                        cycleDate.getMonth() === today.getMonth() &&
+                                        cycleDate.getFullYear() === today.getFullYear();
+                                })}
+                                loading={fichajesLoading}
+                                onEdit={handleEditFichaje}
+                                onLocation={handleLocation}
+                                onManualEntry={() => handleEditFichaje()}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Main Column: Calendar + Requests */}
+                    <div className="col-span-2 space-y-5">
+                        {/* Vacation Calendar Widget */}
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            <VacationCalendarWidget />
+                        </div>
+
+                        {/* Requests Grid */}
+                        <div className="grid grid-cols-2 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+                            <CorrectionRequestsWidget />
+                            <VacationRequestsWidget />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Fichaje Modals */}
+            <ManualFichajeModal
+                isOpen={manualModalOpen}
+                onClose={() => {
+                    setManualModalOpen(false);
+                    setTargetEvent(undefined);
+                    setSelectedDate(undefined);
+                }}
+                onSaved={refreshFichajes}
+                initialDate={selectedDate}
+                targetEvent={targetEvent}
+            />
+            <AdminChangeRequestModal />
+        </>
     );
 }

@@ -81,3 +81,9 @@
 2.  **Check `task.md`** for current objectives.
 3.  **Use `useFichajes.ts`** as the reference implementation for any time-tracking logic changes.
 4.  **Verify changes** on mobile viewports.
+
+## 8. Common Errors & Fixes
+- **JSX Syntax Errors**:
+    - `Error: x Expected '>', got 'ident'`: Often caused by an **extra closing tag** (e.g., `</div>`) or a missing opening tag.
+    - `Error: x Unexpected token. Did you mean '{'}'}' or '&rbrace;'?`: Usually indicates a **missing closing fragment** (`</>`) or a mismatched brace in JSX logic.
+    - **Fix**: meticulously trace opening and closing tags. Use IDE folding to verify structure. When returning multiple elements, always wrap them in a `<Fragment>` or `<>...</>`.

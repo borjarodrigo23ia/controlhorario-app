@@ -54,7 +54,7 @@ export default function GestionPage() {
     return (
         <div className="flex min-h-screen bg-[#FAFBFC]">
             <div className="hidden md:block"><Sidebar /></div>
-            <main className="flex-1 ml-0 md:ml-64 p-6 md:p-12 pb-32">
+            <main className="flex-1 sidebar-margin ml-0 p-6 md:p-12 pb-32">
                 <PageHeader
                     title="Centro de Gestión"
                     subtitle="Accede a tus herramientas de empleado"

@@ -148,7 +148,7 @@ export default function UsuarioPage() {
         <div className="flex min-h-screen bg-[#FAFBFC]">
             <div className="hidden md:block"><Sidebar /></div>
 
-            <main className="flex-1 ml-0 md:ml-64 p-6 md:p-12 pb-32 flex flex-col items-center">
+            <main className="flex-1 sidebar-margin ml-0 p-6 md:p-12 pb-32 flex flex-col items-center">
                 <div className="w-full max-w-lg">
                     <PageHeader
                         title="Mi Perfil"

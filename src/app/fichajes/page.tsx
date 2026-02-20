@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useFichajes } from '@/hooks/useFichajes';
@@ -52,6 +53,20 @@ export default function FichajesPage() {
     const [pendingAction, setPendingAction] = useState<((justification: string, coords?: { lat: string, lng: string }) => Promise<void>) | null>(null);
 
     const [showConfigModal, setShowConfigModal] = useState(false);
+
+    const router = useRouter();
+
+    useEffect(() => {
+        const checkAdminAndRedirect = () => {
+            if (user?.admin && window.innerWidth >= 768) {
+                router.replace('/admin');
+            }
+        };
+
+        checkAdminAndRedirect();
+        window.addEventListener('resize', checkAdminAndRedirect);
+        return () => window.removeEventListener('resize', checkAdminAndRedirect);
+    }, [user, router]);
 
     useEffect(() => {
         const checkCompanySetup = async () => {
@@ -201,6 +216,7 @@ export default function FichajesPage() {
                         loading={loading}
                         onEdit={handleEditFichaje}
                         onLocation={handleLocation}
+                        onManualEntry={() => handleEditFichaje()}
                     />
                 </section>
             </div>

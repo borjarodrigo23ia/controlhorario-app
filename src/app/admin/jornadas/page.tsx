@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { CalendarRange, Save, User, Check, Search, Calendar, Clock, Loader2, Users, LayoutGrid, CalendarDays, CalendarMinus2, LocateFixed, RefreshCcw } from 'lucide-react';
+import { CalendarRange, Save, User, Check, Search, Calendar, Clock, Loader2, Users, LayoutGrid, CalendarDays, CalendarMinus2, LocateFixed, RefreshCcw, X } from 'lucide-react';
 import { TimePicker } from '@/components/ui/TimePicker';
-import Sidebar from '@/components/Sidebar';
-import MobileNav from '@/components/MobileNav';
 import { toast } from 'react-hot-toast';
 import { DolibarrUser } from '@/lib/admin-types';
 
@@ -115,8 +113,6 @@ export default function ScheduleManagementPage() {
         }
 
         if (formData.tipo_jornada === 'partida' && formData.pausas.length === 0) {
-            // Optional warning, or just allow it? Usually 'partida' implies breaks.
-            // Let's enforce at least one break if they chose 'partida'
             if (!confirm('Ha seleccionado jornada partida sin pausas. ¿Desea continuar?')) return;
         }
 
@@ -174,127 +170,122 @@ export default function ScheduleManagementPage() {
     );
 
     return (
-        <div className="flex min-h-screen bg-[#FAFBFC]">
-            <div className="hidden md:block"><Sidebar /></div>
-            <main className="flex-1 ml-0 md:ml-64 p-4 md:p-12 pb-32">
-                <PageHeader
-                    title="Gestión de Jornadas"
-                    subtitle="Centro de control para asignación de horarios"
-                    icon={CalendarRange}
-                    badge="RRHH"
-                    showBack={true}
-                />
+        <>
+            <PageHeader
+                title="Gestión de Jornadas"
+                subtitle="Centro de control para asignación de horarios"
+                icon={CalendarRange}
+                badge="RRHH"
+                showBack={true}
+            />
 
-                <div className="max-w-3xl mx-auto">
+            <div className="max-w-3xl mx-auto">
+                {/* UNIFIED CARD */}
+                <div className="bg-white rounded-[2rem] p-6 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col gap-10">
 
-                    {/* UNIFIED CARD */}
-                    <div className="bg-white rounded-[2rem] p-6 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col gap-10">
+                    {/* SECTION 1: CONFIGURATION */}
+                    <div className="space-y-6">
+                        <h2 className="text-xl font-bold text-black flex items-center gap-3">
+                            <div className="p-2.5 bg-black rounded-xl text-white">
+                                <Clock size={20} strokeWidth={2} />
+                            </div>
+                            Configuración del Horario
+                        </h2>
 
-                        {/* SECTION 1: CONFIGURATION */}
-                        <div className="space-y-6">
-                            <h2 className="text-xl font-bold text-black flex items-center gap-3">
-                                <div className="p-2.5 bg-black rounded-xl text-white">
-                                    <Clock size={20} strokeWidth={2} />
-                                </div>
-                                Configuración del Horario
-                            </h2>
-
-                            <div className="space-y-5 p-1">
-                                {/* Modality Selection Row */}
-                                <div className="space-y-6">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                        {/* Tipo de Jornada */}
-                                        <div className="space-y-3">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Tipo de Jornada</label>
-                                            <div className="grid grid-cols-3 gap-2 bg-gray-50 p-1 rounded-2xl border border-gray-100/50">
-                                                {[
-                                                    { id: 'partida', label: 'Partida', icon: CalendarDays },
-                                                    { id: 'intensiva', label: 'Intensiva', icon: CalendarMinus2 },
-                                                    { id: 'flexible', label: 'Flexible', icon: CalendarRange }
-                                                ].map(opt => (
-                                                    <button
-                                                        key={opt.id}
-                                                        type="button"
-                                                        onClick={() => setFormData(prev => ({ ...prev, tipo_jornada: opt.id as any }))}
-                                                        className={`flex items-center justify-center gap-1.5 py-3 rounded-xl transition-all duration-200 ${formData.tipo_jornada === opt.id
-                                                            ? 'bg-white text-black shadow-sm font-bold'
-                                                            : 'text-gray-400 hover:text-gray-600 font-medium'
-                                                            }`}
-                                                    >
-                                                        <opt.icon size={13} />
-                                                        <span className="text-[10px] uppercase tracking-wide">{opt.label}</span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        {/* Modalidad (Tipo de Turno) */}
-                                        <div className="space-y-3">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Modalidad</label>
-                                            <div className="grid grid-cols-2 gap-2 bg-gray-50 p-1 rounded-2xl border border-gray-100/50">
-                                                {[
-                                                    { id: 'fijo', label: 'Fijo', icon: LocateFixed },
-                                                    { id: 'rotativo', label: 'Rotativo', icon: RefreshCcw }
-                                                ].map(opt => (
-                                                    <button
-                                                        key={opt.id}
-                                                        type="button"
-                                                        onClick={() => setFormData(prev => ({ ...prev, tipo_turno: opt.id as any }))}
-                                                        className={`flex items-center justify-center gap-2 py-3 rounded-xl transition-all duration-200 ${formData.tipo_turno === opt.id
-                                                            ? 'bg-white text-black shadow-sm font-bold'
-                                                            : 'text-gray-400 hover:text-gray-600 font-medium'
-                                                            }`}
-                                                    >
-                                                        <opt.icon size={14} />
-                                                        <span className="text-[11px] uppercase tracking-wide">{opt.label}</span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Days of Week Selector - Moved here */}
-                                    <div className="space-y-3 bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <Calendar size={14} className="text-gray-400" />
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Días de la semana</label>
-                                        </div>
-                                        <div className="flex flex-wrap gap-2">
+                        <div className="space-y-5 p-1">
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    {/* Tipo de Jornada */}
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Tipo de Jornada</label>
+                                        <div className="grid grid-cols-3 gap-2 bg-gray-50 p-1 rounded-2xl border border-gray-100/50">
                                             {[
-                                                { id: 1, label: 'L', name: 'Lunes' },
-                                                { id: 2, label: 'M', name: 'Martes' },
-                                                { id: 3, label: 'X', name: 'Miércoles' },
-                                                { id: 4, label: 'J', name: 'Jueves' },
-                                                { id: 5, label: 'V', name: 'Viernes' },
-                                                { id: 6, label: 'S', name: 'Sábado' },
-                                                { id: 0, label: 'D', name: 'Domingo' }
-                                            ].map(day => {
-                                                const isSelected = formData.dias_semana.includes(day.id);
-                                                return (
-                                                    <button
-                                                        key={day.id}
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const newDays = isSelected
-                                                                ? formData.dias_semana.filter(d => d !== day.id)
-                                                                : [...formData.dias_semana, day.id].sort();
-                                                            setFormData(prev => ({ ...prev, dias_semana: newDays }));
-                                                        }}
-                                                        className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-[12px] font-black transition-all duration-200 border shadow-sm active:scale-95 ${isSelected
-                                                            ? 'bg-black border-black text-white shadow-lg shadow-black/10'
-                                                            : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300 hover:text-gray-600'
-                                                            }`}
-                                                        title={day.name}
-                                                    >
-                                                        {day.label}
-                                                    </button>
-                                                );
-                                            })}
+                                                { id: 'partida', label: 'Partida', icon: CalendarDays },
+                                                { id: 'intensiva', label: 'Intensiva', icon: CalendarMinus2 },
+                                                { id: 'flexible', label: 'Flexible', icon: CalendarRange }
+                                            ].map(opt => (
+                                                <button
+                                                    key={opt.id}
+                                                    type="button"
+                                                    onClick={() => setFormData(prev => ({ ...prev, tipo_jornada: opt.id as any }))}
+                                                    className={`flex items-center justify-center gap-1.5 py-3 rounded-xl transition-all duration-200 ${formData.tipo_jornada === opt.id
+                                                        ? 'bg-white text-black shadow-sm font-bold'
+                                                        : 'text-gray-400 hover:text-gray-600 font-medium'
+                                                        }`}
+                                                >
+                                                    <opt.icon size={13} />
+                                                    <span className="text-[10px] uppercase tracking-wide">{opt.label}</span>
+                                                </button>
+                                            ))}
                                         </div>
-                                        <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest pl-1">
-                                            Selección para cálculo de horas esperadas
-                                        </p>
                                     </div>
+
+                                    {/* Modalidad (Tipo de Turno) */}
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Modalidad</label>
+                                        <div className="grid grid-cols-2 gap-2 bg-gray-50 p-1 rounded-2xl border border-gray-100/50">
+                                            {[
+                                                { id: 'fijo', label: 'Fijo', icon: LocateFixed },
+                                                { id: 'rotativo', label: 'Rotativo', icon: RefreshCcw }
+                                            ].map(opt => (
+                                                <button
+                                                    key={opt.id}
+                                                    type="button"
+                                                    onClick={() => setFormData(prev => ({ ...prev, tipo_turno: opt.id as any }))}
+                                                    className={`flex items-center justify-center gap-2 py-3 rounded-xl transition-all duration-200 ${formData.tipo_turno === opt.id
+                                                        ? 'bg-white text-black shadow-sm font-bold'
+                                                        : 'text-gray-400 hover:text-gray-600 font-medium'
+                                                        }`}
+                                                >
+                                                    <opt.icon size={14} />
+                                                    <span className="text-[11px] uppercase tracking-wide">{opt.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Days of Week Selector */}
+                                <div className="space-y-3 bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Calendar size={14} className="text-gray-400" />
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Días de la semana</label>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {[
+                                            { id: 1, label: 'L', name: 'Lunes' },
+                                            { id: 2, label: 'M', name: 'Martes' },
+                                            { id: 3, label: 'X', name: 'Miércoles' },
+                                            { id: 4, label: 'J', name: 'Jueves' },
+                                            { id: 5, label: 'V', name: 'Viernes' },
+                                            { id: 6, label: 'S', name: 'Sábado' },
+                                            { id: 0, label: 'D', name: 'Domingo' }
+                                        ].map(day => {
+                                            const isSelected = formData.dias_semana.includes(day.id);
+                                            return (
+                                                <button
+                                                    key={day.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const newDays = isSelected
+                                                            ? formData.dias_semana.filter(d => d !== day.id)
+                                                            : [...formData.dias_semana, day.id].sort();
+                                                        setFormData(prev => ({ ...prev, dias_semana: newDays }));
+                                                    }}
+                                                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-[12px] font-black transition-all duration-200 border shadow-sm active:scale-95 ${isSelected
+                                                        ? 'bg-black border-black text-white shadow-lg shadow-black/10'
+                                                        : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300 hover:text-gray-600'
+                                                        }`}
+                                                    title={day.name}
+                                                >
+                                                    {day.label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest pl-1">
+                                        Selección para cálculo de horas esperadas
+                                    </p>
                                 </div>
 
                                 {/* Hours Configuration */}
@@ -328,9 +319,9 @@ export default function ScheduleManagementPage() {
                                                     <div key={idx} className="bg-gray-50 rounded-2xl p-4 border border-gray-100 relative group animate-in fade-in slide-in-from-top-2 duration-200">
                                                         <button
                                                             onClick={() => removePausa(idx)}
-                                                            className="absolute -top-2 -right-2 bg-white text-gray-400 hover:text-red-500 p-1.5 rounded-full shadow-sm border border-gray-200 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all z-10"
+                                                            className="absolute -top-2 -right-2 bg-white text-gray-400 hover:text-red-500 p-1.5 rounded-full shadow-sm border border-gray-200 opacity-100 transition-all z-10"
                                                         >
-                                                            <Check size={14} className="rotate-45" />
+                                                            <X size={14} />
                                                         </button>
 
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -506,11 +497,9 @@ export default function ScheduleManagementPage() {
                                 )}
                             </button>
                         </div>
-
                     </div>
                 </div>
-            </main>
-            <MobileNav />
-        </div>
+            </div>
+        </>
     );
 }

@@ -293,7 +293,7 @@ export default function ManualFichajeModal({
 
                 <div className={cn(
                     "relative bg-white w-full rounded-3xl md:rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200",
-                    isSimpleMode ? "max-w-md" : "max-w-2xl",
+                    isSimpleMode ? "md:max-w-xl" : "md:max-w-3xl",
                     "max-h-[90vh] md:max-h-none"
                 )}>
                     {/* Header */}
@@ -428,7 +428,7 @@ export default function ManualFichajeModal({
                                                                 >
                                                                     <Trash2 size={14} />
                                                                 </button>
-                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-6 mt-1">
                                                                     <InputField type="time" label="Inicio" value={p.inicio} onChange={v => updatePausa(idx, { inicio: v })} compact />
                                                                     <InputField type="time" label="Fin" value={p.fin} onChange={v => updatePausa(idx, { fin: v })} compact />
                                                                 </div>

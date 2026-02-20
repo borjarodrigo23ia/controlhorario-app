@@ -124,7 +124,7 @@ export default function AdminChangeRequestModal() {
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#121726]/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-400 border border-gray-100">
+            <div className="bg-white w-full md:max-w-2xl rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-400 border border-gray-100">
                 {/* Header - Minimalist B&W */}
                 <div className="p-8 pb-4">
                     <div className="flex items-center gap-4 mb-4">

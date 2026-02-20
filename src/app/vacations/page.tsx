@@ -37,7 +37,7 @@ export default function VacationsPage() {
             </div>
 
             {/* Main Content */}
-            <main className="flex-1 ml-0 md:ml-64 p-6 md:p-12 pb-32">
+            <main className="flex-1 sidebar-margin ml-0 p-6 md:p-12 pb-32">
                 <div className="max-w-[1600px] mx-auto space-y-8">
                     <PageHeader
                         title="Mis Vacaciones"
