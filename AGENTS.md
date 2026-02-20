@@ -82,8 +82,33 @@
 3.  **Use `useFichajes.ts`** as the reference implementation for any time-tracking logic changes.
 4.  **Verify changes** on mobile viewports.
 
-## 8. Common Errors & Fixes
-- **JSX Syntax Errors**:
-    - `Error: x Expected '>', got 'ident'`: Often caused by an **extra closing tag** (e.g., `</div>`) or a missing opening tag.
-    - `Error: x Unexpected token. Did you mean '{'}'}' or '&rbrace;'?`: Usually indicates a **missing closing fragment** (`</>`) or a mismatched brace in JSX logic.
-    - **Fix**: meticulously trace opening and closing tags. Use IDE folding to verify structure. When returning multiple elements, always wrap them in a `<Fragment>` or `<>...</>`.
+## 9. Admin Platform Evolution (Desktop vs Mobile)
+The administration panels have undergone a significant evolution to serve two distinct user experiences based on screen size:
+
+### Hybrid Layout Strategy
+The app uses Tailwind's `lg` (1024px) breakpoint to conditionally switch between a modern desktop dashboard and a restored legacy mobile view (Commit `ce4b5304`).
+- **Desktop (≥1024px)**: 
+    - **Dashboard**: Features a multi-widget layout (`WhosWorking`, `Clock`, `Corrections`, `Vacations`).
+    - **Split-View**: Management pages (Users, Centers) use a left-list / right-detail split layout.
+- **Mobile (<1024px)**:
+    - **Navigation**: Restores `Link`-based navigation for better browser history support.
+    - **Visuals**: Uses the original gradient cards and specific status icons.
+    - **Modals**: Uses `CenterDetailViewLegacy.tsx` to provide an exact replica of the original centered modal, avoiding the sheet/overlay behavior of the newer desktop components.
+
+### Implementation Specifics
+- **Legacy Components**: When exact visual parity is required for mobile, a `Legacy` version of the component is created (e.g., `CenterDetailViewLegacy.tsx`) to avoid bloating the desktop components with conditional styling.
+- **Header Logic**: Headers in Admin pages now conditionally render the mobile layout (buttons above search) vs desktop layout (side-by-side) to ensure ergonomic touch targets.
+
+## 10. Troubleshooting & Common Fixes (Updates)
+
+### React Hook Form + TypeScript
+- **Problem**: `watch('name')` returning `undefined` during initial render, breaking type-strict components.
+- **Fix**: Always use fallback values when passing watched values to props: `<Component value={watchedValue || ''} />`.
+
+### Modal Fluidity & Internal Loading
+- **Problem**: Component-level loading states (`if (loading) return <Spinner />`) that unmount the entire container cause "jank" and layout shifting.
+- **Fix**: Allow the container structure to render immediately and handle loading states internally within specific fields or sections (e.g., inside the list of workers).
+
+### Build & Code Extraction
+- **Encoding Errors**: When extracting code from older commits or temporary files, beware of `UTF-16LE` encoding (PowerShell default). Use `UTF-8` to ensure compatibility with tools like `view_file` or `grep`.
+- **Git Operations**: Always verify the current branch before merging to `main`. Use `git branch --show-current`.
