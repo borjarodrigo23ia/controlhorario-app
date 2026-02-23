@@ -53,20 +53,20 @@ export const CheckboxDropdown: React.FC<CheckboxDropdownProps> = ({
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "group flex items-center justify-between transition-all duration-300 border focus:outline-none focus:ring-4 focus:ring-primary/10",
+                    "group flex items-center justify-between transition-all duration-300 border focus:outline-none focus:ring-4 focus:ring-primary/10 w-full",
                     compact ? "gap-2 px-3 md:px-5 py-2 md:py-3 rounded-xl" : "gap-6 px-10 py-3.5 rounded-2xl",
                     isOpen
                         ? "bg-white text-[#121726] border-primary shadow-lg ring-2 ring-primary/5"
                         : "bg-white text-gray-700 border-gray-200 shadow-sm hover:border-primary/30 hover:shadow-md active:scale-95"
                 )}
             >
-                <div className={cn("flex items-center", compact ? "gap-2" : "gap-4")}>
+                <div className={cn("flex items-center min-w-0 flex-1", compact ? "gap-2" : "gap-4")}>
                     <div className={cn(
-                        "rounded-full ring-2 ring-offset-2 transition-all",
+                        "rounded-full ring-2 ring-offset-2 transition-all shrink-0",
                         compact ? "w-1.5 h-1.5" : "w-2.5 h-2.5",
                         isAllSelected ? "bg-green-500 ring-green-100 scale-110" : (selectedCount > 0 ? "bg-green-500 ring-green-100 scale-110" : "bg-gray-300 ring-transparent")
                     )} />
-                    <span className={cn("font-black tracking-tight uppercase whitespace-nowrap", compact ? "text-[10px]" : "text-sm")}>{label}</span>
+                    <span className={cn("font-black tracking-tight uppercase truncate", compact ? "text-[10px]" : "text-sm")}>{label}</span>
                 </div>
                 <ChevronDown
                     className={cn(

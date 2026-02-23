@@ -25,7 +25,7 @@ export default function UserCorrectionsPage() {
     return (
         <div className="flex min-h-screen bg-[#FAFBFC]">
             <div className="hidden md:block"><Sidebar /></div>
-            <main className="flex-1 sidebar-margin ml-0 p-6 md:p-12 pb-32">
+            <main className="flex-1 ml-0 md:ml-80 p-6 md:p-12 pb-32">
                 <div className="max-w-4xl mx-auto space-y-6">
                     <PageHeader
                         title="Validar Solicitudes"

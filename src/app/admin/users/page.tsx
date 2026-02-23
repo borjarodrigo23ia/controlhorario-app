@@ -171,7 +171,7 @@ export default function AdminUsersPage() {
                         </div>
 
                         <button
-                            onClick={() => setShowCreateModal(true)}
+                            onClick={() => setSelectedUserId('new')}
                             className="flex items-center gap-2 bg-black text-white px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/20 active:scale-95 transition-all shrink-0"
                         >
                             <Plus size={18} strokeWidth={3} />
@@ -327,6 +327,7 @@ export default function AdminUsersPage() {
                         <UserDetailView
                             userId={selectedUserId}
                             onClose={() => setSelectedUserId(null)}
+                            onSuccess={fetchData}
                         />
                     </div>
                 )}

@@ -103,15 +103,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 </div>
             </div>
 
-            {children && (
-                <div className="relative z-50 flex items-center gap-3">
-                    {children}
+            <div className="relative z-50 flex items-center gap-3">
+                <div className="hidden lg:block">
+                    <NotificationBell />
                 </div>
-            )}
-
-            {/* Global Notification Bell - Absolutely positioned to match icon center */}
-            <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 z-[60]">
-                <NotificationBell />
+                {children}
             </div>
 
             {/* Mobile Notification Bell - Integrated in flow if no children handle it */}

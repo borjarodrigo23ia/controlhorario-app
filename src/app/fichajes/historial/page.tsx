@@ -197,14 +197,12 @@ export default function HistorialPage() {
         );
     };
 
-    // Fetch corrections for the 'audit' tab
     const { corrections, loading: correctionsLoading, fetchMyCorrections } = useUserCorrections();
 
     useEffect(() => {
-        if (activeTab === 'audit') {
-            fetchMyCorrections();
-        }
-    }, [activeTab, fetchMyCorrections]);
+        // En escritorio mostramos siempre las correcciones, así que las cargamos independientemente del tab
+        fetchMyCorrections();
+    }, [fetchMyCorrections]);
 
     return (
         <>
@@ -216,85 +214,168 @@ export default function HistorialPage() {
                 badge="Mi Actividad"
             />
 
-            <div className="max-w-5xl space-y-8">
-                {/* Tab Switcher & Export */}
-                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-                    <div className="flex p-1.5 bg-gray-100/50 backdrop-blur-sm rounded-2xl flex-1 border border-gray-200/30 w-full md:w-auto">
-                        <button
-                            onClick={() => setActiveTab('activity')}
-                            className={cn(
-                                "flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300",
-                                activeTab === 'activity'
-                                    ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
-                                    : "text-gray-400 hover:text-gray-600"
-                            )}
-                        >
-                            <ClipboardList size={16} />
-                            Actividad
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('audit')}
-                            className={cn(
-                                "flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300",
-                                activeTab === 'audit'
-                                    ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
-                                    : "text-gray-400 hover:text-gray-600"
-                            )}
-                        >
-                            <History size={16} />
-                            Cambios
-                        </button>
+            <div className="max-w-5xl lg:max-w-[1400px] w-full mx-auto space-y-8">
+                {/* ========================================
+                    MOBILE LAYOUT — Preserved exactly as-is
+                   ======================================== */}
+                <div className="block lg:hidden space-y-8 min-w-0">
+                    {/* Tab Switcher & Export */}
+                    <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                        <div className="flex p-1.5 bg-gray-100/50 backdrop-blur-sm rounded-2xl flex-1 border border-gray-200/30 w-full md:w-auto">
+                            <button
+                                onClick={() => setActiveTab('activity')}
+                                className={cn(
+                                    "flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300",
+                                    activeTab === 'activity'
+                                        ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+                                        : "text-gray-400 hover:text-gray-600"
+                                )}
+                            >
+                                <ClipboardList size={16} />
+                                Actividad
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('audit')}
+                                className={cn(
+                                    "flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300",
+                                    activeTab === 'audit'
+                                        ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+                                        : "text-gray-400 hover:text-gray-600"
+                                )}
+                            >
+                                <History size={16} />
+                                Cambios
+                            </button>
+                        </div>
+
+                        {activeTab === 'activity' && (
+                            <ExportActions
+                                cycles={filteredCycles}
+                                user={user}
+                                userName={`${user?.firstname || ''} ${user?.lastname || ''}`}
+                            />
+                        )}
                     </div>
 
-                    {activeTab === 'activity' && (
-                        <ExportActions
-                            cycles={filteredCycles}
-                            user={user}
-                            userName={`${user?.firstname || ''} ${user?.lastname || ''}`}
-                        />
+                    {activeTab === 'activity' ? (
+                        <div className="flex flex-col min-h-[500px]">
+                            {/* Filters - Exact Custom Component Design */}
+                            <div className="flex flex-col gap-4 mb-8">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none ml-1">
+                                    Filtrar por Rango de Fechas
+                                </span>
+
+                                <HistoryDateRangePicker
+                                    startDate={startDate}
+                                    endDate={endDate}
+                                    onChange={(dates) => {
+                                        setStartDate(dates.start);
+                                        setEndDate(dates.end);
+                                    }}
+                                />
+                            </div>
+
+                            <div className="flex-1">
+                                <HistoryList
+                                    cycles={paginatedCycles}
+                                    loading={loading}
+                                    title="Historial de Jornadas"
+                                    onEdit={handleEdit}
+                                />
+                            </div>
+
+                            <div className="mt-auto pb-4 md:pb-0">
+                                {renderPagination()}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            {/* Migrated UserCorrectionsPanel here */}
+                            <UserCorrectionsPanel
+                                corrections={corrections}
+                                loading={correctionsLoading}
+                            />
+                        </div>
                     )}
                 </div>
 
-                {activeTab === 'activity' ? (
-                    <div className="flex flex-col min-h-[500px]">
-                        {/* Filters - Exact Custom Component Design */}
-                        <div className="flex flex-col gap-4 mb-8">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none ml-1">
-                                Filtrar por Rango de Fechas
-                            </span>
-
-                            <HistoryDateRangePicker
-                                startDate={startDate}
-                                endDate={endDate}
-                                onChange={(dates) => {
-                                    setStartDate(dates.start);
-                                    setEndDate(dates.end);
-                                }}
-                            />
+                {/* ========================================
+                    DESKTOP LAYOUT — Dual panel
+                   ======================================== */}
+                <div className="hidden lg:flex flex-col gap-6">
+                    {/* Top Control Bar */}
+                    <div className="w-full bg-white p-4 px-6 rounded-[2rem] border border-gray-100/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex items-center justify-between gap-6 relative z-30">
+                        <div className="flex bg-gray-50 p-1.5 rounded-[1.5rem] border border-gray-100 gap-1 shrink-0">
+                            <button className="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all bg-white text-primary shadow-sm">
+                                <span className="flex items-center gap-2"><ClipboardList size={14} /> Fichajes Propios</span>
+                            </button>
                         </div>
 
-                        <div className="flex-1">
-                            <HistoryList
-                                cycles={paginatedCycles}
-                                loading={loading}
-                                title="Historial de Jornadas"
-                                onEdit={handleEdit}
-                            />
-                        </div>
-
-                        <div className="mt-auto pb-4 md:pb-0">
-                            {renderPagination()}
+                        <div className="flex items-center gap-4">
+                            <div className="w-[300px]">
+                                <HistoryDateRangePicker
+                                    startDate={startDate}
+                                    endDate={endDate}
+                                    onChange={(dates) => {
+                                        setStartDate(dates.start);
+                                        setEndDate(dates.end);
+                                    }}
+                                />
+                            </div>
                         </div>
                     </div>
-                ) : (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        {/* Migrated UserCorrectionsPanel here */}
-                        <UserCorrectionsPanel
-                            corrections={corrections}
-                            loading={correctionsLoading}
-                        />
+
+                    {/* Main Content Grid */}
+                    <div className="grid grid-cols-[1.5fr_1fr] gap-8 items-start">
+                        {/* Left Column: Activity List */}
+                        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col min-h-[600px]">
+                            <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-100 shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2.5 bg-primary/5 rounded-xl text-primary"><ClipboardList size={20} /></div>
+                                    <div>
+                                        <h2 className="text-base font-black text-gray-800 tracking-tight">Actividad Personal</h2>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5">Mis jornadas</p>
+                                    </div>
+                                </div>
+                                <ExportActions
+                                    cycles={filteredCycles}
+                                    user={user}
+                                    userName={`${user?.firstname || ''} ${user?.lastname || ''}`}
+                                />
+                            </div>
+
+                            <div className="flex-1">
+                                <HistoryList
+                                    cycles={paginatedCycles}
+                                    loading={loading}
+                                    onEdit={handleEdit}
+                                />
+                            </div>
+
+                            <div className="mt-8 shrink-0">
+                                {renderPagination()}
+                            </div>
+                        </div>
+
+                        {/* Right Column: Corrections Audit */}
+                        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col h-full bg-gray-50/30">
+                            <div className="flex items-center gap-3 mb-8 pb-6 border-b border-gray-100 shrink-0">
+                                <div className="p-2.5 bg-primary/5 rounded-xl text-primary"><History size={20} /></div>
+                                <div>
+                                    <h2 className="text-base font-black text-gray-800 tracking-tight">Auditoría de Cambios</h2>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5">Estado de peticiones</p>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 min-h-[500px]">
+                                <UserCorrectionsPanel
+                                    corrections={corrections}
+                                    loading={correctionsLoading}
+                                />
+                            </div>
+                        </div>
                     </div>
-                )}
+                </div>
             </div>
 
             <ManualFichajeModal

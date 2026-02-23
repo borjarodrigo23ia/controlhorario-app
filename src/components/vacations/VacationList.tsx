@@ -227,7 +227,7 @@ export default function VacationList({ refreshTrigger, compact = false, limit }:
 
         return (
             <div className="w-full pt-6 mt-8 border-t border-gray-100/80">
-                <div className="flex items-center justify-between w-full max-w-lg mx-auto text-gray-500 font-medium p-2 transition-all duration-300">
+                <div className="flex items-center justify-between w-full max-w-lg lg:max-w-none mx-auto text-gray-500 font-medium p-2 transition-all duration-300">
                     <button
                         type="button"
                         onClick={() => {
@@ -292,7 +292,6 @@ export default function VacationList({ refreshTrigger, compact = false, limit }:
                         <Skeleton width={200} height={28} />
                         <Skeleton width={150} height={18} />
                     </div>
-                    <Skeleton width={256} height={48} borderRadius="full" />
                 </div>
                 <div className="grid gap-4 max-w-2xl mx-auto w-full">
                     {[1, 2, 3, 4, 5].map((i) => (
@@ -329,119 +328,125 @@ export default function VacationList({ refreshTrigger, compact = false, limit }:
     }
 
     return (
-        <div className="space-y-6" ref={historyRef}>
-            {/* Header with Year Filter - Hide if compact */}
-            {!compact && (
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 px-2">
-                    <div className="flex-1">
-                        <h3 className="text-xl font-bold text-[#121726] tracking-tight mb-1">
-                            Historial de Solicitudes
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                            Mostrando {paginatedVacations.length} de {filteredVacations.length} solicitud{filteredVacations.length !== 1 ? 'es' : ''}
-                        </p>
-                    </div>
-
-                    <div className="w-full sm:w-64">
-                        <CustomSelect
-                            label="Filtrar por Año"
-                            options={yearOptions}
-                            value={selectedYear}
-                            onChange={setSelectedYear}
-                            icon={Filter}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* Vacation Cards */}
-            <div className="grid gap-4 max-w-2xl mx-auto">
-                {paginatedVacations.map((vacation) => {
-                    const isExpanded = expandedCards.has(vacation.rowid);
-                    const hasComments = !!vacation.comentarios;
-                    const canDelete = vacation.estado === 'pendiente' || vacation.estado === 'rechazado';
-
-                    const statusGlowColors = {
-                        aprobado: '#10B981', // Emerald
-                        rechazado: '#EF4444', // Red
-                        pendiente: '#F59E0B'  // Amber
-                    };
-                    const glowColor = statusGlowColors[vacation.estado as keyof typeof statusGlowColors] || '#9ca3af';
-
-                    return (
-                        <div
-                            key={vacation.rowid}
-                            onClick={() => (hasComments || true) && toggleExpand(vacation.rowid)}
-                            className={`group overflow-hidden relative bg-white rounded-2xl border transition-all cursor-pointer ${isExpanded ? 'border-primary/10 shadow-md scale-[1.01]' : 'border-gray-100 shadow-sm hover:shadow-md hover:scale-[1.01]'
-                                }`}
-                        >
-                            {/* Diagonal Glow Effect */}
-                            <div
-                                className={`absolute -bottom-6 -right-6 w-32 h-32 bg-gradient-to-tl from-transparent to-transparent blur-2xl rounded-tl-full pointer-events-none z-0 transition-opacity duration-300 ${isExpanded ? 'opacity-0' : 'opacity-60 group-hover:opacity-100'}`}
-                                style={{
-                                    background: `radial-gradient(circle at bottom right, ${glowColor}, transparent)`
-                                }}
-                            />
-
-                            <div className="p-4">
-                                <div className="flex items-center justify-between gap-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100/50">
-                                            {getStatusIcon(vacation.estado)}
-                                        </div>
-                                        <div>
-                                            <p className="text-base font-bold text-[#121726] tracking-tight flex items-center gap-2">
-                                                <span>{formatDate(vacation.fecha_inicio)}</span>
-                                                <span className="text-gray-300 text-sm">→</span>
-                                                <span>{formatDate(vacation.fecha_fin)}</span>
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-1">
-                                        {canDelete && (
-                                            <button
-                                                onClick={(e) => handleDelete(e, vacation.rowid)}
-                                                className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 transition-all rounded-lg"
-                                                title="Eliminar solicitud"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        )}
-                                        <div className={`p-1.5 rounded-lg transition-colors ${isExpanded ? 'bg-black/5 text-black' : 'text-black'}`}>
-                                            {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Expandable Section */}
-                            <div className={`overflow-hidden transition-all duration-300 ease-in-out border-t border-gray-50 bg-gray-50/30 ${isExpanded ? 'max-h-[500px] opacity-100 p-4' : 'max-h-0 opacity-0'
-                                }`}>
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between pb-2 border-b border-gray-100/50">
-                                        <div className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
-                                            {getTypeBadge(vacation.tipo)}
-                                        </div>
-                                        <div className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
-                                            Creada el {formatDate(vacation.fecha_creacion.split(' ')[0])}
-                                        </div>
-                                    </div>
-                                    {hasComments ? (
-                                        <div className="space-y-3">
-                                            {formatCommentContent(vacation.comentarios)}
-                                        </div>
-                                    ) : (
-                                        <p className="text-xs text-gray-400 italic">No hay comentarios adicionales.</p>
-                                    )}
-                                </div>
-                            </div>
+        <div className="flex flex-col h-full" ref={historyRef}>
+            <div className="flex-1 overflow-y-auto px-1 md:px-2 space-y-6 custom-scrollbar">
+                {/* Header with Year Filter - Hide if compact */}
+                {!compact && (
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 px-2 pt-4">
+                        <div className="flex-1">
+                            <h3 className="text-xl font-bold text-[#121726] tracking-tight mb-1">
+                                Historial de Solicitudes
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                                Mostrando {paginatedVacations.length} de {filteredVacations.length} solicitud{filteredVacations.length !== 1 ? 'es' : ''}
+                            </p>
                         </div>
-                    );
-                })}
+
+                        <div className="w-full sm:w-64">
+                            <CustomSelect
+                                label="Filtrar por Año"
+                                options={yearOptions}
+                                value={selectedYear}
+                                onChange={setSelectedYear}
+                                icon={Filter}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* Vacation Cards */}
+                <div className="grid gap-4 max-w-2xl lg:max-w-none mx-auto pb-4">
+                    {paginatedVacations.map((vacation) => {
+                        const isExpanded = expandedCards.has(vacation.rowid);
+                        const hasComments = !!vacation.comentarios;
+                        const canDelete = vacation.estado === 'pendiente' || vacation.estado === 'rechazado';
+
+                        const statusGlowColors = {
+                            aprobado: '#10B981', // Emerald
+                            rechazado: '#EF4444', // Red
+                            pendiente: '#F59E0B'  // Amber
+                        };
+                        const glowColor = statusGlowColors[vacation.estado as keyof typeof statusGlowColors] || '#9ca3af';
+
+                        return (
+                            <div
+                                key={vacation.rowid}
+                                onClick={() => toggleExpand(vacation.rowid)}
+                                className={`group overflow-hidden relative bg-white rounded-2xl border transition-all cursor-pointer ${isExpanded ? 'border-primary/10 shadow-md scale-[1.01]' : 'border-gray-100 shadow-sm hover:shadow-md hover:scale-[1.01]'
+                                    }`}
+                            >
+                                {/* Diagonal Glow Effect */}
+                                <div
+                                    className={`absolute -bottom-6 -right-6 w-32 h-32 bg-gradient-to-tl from-transparent to-transparent blur-2xl rounded-tl-full pointer-events-none z-0 transition-opacity duration-300 ${isExpanded ? 'opacity-0' : 'opacity-60 group-hover:opacity-100'}`}
+                                    style={{
+                                        background: `radial-gradient(circle at bottom right, ${glowColor}, transparent)`
+                                    }}
+                                />
+
+                                <div className="p-4">
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100/50">
+                                                {getStatusIcon(vacation.estado)}
+                                            </div>
+                                            <div>
+                                                <p className="text-base font-bold text-[#121726] tracking-tight flex items-center gap-2">
+                                                    <span>{formatDate(vacation.fecha_inicio)}</span>
+                                                    <span className="text-gray-300 text-sm">→</span>
+                                                    <span>{formatDate(vacation.fecha_fin)}</span>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-1">
+                                            {canDelete && (
+                                                <button
+                                                    onClick={(e) => handleDelete(e, vacation.rowid)}
+                                                    className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 transition-all rounded-lg"
+                                                    title="Eliminar solicitud"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
+                                            <div className={`p-1.5 rounded-lg transition-colors ${isExpanded ? 'bg-black/5 text-black' : 'text-black'}`}>
+                                                {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Expandable Section */}
+                                <div className={`overflow-hidden transition-all duration-300 ease-in-out border-t border-gray-50 bg-gray-50/30 ${isExpanded ? 'max-h-[500px] opacity-100 p-4' : 'max-h-0 opacity-0'
+                                    }`}>
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between pb-2 border-b border-gray-100/50">
+                                            <div className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
+                                                {getTypeBadge(vacation.tipo)}
+                                            </div>
+                                            <div className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
+                                                Creada el {formatDate(vacation.fecha_creacion.split(' ')[0])}
+                                            </div>
+                                        </div>
+                                        {hasComments ? (
+                                            <div className="space-y-3">
+                                                {formatCommentContent(vacation.comentarios)}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-gray-400 italic">No hay comentarios adicionales.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
 
-            {!compact && renderPagination()}
+            {!compact && (
+                <div className="shrink-0 bg-white pt-2 pb-4">
+                    {renderPagination()}
+                </div>
+            )}
         </div>
     );
 }
