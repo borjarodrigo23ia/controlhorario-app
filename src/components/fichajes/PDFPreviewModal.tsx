@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { X, Download, Loader2, FileText, Printer, Share2, AlertCircle } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { X, Download, Loader2, FileText, Printer, AlertCircle, ZoomIn, ZoomOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PDFPreviewModalProps {
@@ -14,6 +15,12 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({ isOpen, onClos
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [pageCount, setPageCount] = useState(1);
+    const [zoom, setZoom] = useState(100);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     useEffect(() => {
         if (isOpen && pdfDoc) {
@@ -33,12 +40,13 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({ isOpen, onClos
                 if (url) {
                     URL.revokeObjectURL(url);
                     setPdfUrl(null);
+                    setZoom(100);
                 }
             };
         }
     }, [isOpen, pdfDoc]);
 
-    if (!isOpen) return null;
+    if (!isOpen || !isMounted) return null;
 
     const handleDownload = () => {
         if (pdfDoc) {
@@ -55,19 +63,22 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({ isOpen, onClos
         }
     };
 
-    return (
+    const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 200));
+    const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 50));
+
+    const modalContent = (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-4 lg:p-8 animate-in fade-in duration-300">
-            {/* Soft Backdrop */}
+            {/* Soft Backdrop - Blurred on desktop */}
             <div
-                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-all"
+                className="absolute inset-0 bg-slate-900/60 lg:bg-black/40 lg:backdrop-blur-md transition-all"
                 onClick={onClose}
             />
 
-            {/* Modal Container: Clean Paper & Slate Design */}
-            <div className="relative w-full h-full md:max-w-5xl md:h-[90vh] bg-slate-50 md:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-500">
+            {/* Modal Container: Clean Paper & Slate Design - Centered popup on desktop */}
+            <div className="relative w-full h-full md:max-w-5xl md:h-[90vh] lg:w-[1000px] lg:h-[85vh] lg:m-auto bg-slate-50 lg:rounded-[2rem] md:rounded-2xl shadow-2xl lg:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden animate-in zoom-in-95 duration-500">
 
                 {/* Clean Simplified Toolbar */}
-                <div className="z-20 flex items-center justify-between px-4 md:px-8 py-4 bg-white border-b border-slate-200 shadow-sm">
+                <div className="z-20 flex items-center justify-between px-4 md:px-8 py-4 bg-white border-b border-slate-200 shadow-sm lg:rounded-t-[2rem]">
                     <div className="flex items-center gap-3 min-w-0">
                         <div className="hidden sm:flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
                             <FileText size={20} />
@@ -81,6 +92,26 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({ isOpen, onClos
                     </div>
 
                     <div className="flex items-center gap-2">
+                        <div className="hidden sm:flex items-center gap-1 bg-slate-100 p-1 rounded-lg mr-2">
+                            <button
+                                onClick={handleZoomOut}
+                                disabled={zoom <= 50}
+                                className="p-1.5 text-slate-500 hover:bg-white hover:shadow-sm rounded transition-all disabled:opacity-50"
+                                title="Reducir zoom"
+                            >
+                                <ZoomOut size={16} />
+                            </button>
+                            <span className="text-xs font-bold text-slate-600 px-2 min-w-[3rem] text-center">{zoom}%</span>
+                            <button
+                                onClick={handleZoomIn}
+                                disabled={zoom >= 200}
+                                className="p-1.5 text-slate-500 hover:bg-white hover:shadow-sm rounded transition-all disabled:opacity-50"
+                                title="Aumentar zoom"
+                            >
+                                <ZoomIn size={16} />
+                            </button>
+                        </div>
+
                         <button
                             onClick={handlePrint}
                             className="hidden sm:flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-all text-xs font-bold"
@@ -108,19 +139,20 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({ isOpen, onClos
                 </div>
 
                 {/* Main Content Area: High Visibility White Background */}
-                <div className="flex-1 relative bg-slate-200/50 flex flex-col">
+                <div className="flex-1 relative bg-white flex flex-col">
                     {loading ? (
                         <div className="flex-1 flex flex-col items-center justify-center gap-4">
                             <div className="w-12 h-12 border-4 border-slate-300 border-t-indigo-600 rounded-full animate-spin"></div>
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Cargando visualizador...</p>
                         </div>
                     ) : pdfUrl ? (
-                        <div className="flex-1 w-full h-full bg-slate-600 p-0 md:p-6 overflow-hidden flex items-center justify-center">
-                            <div className="w-full h-full max-w-5xl bg-white shadow-2xl md:rounded-lg overflow-hidden relative">
+                        <div className="flex-1 w-full h-full bg-slate-50 md:bg-white p-0 md:p-6 overflow-hidden flex items-center justify-center">
+                            <div className="w-full h-full max-w-5xl bg-white md:shadow-[0_0_40px_-15px_rgba(0,0,0,0.1)] md:border md:border-slate-200 md:rounded-lg overflow-hidden relative transition-all duration-300">
                                 <iframe
+                                    key={zoom}
                                     id="pdf-preview-iframe"
-                                    src={`${pdfUrl}#view=Fit&toolbar=0&navpanes=0`}
-                                    className="w-full h-full border-none"
+                                    src={`${pdfUrl}#zoom=${zoom}&toolbar=0&navpanes=0`}
+                                    className="w-full h-full border-none transition-transform duration-300"
                                     style={{
                                         width: '100%',
                                         height: '100%',
@@ -141,7 +173,7 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({ isOpen, onClos
                 </div>
 
                 {/* Status Bar */}
-                <div className="hidden md:flex px-8 py-2.5 bg-white border-t border-slate-200 items-center justify-between">
+                <div className="hidden md:flex px-8 py-2.5 bg-white border-t border-slate-200 items-center justify-between lg:rounded-b-[2rem]">
                     <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                         <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> Visualización Optimizada</span>
                         <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div> A4 Portrait</span>
@@ -153,4 +185,6 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({ isOpen, onClos
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 };

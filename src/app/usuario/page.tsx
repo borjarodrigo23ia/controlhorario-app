@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import MobileNav from '@/components/MobileNav';
 import Sidebar from '@/components/Sidebar';
-import { LogOut, Save, Mail, Phone, Lock, Loader2, Pencil, UserCircle, X, Power, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { LogOut, Save, Mail, Phone, Lock, Loader2, Pencil, UserCircle, X, Power, Eye, EyeOff, Trash2, ScanFace } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { toast } from 'react-hot-toast';
 import { clsx, type ClassValue } from 'clsx';
@@ -148,11 +148,11 @@ export default function UsuarioPage() {
         <div className="flex min-h-screen bg-[#FAFBFC]">
             <div className="hidden md:block"><Sidebar /></div>
 
-            <main className="flex-1 sidebar-margin ml-0 p-6 md:p-12 pb-32 flex flex-col items-center">
-                <div className="w-full max-w-lg">
+            <main className="flex-1 ml-0 md:ml-80 p-6 md:p-12 pb-32">
+                <div className="w-full space-y-8">
                     <PageHeader
                         title="Mi Perfil"
-                        subtitle="Gestiona tu información de cuenta"
+                        subtitle="Gestiona tu información de cuenta y preferencias"
                         icon={UserCircle}
                         showBack
                         badge="Mi Cuenta"
@@ -162,7 +162,7 @@ export default function UsuarioPage() {
                                 <>
                                     <button
                                         onClick={() => setIsEditing(true)}
-                                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-black rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 border border-slate-200 hover:bg-slate-50 group"
+                                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-black rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 border border-slate-200 hover:bg-slate-50 group shadow-sm"
                                     >
                                         <Pencil size={14} strokeWidth={3} className="group-hover:rotate-12 transition-transform" />
                                         EDITAR
@@ -179,201 +179,231 @@ export default function UsuarioPage() {
                         </div>
                     </PageHeader>
 
-                    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-[0_20px_60px_rgb(0,0,0,0.03)] overflow-hidden">
-                        <div className="p-10 md:p-12 space-y-7">
+                    <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] border border-gray-100 shadow-[0_20px_60px_rgb(0,0,0,0.03)] overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div className="p-8 md:p-12">
 
-                            {/* Header Info (Compact) */}
-                            <div className="border-b border-gray-50 pb-6 mb-2">
-                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Información de Usuario</h3>
-                                <p className="text-xs font-bold text-slate-400">Datos registrados en la base</p>
-                            </div>
-
-                            <div className="group border-b border-gray-50 pb-4">
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Nombre de usuario</p>
-                                <p className="text-base font-bold text-slate-900 tracking-tight">{user.login}</p>
-                            </div>
-
-                            <div className="group border-b border-gray-50 pb-4">
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Nombre completo</p>
-                                {isEditing ? (
-                                    <div className="flex gap-3">
-                                        <input
-                                            type="text"
-                                            className="w-1/2 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all underline decoration-slate-300 decoration-2 underline-offset-4"
-                                            value={formData.firstname}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, firstname: e.target.value }))}
-                                            placeholder="Nombre"
-                                        />
-                                        <input
-                                            type="text"
-                                            className="w-1/2 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all underline decoration-slate-300 decoration-2 underline-offset-4"
-                                            value={formData.lastname}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, lastname: e.target.value }))}
-                                            placeholder="Apellidos"
-                                        />
+                            {/* Section: User Info Header */}
+                            <div className="flex flex-row items-center gap-4 md:gap-6 mb-6 pb-8 border-b border-gray-50">
+                                <div className="w-16 h-16 md:w-20 md:h-20 bg-primary/5 rounded-[1.5rem] md:rounded-3xl flex items-center justify-center text-primary border border-primary/10 shrink-0">
+                                    <ScanFace size={32} className="md:w-10 md:h-10" strokeWidth={1.5} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight truncate">
+                                        {user.firstname} {user.lastname}
+                                    </h3>
+                                    <div className="flex flex-col md:flex-row md:items-center gap-x-4 gap-y-0.5 mt-0.5 md:mt-1">
+                                        <p className="flex items-center gap-1.5 text-xs md:text-sm font-bold text-gray-400 truncate">
+                                            <UserCircle size={12} className="text-gray-300 md:w-3.5 md:h-3.5" />
+                                            @{user.login}
+                                        </p>
+                                        <div className="w-1 h-1 bg-gray-200 rounded-full hidden md:block" />
+                                        <p className="flex items-center gap-1.5 text-xs md:text-sm font-bold text-gray-400 truncate">
+                                            <Mail size={12} className="text-gray-300 md:w-3.5 md:h-3.5" />
+                                            {user.email}
+                                        </p>
                                     </div>
-                                ) : (
-                                    <p className="text-base font-bold text-slate-900 tracking-tight">
-                                        {user.firstname || ''} {user.lastname || ''}
-                                    </p>
-                                )}
+                                </div>
                             </div>
 
-                            {/* Fields Section */}
-                            <div className="space-y-7">
-                                <div className="group">
-                                    <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 transition-colors">
-                                        DNI / NIE
-                                    </label>
-                                    {isEditing ? (
-                                        <input
-                                            type="text"
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all underline decoration-slate-300 decoration-2 underline-offset-4"
-                                            value={formData.dni}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, dni: e.target.value }))}
-                                            placeholder="12345678X"
-                                        />
-                                    ) : (
-                                        <p className="text-base font-bold text-slate-700 px-1">{formData.dni || 'No registrado'}</p>
-                                    )}
-                                </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
 
-                                <div className="group">
-                                    <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 transition-colors">
-                                        Correo electrónico
-                                    </label>
-                                    {isEditing ? (
-                                        <input
-                                            type="email"
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all underline decoration-slate-300 decoration-2 underline-offset-4"
-                                            value={formData.email}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                                            placeholder="correo@ejemplo.com"
-                                        />
-                                    ) : (
-                                        <p className="text-base font-bold text-slate-700 px-1">{user.email || 'No especificado'}</p>
-                                    )}
-                                </div>
+                                {/* Personal Info Group */}
+                                <div className="space-y-8">
+                                    <div>
+                                        <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                                            <UserCircle size={14} strokeWidth={2.5} />
+                                            Datos Personales
+                                        </h4>
 
-                                <div className="group">
-                                    <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 transition-colors">
-                                        Teléfono móvil
-                                    </label>
-                                    {isEditing ? (
-                                        <input
-                                            type="tel"
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all underline decoration-slate-300 decoration-2 underline-offset-4"
-                                            value={formData.user_mobile}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, user_mobile: e.target.value }))}
-                                            placeholder="+34"
-                                        />
-                                    ) : (
-                                        <p className="text-base font-bold text-slate-700 px-1">{formData.user_mobile || 'No registrado'}</p>
-                                    )}
-                                </div>
+                                        <div className="space-y-6">
+                                            <div className="group">
+                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 block transition-colors">
+                                                    Nombre Completo
+                                                </label>
+                                                {isEditing ? (
+                                                    <div className="flex flex-col sm:flex-row gap-3">
+                                                        <input
+                                                            type="text"
+                                                            className="w-full sm:w-1/2 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all"
+                                                            value={formData.firstname}
+                                                            onChange={(e) => setFormData(prev => ({ ...prev, firstname: e.target.value }))}
+                                                            placeholder="Nombre"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            className="w-full sm:w-1/2 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all"
+                                                            value={formData.lastname}
+                                                            onChange={(e) => setFormData(prev => ({ ...prev, lastname: e.target.value }))}
+                                                            placeholder="Apellidos"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-base font-bold text-slate-900 tracking-tight pb-2 border-b border-transparent">
+                                                        {formData.firstname} {formData.lastname}
+                                                    </p>
+                                                )}
+                                            </div>
 
-                                <div className="group">
-                                    <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 transition-colors">
-                                        Teléfono oficina / fijo
-                                    </label>
-                                    {isEditing ? (
-                                        <input
-                                            type="tel"
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all underline decoration-slate-300 decoration-2 underline-offset-4"
-                                            value={formData.office_phone}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, office_phone: e.target.value }))}
-                                            placeholder="Extensión o fijo"
-                                        />
-                                    ) : (
-                                        <p className="text-base font-bold text-slate-700 px-1">{formData.office_phone || 'No registrado'}</p>
-                                    )}
-                                </div>
+                                            <div className="group">
+                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 block transition-colors">
+                                                    DNI / NIE
+                                                </label>
+                                                {isEditing ? (
+                                                    <input
+                                                        type="text"
+                                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all"
+                                                        value={formData.dni}
+                                                        onChange={(e) => setFormData(prev => ({ ...prev, dni: e.target.value }))}
+                                                        placeholder="12345678X"
+                                                    />
+                                                ) : (
+                                                    <p className="text-base font-bold text-slate-700">{formData.dni || 'No registrado'}</p>
+                                                )}
+                                            </div>
 
-                                <div className="group">
-                                    <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 transition-colors">
-                                        Nº Seguridad Social (NAF)
-                                    </label>
-                                    {isEditing ? (
-                                        <input
-                                            type="text"
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all underline decoration-slate-300 decoration-2 underline-offset-4"
-                                            value={formData.naf}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, naf: e.target.value }))}
-                                            placeholder="00/00000000/00"
-                                        />
-                                    ) : (
-                                        <p className="text-base font-bold text-slate-700 px-1">{formData.naf || 'No especificado'}</p>
-                                    )}
-                                </div>
-
-
-
-                                {isEditing && (
-                                    <div className="group animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <label className="flex items-center gap-2 text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] mb-3">
-                                            Nueva contraseña
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type={showPassword ? "text" : "password"}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 pr-12 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all placeholder:text-slate-300 placeholder:font-medium underline decoration-slate-300 decoration-2 underline-offset-4"
-                                                value={formData.password}
-                                                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-2"
-                                            >
-                                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                            </button>
+                                            <div className="group">
+                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 block transition-colors">
+                                                    Nº Seguridad Social (NAF)
+                                                </label>
+                                                {isEditing ? (
+                                                    <input
+                                                        type="text"
+                                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all"
+                                                        value={formData.naf}
+                                                        onChange={(e) => setFormData(prev => ({ ...prev, naf: e.target.value }))}
+                                                        placeholder="00/00000000/00"
+                                                    />
+                                                ) : (
+                                                    <p className="text-base font-bold text-slate-700">{formData.naf || 'No especificado'}</p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                )}
+                                </div>
+
+                                {/* Contact & Security Group */}
+                                <div className="space-y-8">
+                                    <div>
+                                        <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                                            <Phone size={14} strokeWidth={2.5} />
+                                            Contacto y Seguridad
+                                        </h4>
+
+                                        <div className="space-y-6">
+                                            <div className="group">
+                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 block transition-colors">
+                                                    Correo electrónico
+                                                </label>
+                                                {isEditing ? (
+                                                    <input
+                                                        type="email"
+                                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all"
+                                                        value={formData.email}
+                                                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                                                    />
+                                                ) : (
+                                                    <p className="text-base font-bold text-slate-700">{formData.email}</p>
+                                                )}
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div className="group">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 block transition-colors">
+                                                        Móvil
+                                                    </label>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="tel"
+                                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all"
+                                                            value={formData.user_mobile}
+                                                            onChange={(e) => setFormData(prev => ({ ...prev, user_mobile: e.target.value }))}
+                                                        />
+                                                    ) : (
+                                                        <p className="text-base font-bold text-slate-700">{formData.user_mobile || '—'}</p>
+                                                    )}
+                                                </div>
+                                                <div className="group">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 block transition-colors">
+                                                        Fijo
+                                                    </label>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="tel"
+                                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all"
+                                                            value={formData.office_phone}
+                                                            onChange={(e) => setFormData(prev => ({ ...prev, office_phone: e.target.value }))}
+                                                        />
+                                                    ) : (
+                                                        <p className="text-base font-bold text-slate-700">{formData.office_phone || '—'}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {isEditing && (
+                                                <div className="group animate-in fade-in slide-in-from-top-2 duration-400">
+                                                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] mb-2 block">
+                                                        Nueva contraseña
+                                                    </label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type={showPassword ? "text" : "password"}
+                                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 pr-12 text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:bg-white transition-all"
+                                                            value={formData.password}
+                                                            onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                                                            placeholder="Dejar vacío para mantener"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowPassword(!showPassword)}
+                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-2"
+                                                        >
+                                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* Actions */}
-                            <div className="pt-6 space-y-4">
-                                {isEditing ? (
-                                    <div className="flex gap-3">
-                                        <button
-                                            onClick={handleSave}
-                                            disabled={saving}
-                                            className="flex-1 relative group overflow-hidden bg-slate-900 text-white py-4 px-4 rounded-xl font-bold text-[10px] tracking-wider transition-all duration-300 active:scale-95 disabled:opacity-70"
-                                        >
-                                            <div className="relative z-10 flex items-center justify-center gap-2">
-                                                {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
-                                                <span>{saving ? 'GUARDANDO...' : 'GUARDAR'}</span>
-                                            </div>
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                setIsEditing(false);
-                                                setFormData(prev => ({
-                                                    ...prev,
-                                                    firstname: user.firstname || '',
-                                                    lastname: user.lastname || '',
-                                                    email: user.email || '',
-                                                    user_mobile: user.user_mobile || '',
-                                                    password: ''
-                                                }));
-                                            }}
-                                            className="flex-1 flex items-center justify-center gap-2 bg-white text-red-600 border border-red-200 py-4 px-4 rounded-xl font-bold text-[10px] tracking-wider uppercase hover:bg-red-50 transition-all active:scale-95"
-                                        >
-                                            <Trash2 size={14} strokeWidth={3} />
-                                            CANCELAR
-                                        </button>
-                                    </div>
-                                ) : null}
-                            </div>
+                            {/* Actions Group (at the bottom of card) */}
+                            {isEditing && (
+                                <div className="mt-12 pt-10 border-t border-gray-50 flex flex-col sm:flex-row gap-4">
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={saving}
+                                        className="flex-1 inline-flex items-center justify-center gap-2 bg-black text-white py-4 px-8 rounded-2xl font-black text-[11px] tracking-widest uppercase transition-all shadow-xl shadow-black/10 hover:shadow-black/20 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50"
+                                    >
+                                        {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} strokeWidth={2.5} />}
+                                        {saving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setIsEditing(false);
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                firstname: user.firstname || '',
+                                                lastname: user.lastname || '',
+                                                email: user.email || '',
+                                                user_mobile: user.user_mobile || '',
+                                                password: ''
+                                            }));
+                                        }}
+                                        className="flex-1 inline-flex items-center justify-center gap-2 bg-white text-red-600 border border-red-100 py-4 px-8 rounded-2xl font-black text-[11px] tracking-widest uppercase hover:bg-red-50 transition-all active:scale-95"
+                                    >
+                                        <Trash2 size={16} strokeWidth={2.5} />
+                                        CANCELAR
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     {/* Notification Preferences Section */}
-                    <div className="mt-8 w-full">
+                    <div className="mt-12">
                         <NotificationPreferences />
                     </div>
-
                 </div>
             </main>
 

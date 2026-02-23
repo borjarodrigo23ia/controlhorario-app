@@ -9,27 +9,35 @@ import { useState, useEffect } from 'react';
 export default function WelcomeCard() {
     const { user } = useAuth();
     const { currentState, registrarEntrada, registrarSalida, iniciarPausa, terminarPausa, loading } = useFichajes();
-    const [time, setTime] = useState(new Date());
+    const [time, setTime] = useState<Date | null>(null);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
+        setTime(new Date());
         const timer = setInterval(() => setTime(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);
 
-    const timeStr = time.toLocaleTimeString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    });
+    const pad = (num: number) => num.toString().padStart(2, '0');
 
-    const dateStr = time.toLocaleDateString('es-ES', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    });
-    const formattedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
-    const greeting = time.getHours() < 12 ? 'Buenos días' : time.getHours() < 20 ? 'Buenas tardes' : 'Buenas noches';
+    const timeStr = time ?
+        `${pad(time.getHours())}:${pad(time.getMinutes())}:${pad(time.getSeconds())}`
+        : '--:--:--';
+
+    const getFormattedDate = (date: Date) => {
+        const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+        return `${days[date.getDay()]}, ${date.getDate()} de ${months[date.getMonth()]} de ${date.getFullYear()}`;
+    };
+
+    const dateStr = mounted && time ? getFormattedDate(time) : '';
+    const formattedDate = dateStr || '...';
+
+    // Greeting should also be stable until mounted or use a safe fallback
+    const currentHour = mounted && time ? time.getHours() : new Date().getHours();
+    const greeting = currentHour < 12 ? 'Buenos días' : currentHour < 20 ? 'Buenas tardes' : 'Buenas noches';
 
     // State logic for buttons
     const canEntrada = currentState === 'sin_iniciar';

@@ -86,7 +86,7 @@ export default function VacationDaysBulkAssign() {
     };
 
     return (
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-gray-100 dark:border-zinc-800 shadow-sm">
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-gray-100 dark:border-zinc-800 shadow-sm flex flex-col h-full">
             <div className="mb-8">
                 <div className="flex items-center gap-1 mb-0">
                     <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0">
@@ -134,7 +134,7 @@ export default function VacationDaysBulkAssign() {
             </div>
 
             {/* User Selection Panel */}
-            <div className="space-y-4">
+            <div className="space-y-4 flex flex-col flex-1 min-h-[300px]">
                 <div className="flex items-center justify-between gap-4">
                     <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                         Seleccionar Empleados
@@ -165,7 +165,7 @@ export default function VacationDaysBulkAssign() {
                 </div>
 
                 {/* User List */}
-                <div className="max-h-96 overflow-y-auto bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-gray-100 dark:border-zinc-700 p-2">
+                <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-gray-100 dark:border-zinc-700 p-2 min-h-0">
                     {loadingUsers ? (
                         <div className="flex items-center justify-center py-12 text-gray-400">
                             <Loader2 className="w-6 h-6 animate-spin" />
@@ -237,23 +237,25 @@ export default function VacationDaysBulkAssign() {
             )}
 
             {/* Apply Button */}
-            <button
-                onClick={handleApply}
-                disabled={submitting || selectedUserIds.size === 0 || !daysInput || parseInt(daysInput) < 0}
-                className="w-full mt-6 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 active:scale-[0.98] font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-            >
-                {submitting ? (
-                    <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Asignando...
-                    </>
-                ) : (
-                    <>
-                        <Users size={20} />
-                        Asignar a {selectedUserIds.size} empleado{selectedUserIds.size !== 1 ? 's' : ''}
-                    </>
-                )}
-            </button>
+            <div className="mt-auto pt-6 shrink-0">
+                <button
+                    onClick={handleApply}
+                    disabled={submitting || selectedUserIds.size === 0 || !daysInput || parseInt(daysInput) < 0}
+                    className="w-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 active:scale-[0.98] font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                >
+                    {submitting ? (
+                        <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Asignando...
+                        </>
+                    ) : (
+                        <>
+                            <Users size={20} />
+                            Asignar a {selectedUserIds.size} empleado{selectedUserIds.size !== 1 ? 's' : ''}
+                        </>
+                    )}
+                </button>
+            </div>
         </div>
     );
 }

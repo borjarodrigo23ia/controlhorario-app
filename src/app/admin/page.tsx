@@ -216,6 +216,7 @@ export default function AdminPage() {
                                 onEdit={handleEditFichaje}
                                 onLocation={handleLocation}
                                 onManualEntry={() => handleEditFichaje()}
+                                showExampleIfEmpty={true}
                             />
                         </div>
                     </div>

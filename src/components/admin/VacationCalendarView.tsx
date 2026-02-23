@@ -19,7 +19,7 @@ import {
 import { es } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, User, Filter, X } from 'lucide-react';
 
-export default function VacationCalendarView() {
+export default function VacationCalendarView({ leftPanel }: { leftPanel?: React.ReactNode }) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedUserId, setSelectedUserId] = useState<string>('all');
@@ -104,171 +104,185 @@ export default function VacationCalendarView() {
     }
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6">
-            {/* Main Calendar Card */}
-            <div className="flex-1 bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-gray-100 dark:border-zinc-800 shadow-sm h-fit">
-                {/* Header & Controls */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 md:w-10 md:h-10 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center text-red-600 dark:text-red-400">
-                                <CalendarIcon size={18} className="md:w-5 md:h-5" />
+        <div className="flex flex-col xl:flex-row gap-6 xl:gap-8 items-stretch h-full">
+            {/* Left Panel (e.g. Bulk Assign) */}
+            {leftPanel && (
+                <div className="w-full xl:w-[350px] 2xl:w-[400px] shrink-0 flex flex-col h-full">
+                    {leftPanel}
+                </div>
+            )}
+
+            {/* Right Column: Calendar & Details */}
+            <div className="flex-1 flex flex-col gap-6 xl:gap-8 min-w-0 h-full">
+                {/* Main Calendar Card */}
+                <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-gray-100 dark:border-zinc-800 shadow-sm flex flex-col">
+                    {/* Header & Controls */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 md:w-10 md:h-10 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center text-red-600 dark:text-red-400">
+                                    <CalendarIcon size={18} className="md:w-5 md:h-5" />
+                                </div>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white capitalize">
+                                    {format(currentDate, 'MMMM yyyy', { locale: es })}
+                                </h3>
                             </div>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white capitalize">
-                                {format(currentDate, 'MMMM yyyy', { locale: es })}
-                            </h3>
-                        </div>
-                        {/* Mobile Nav Arrows */}
-                        <div className="flex md:hidden items-center bg-gray-100 dark:bg-zinc-800 rounded-lg p-1">
-                            <button onClick={handlePrevMonth} className="p-1.5 hover:bg-white dark:hover:bg-black rounded-md"><ChevronLeft size={16} /></button>
-                            <button onClick={handleNextMonth} className="p-1.5 hover:bg-white dark:hover:bg-black rounded-md"><ChevronRight size={16} /></button>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        {/* Desktop Nav Arrows */}
-                        <div className="hidden md:flex items-center bg-gray-100 dark:bg-zinc-800 rounded-lg p-1 mr-2">
-                            <button onClick={handlePrevMonth} className="p-1.5 hover:bg-white dark:hover:bg-black rounded-md transition-all"><ChevronLeft size={16} /></button>
-                            <button onClick={handleNextMonth} className="p-1.5 hover:bg-white dark:hover:bg-black rounded-md transition-all"><ChevronRight size={16} /></button>
+                            {/* Mobile Nav Arrows */}
+                            <div className="flex md:hidden items-center bg-gray-100 dark:bg-zinc-800 rounded-lg p-1">
+                                <button onClick={handlePrevMonth} className="p-1.5 hover:bg-white dark:hover:bg-black rounded-md"><ChevronLeft size={16} /></button>
+                                <button onClick={handleNextMonth} className="p-1.5 hover:bg-white dark:hover:bg-black rounded-md"><ChevronRight size={16} /></button>
+                            </div>
                         </div>
 
-                        {/* User Filter */}
-                        <div className="w-full md:w-72">
-                            <CustomSelect
-                                label="EMPLEADO"
-                                options={userOptions}
-                                value={selectedUserId}
-                                onChange={setSelectedUserId}
-                                icon={User}
-                                className="z-20"
-                            />
+                        <div className="flex items-center gap-3">
+                            {/* Desktop Nav Arrows */}
+                            <div className="hidden md:flex items-center bg-gray-100 dark:bg-zinc-800 rounded-lg p-1 mr-2">
+                                <button onClick={handlePrevMonth} className="p-1.5 hover:bg-white dark:hover:bg-black rounded-md transition-all"><ChevronLeft size={16} /></button>
+                                <button onClick={handleNextMonth} className="p-1.5 hover:bg-white dark:hover:bg-black rounded-md transition-all"><ChevronRight size={16} /></button>
+                            </div>
+
+                            {/* User Filter */}
+                            <div className="w-full md:w-72">
+                                <CustomSelect
+                                    label="EMPLEADO"
+                                    options={userOptions}
+                                    value={selectedUserId}
+                                    onChange={setSelectedUserId}
+                                    icon={User}
+                                    className="z-20"
+                                />
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Days Header */}
-                <div className="grid grid-cols-7 mb-2">
-                    {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
-                        <div key={day} className="text-center py-2 text-xs font-bold text-gray-400 uppercase">
-                            {day}
-                        </div>
-                    ))}
-                </div>
+                    {/* Days Header */}
+                    <div className="grid grid-cols-7 mb-2">
+                        {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
+                            <div key={day} className="text-center py-2 text-xs font-bold text-gray-400 uppercase">
+                                {day}
+                            </div>
+                        ))}
+                    </div>
 
-                {/* Calendar Grid */}
-                <div className="grid grid-cols-7 gap-1 md:gap-2">
-                    {calendarDays.map((day, idx) => {
-                        const isCurrentMonth = isSameMonth(day, currentDate);
-                        const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
-                        const absences = getAbsencesForDate(day);
-                        const isTodayDate = isToday(day);
+                    {/* Calendar Grid */}
+                    <div className="grid grid-cols-7 gap-1 md:gap-2">
+                        {calendarDays.map((day, idx) => {
+                            const isCurrentMonth = isSameMonth(day, currentDate);
+                            const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
+                            const absences = getAbsencesForDate(day);
+                            const isTodayDate = isToday(day);
 
-                        return (
-                            <div
-                                key={day.toISOString()}
-                                onClick={() => setSelectedDate(day)}
-                                className={`
-                                    relative aspect-square md:aspect-[1/0.8] rounded-xl flex flex-col items-center justify-start py-2 cursor-pointer transition-all border-2
+                            return (
+                                <div
+                                    key={day.toISOString()}
+                                    onClick={() => setSelectedDate(day)}
+                                    className={`
+                                    relative aspect-square xl:aspect-[1/0.8] 2xl:aspect-[1/0.7] rounded-xl flex flex-col items-center justify-start py-2 cursor-pointer transition-all border-2
                                     ${!isCurrentMonth ? 'opacity-30' : 'opacity-100'}
                                     ${isSelected
-                                        ? 'border-red-500 bg-red-50/50 dark:bg-red-900/10'
-                                        : 'border-transparent hover:bg-gray-50 dark:hover:bg-zinc-800'
-                                    }
+                                            ? 'border-red-500 bg-red-50/50 dark:bg-red-900/10'
+                                            : 'border-transparent hover:bg-gray-50 dark:hover:bg-zinc-800'
+                                        }
                                 `}
-                            >
-                                <span
-                                    className={`
+                                >
+                                    <span
+                                        className={`
                                         text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full mb-1 transition-all
                                         ${isTodayDate ? 'bg-red-600 text-white shadow-lg shadow-red-200 dark:shadow-none' : (absences.length > 0 ? 'text-zinc-900' : 'text-zinc-700 dark:text-zinc-300')}
                                     `}
-                                    style={!isTodayDate && absences.length > 0 ? {
-                                        backgroundColor: getTypeColor(absences[0].tipo),
-                                        boxShadow: `0 4px 14px ${getTypeColor(absences[0].tipo)}80`
-                                    } : {}}
-                                >
-                                    {format(day, 'd')}
-                                </span>
+                                        style={!isTodayDate && absences.length > 0 ? {
+                                            backgroundColor: getTypeColor(absences[0].tipo),
+                                            boxShadow: `0 4px 14px ${getTypeColor(absences[0].tipo)}80`
+                                        } : {}}
+                                    >
+                                        {format(day, 'd')}
+                                    </span>
 
-                                {/* Absences indicators removed as per request */}
-                            </div>
-                        );
-                    })}
-                </div>
+                                    {/* Absences indicators removed as per request */}
+                                </div>
+                            );
+                        })}
+                    </div>
 
-                {/* Legend */}
-                <div className="flex flex-wrap items-center justify-center gap-4 mt-8 pt-6 border-t border-gray-100 dark:border-zinc-800">
-                    <div className="flex items-center gap-2 text-xs">
-                        <div className="w-2.5 h-2.5 rounded-full shadow-xs" style={{ backgroundColor: '#9EE8FF' }}></div>
-                        <span className="text-gray-500 dark:text-gray-400">Vacaciones</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs">
-                        <div className="w-2.5 h-2.5 rounded-full shadow-xs" style={{ backgroundColor: '#FFCE8A' }}></div>
-                        <span className="text-gray-500 dark:text-gray-400">Días Propios</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs">
-                        <div className="w-2.5 h-2.5 rounded-full shadow-xs" style={{ backgroundColor: '#EA9EFF' }}></div>
-                        <span className="text-gray-500 dark:text-gray-400">Enfermedad</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Selected Day Details Panel */}
-            <div className={`
-                fixed inset-x-0 bottom-0 z-[100] transform transition-transform duration-300 rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.12)] lg:shadow-none lg:transform-none lg:static lg:w-96
-                bg-white dark:bg-zinc-900 border-t lg:border border-gray-100 dark:border-zinc-800 lg:rounded-3xl p-6
-                ${selectedDate ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'}
-            `}>
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Detalles del día</h4>
-                        <p className="text-xl font-bold text-gray-900 dark:text-white capitalize">
-                            {selectedDate ? format(selectedDate, 'EEEE, d MMMM', { locale: es }) : 'Selecciona un día'}
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => setSelectedDate(null)}
-                        className="lg:hidden p-2 hover:bg-gray-100 rounded-full"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
-
-                <div className="space-y-4 max-h-[40vh] lg:max-h-[600px] overflow-y-auto pr-1">
-                    {selectedDayAbsences.length === 0 ? (
-                        <div className="text-center py-10 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-zinc-700">
-                            <p className="text-gray-400 text-sm">No hay ausencias registradas</p>
+                    {/* Legend */}
+                    <div className="flex flex-wrap items-center justify-center gap-4 mt-8 pt-6 border-t border-gray-100 dark:border-zinc-800">
+                        <div className="flex items-center gap-2 text-xs">
+                            <div className="w-2.5 h-2.5 rounded-full shadow-xs" style={{ backgroundColor: '#9EE8FF' }}></div>
+                            <span className="text-gray-500 dark:text-gray-400">Vacaciones</span>
                         </div>
-                    ) : (
-                        selectedDayAbsences.map((abs, idx) => (
-                            <div key={idx} className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800">
-                                <div className="w-10 h-10 rounded-full bg-white dark:bg-zinc-800 border flex items-center justify-center font-bold text-gray-500 text-sm shadow-sm shrink-0">
-                                    {abs.usuario.substring(0, 2).toUpperCase()}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <h5 className="font-bold text-gray-900 dark:text-white truncate">{abs.usuario}</h5>
-                                        <span
-                                            className="text-[10px] font-bold px-2 py-1 rounded-md text-zinc-900 shadow-sm"
-                                            style={{ backgroundColor: getTypeColor(abs.tipo) }}
-                                        >
-                                            {getTypeLabel(abs.tipo)}
-                                        </span>
-                                    </div>
-                                    <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                                        <span>Desde {abs.fecha_inicio}</span>
-                                        <span>➜</span>
-                                        <span>Hasta {abs.fecha_fin}</span>
-                                    </div>
-                                    {abs.comentarios && (
-                                        <p className="text-xs text-gray-400 mt-2 italic bg-white dark:bg-zinc-900 p-2 rounded-lg border border-gray-100 dark:border-zinc-800">
-                                            "{abs.comentarios}"
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        ))
-                    )}
+                        <div className="flex items-center gap-2 text-xs">
+                            <div className="w-2.5 h-2.5 rounded-full shadow-xs" style={{ backgroundColor: '#FFCE8A' }}></div>
+                            <span className="text-gray-500 dark:text-gray-400">Días Propios</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                            <div className="w-2.5 h-2.5 rounded-full shadow-xs" style={{ backgroundColor: '#EA9EFF' }}></div>
+                            <span className="text-gray-500 dark:text-gray-400">Enfermedad</span>
+                        </div>
+                    </div>
                 </div>
+
+                {/* Selected Day Details Panel */}
+                <div className={`
+                fixed inset-x-0 bottom-0 z-[100] transform transition-transform duration-300 rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.12)] xl:shadow-none xl:transform-none xl:static xl:flex-1
+                bg-white dark:bg-zinc-900 border-t xl:border border-gray-100 dark:border-zinc-800 xl:rounded-3xl p-6 flex flex-col xl:flex-row gap-6 xl:gap-8 items-start
+                ${selectedDate ? 'translate-y-0' : 'translate-y-full xl:translate-y-0'}
+            `}>
+                    <div className="flex items-center justify-between w-full xl:w-64 shrink-0 xl:border-r xl:border-gray-100 dark:xl:border-zinc-800 xl:pr-6 xl:h-full">
+                        <div>
+                            <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Detalles del día</h4>
+                            <p className="text-xl font-bold text-gray-900 dark:text-white capitalize">
+                                {selectedDate ? format(selectedDate, 'EEEE, d MMMM', { locale: es }) : 'Selecciona un día'}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setSelectedDate(null)}
+                            className="xl:hidden p-2 hover:bg-gray-100 rounded-full shrink-0"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    <div className="w-full flex-1 max-h-[40vh] xl:max-h-[300px] overflow-y-auto pr-1 min-h-0">
+                        {selectedDayAbsences.length === 0 ? (
+                            <div className="text-center py-10 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-zinc-700">
+                                <p className="text-gray-400 text-sm">No hay ausencias registradas</p>
+                            </div>
+                        ) : (
+                            selectedDayAbsences.map((abs, idx) => (
+                                <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-2xl bg-gray-50/80 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 mb-3">
+                                    <div className="flex items-center gap-4 sm:w-1/3 shrink-0">
+                                        <div className="w-10 h-10 rounded-full bg-white dark:bg-zinc-800 border flex items-center justify-center font-bold text-gray-500 text-sm shadow-sm shrink-0">
+                                            {abs.usuario.substring(0, 2).toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h5 className="font-bold text-gray-900 dark:text-white truncate">{abs.usuario}</h5>
+                                            <span
+                                                className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-md text-zinc-900 shadow-sm"
+                                                style={{ backgroundColor: getTypeColor(abs.tipo) }}
+                                            >
+                                                {getTypeLabel(abs.tipo)}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 min-w-0 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-zinc-700 pt-3 sm:pt-0 sm:pl-4">
+                                        <div className="text-xs font-medium text-gray-500 flex items-center gap-2">
+                                            <CalendarIcon size={14} className="text-gray-400" />
+                                            <span>{abs.fecha_inicio} ➜ {abs.fecha_fin}</span>
+                                        </div>
+                                        {abs.comentarios && (
+                                            <p className="text-xs text-gray-400 mt-2 italic bg-white dark:bg-zinc-900 p-2.5 rounded-lg border border-gray-100 dark:border-zinc-800">
+                                                "{abs.comentarios}"
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                {/* End of Right Column Wrapper */}
             </div>
 
             {/* Backdrop for mobile when modal is open */}
