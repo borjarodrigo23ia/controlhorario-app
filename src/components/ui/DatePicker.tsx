@@ -88,7 +88,7 @@ export function DatePicker({ value, onChange, label, disabled = false, className
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 disabled={disabled}
                 className={cn(
-                    "w-full bg-white border border-gray-100 rounded-2xl px-5 py-4 text-base md:text-base h-12 md:h-14 font-bold text-gray-900 flex items-center justify-between tracking-tight shadow-sm transition-all focus:ring-2 focus:ring-primary/20",
+                    "w-full bg-white border border-gray-100 rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 flex items-center justify-between tracking-tight shadow-sm transition-all focus:ring-2 focus:ring-primary/20 h-14",
                     disabled && "opacity-50 cursor-not-allowed bg-gray-50",
                     !value && "text-gray-300"
                 )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, User as UserIcon, Mail, Lock, Shield, Check, Loader2, Fingerprint, Phone, Smartphone, Eye, EyeOff, MapPin, MapPinOff } from 'lucide-react';
+import { X, User as UserIcon, Mail, Lock, Shield, Check, Loader2, Fingerprint, Phone, Smartphone, Eye, EyeOff, MapPin, MapPinOff, Globe } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { DolibarrUser } from '@/lib/admin-types';
@@ -26,7 +26,8 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
         user_mobile: '',
         office_phone: '',
         isAdmin: false,
-        requireGeolocation: false
+        requireGeolocation: false,
+        kiosk_pin: ''
     });
     const [showPassword, setShowPassword] = useState(false);
 
@@ -50,10 +51,11 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
                     user_mobile: initialData.user_mobile || '',
                     office_phone: initialData.phone || initialData.office_phone || '',
                     isAdmin: initialData.admin === '1',
-                    requireGeolocation: false // Will be updated by fetch
+                    requireGeolocation: false,
+                    kiosk_pin: ''
                 });
 
-                // Fetch current geolocation config for the user
+                // Fetch current geolocation and kiosk_pin config for the user
                 const fetchUserConfig = async () => {
                     try {
                         const token = localStorage.getItem('dolibarr_token');
@@ -63,7 +65,12 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
                         if (res.ok) {
                             const config = await res.json();
                             const isGeolocationEnabled = config.require_geolocation === '1' || config.require_geolocation === 1;
-                            setFormData(prev => ({ ...prev, requireGeolocation: isGeolocationEnabled }));
+                            const kioskPin = config.kiosk_pin || '';
+                            setFormData(prev => ({
+                                ...prev,
+                                requireGeolocation: isGeolocationEnabled,
+                                kiosk_pin: kioskPin
+                            }));
                         }
                     } catch (err) {
                         console.error('Error fetching user config:', err);
@@ -83,7 +90,8 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
                     user_mobile: '',
                     office_phone: '',
                     isAdmin: false,
-                    requireGeolocation: false
+                    requireGeolocation: false,
+                    kiosk_pin: ''
                 });
             }
         }
@@ -149,7 +157,7 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
                 ? initialData?.id
                 : (savedUser.data?.id || savedUser.data?.log_id || savedUser.id || savedUser.log_id);
 
-            // Persist geolocation preference if we have a user ID
+            // Persist geolocation and kiosk_pin preference if we have a user ID
             if (userId) {
                 try {
                     await fetch(`/api/users/${userId}/config`, {
@@ -163,9 +171,20 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
                             value: formData.requireGeolocation ? '1' : '0'
                         })
                     });
+
+                    await fetch(`/api/users/${userId}/config`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'DOLAPIKEY': token || ''
+                        },
+                        body: JSON.stringify({
+                            param_name: 'kiosk_pin',
+                            value: formData.kiosk_pin
+                        })
+                    });
                 } catch (configErr) {
-                    console.error('Error persisting geolocation config:', configErr);
-                    // We don't throw here as the main user save was successful
+                    console.error('Error persisting user config:', configErr);
                 }
             }
 
@@ -288,7 +307,7 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
                                 value={formData.login}
                                 onChange={handleChange}
                                 required
-                                disabled={isEditMode} // Usually login shouldn't change easily
+                                disabled={isEditMode}
                                 title={isEditMode ? "El login no se puede cambiar" : ""}
                                 placeholder="usuario123"
                                 className={cn(
@@ -416,6 +435,25 @@ export default function UserFormModal({ isOpen, onClose, onSuccess, initialData 
                                     formData.requireGeolocation ? "left-6" : "left-1"
                                 )} />
                             </div>
+                        </div>
+
+                        {/* Kiosk PIN */}
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-wider px-1">
+                                <Fingerprint size={12} /> PIN Modo Quiosco
+                            </label>
+                            <input
+                                type="text"
+                                name="kiosk_pin"
+                                value={formData.kiosk_pin}
+                                onChange={e => {
+                                    const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                                    setFormData(prev => ({ ...prev, kiosk_pin: val }));
+                                }}
+                                placeholder="4 dígitos (ej. 1234)"
+                                maxLength={4}
+                                className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-3 text-sm text-gray-900 placeholder:text-gray-300 font-bold focus:outline-none focus:ring-2 focus:ring-black/10 transition-all tracking-[0.2em]"
+                            />
                         </div>
 
                     </div>

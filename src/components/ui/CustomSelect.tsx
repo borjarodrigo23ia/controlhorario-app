@@ -58,7 +58,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "group flex items-center justify-between gap-4 w-full px-6 py-4 rounded-2xl transition-all duration-300 border focus:outline-none focus:ring-4 focus:ring-primary/10",
+                    "group flex items-center justify-between gap-4 w-full px-6 rounded-2xl transition-all duration-300 border focus:outline-none focus:ring-4 focus:ring-primary/10 h-14",
                     isOpen
                         ? "bg-white dark:bg-zinc-900 text-[#121726] dark:text-white border-primary shadow-lg ring-2 ring-primary/5"
                         : "bg-gray-50 dark:bg-zinc-800/50 text-gray-700 dark:text-gray-200 border-gray-100 dark:border-zinc-700 shadow-sm hover:border-primary/30 hover:shadow-md hover:bg-white dark:hover:bg-zinc-800 active:scale-[0.98]"

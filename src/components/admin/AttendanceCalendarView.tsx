@@ -18,7 +18,8 @@ import {
     parseISO
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, User, X, Clock, Briefcase } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, User, X, Clock, Briefcase, Globe } from 'lucide-react';
+import { useHolidays } from '@/hooks/useHolidays';
 import { WorkCycle } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +27,7 @@ export default function AttendanceCalendarView() {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
     const [selectedUserId, setSelectedUserId] = useState<string>('0');
+    const { holidays, isHoliday } = useHolidays(currentDate.getFullYear());
 
     const { users, loading: loadingUsers } = useUsers();
 
@@ -102,35 +104,33 @@ export default function AttendanceCalendarView() {
                 <div className="flex flex-col gap-6 mb-10">
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0">
+                            <div className="w-12 h-12 bg-white shadow-sm rounded-2xl flex items-center justify-center text-black shrink-0">
                                 <CalendarIcon size={24} />
                             </div>
-                            <div>
-                                <h3 className="text-xl font-bold text-gray-900 dark:text-white capitalize leading-tight">
-                                    {format(currentDate, 'MMMM yyyy', { locale: es })}
-                                </h3>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
+                            <div className="flex flex-col">
+                                <div className="flex items-center gap-6">
+                                    <button
+                                        onClick={handlePrevMonth}
+                                        className="p-1.5 text-gray-400 hover:text-black transition-colors"
+                                        title="Mes anterior"
+                                    >
+                                        <ChevronLeft size={20} />
+                                    </button>
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white capitalize leading-tight min-w-[140px] text-center">
+                                        {format(currentDate, 'MMMM yyyy', { locale: es })}
+                                    </h3>
+                                    <button
+                                        onClick={handleNextMonth}
+                                        className="p-1.5 text-gray-400 hover:text-black transition-colors"
+                                        title="Mes siguiente"
+                                    >
+                                        <ChevronRight size={20} />
+                                    </button>
+                                </div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1 text-center">
                                     {monthStats.workingDays} días con actividad
                                 </p>
                             </div>
-                        </div>
-
-                        {/* Nav Arrows - Corner of the row */}
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={handlePrevMonth}
-                                className="p-2.5 bg-white dark:bg-zinc-800 text-gray-400 hover:text-primary border border-gray-200 dark:border-zinc-700 hover:border-primary/50 shadow-sm rounded-xl transition-all active:scale-95"
-                                title="Mes anterior"
-                            >
-                                <ChevronLeft size={18} />
-                            </button>
-                            <button
-                                onClick={handleNextMonth}
-                                className="p-2.5 bg-white dark:bg-zinc-800 text-gray-400 hover:text-primary border border-gray-200 dark:border-zinc-700 hover:border-primary/50 shadow-sm rounded-xl transition-all active:scale-95"
-                                title="Mes siguiente"
-                            >
-                                <ChevronRight size={18} />
-                            </button>
                         </div>
                     </div>
 
@@ -165,6 +165,7 @@ export default function AttendanceCalendarView() {
                         const isCurrentMonth = isSameMonth(day, currentDate);
                         const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
                         const cycles = getCyclesForDate(day);
+                        const holiday = isHoliday(day);
                         const isTodayDate = isToday(day);
                         const hasActivity = cycles.length > 0;
 
@@ -177,14 +178,22 @@ export default function AttendanceCalendarView() {
                                     !isCurrentMonth ? "opacity-20 pointer-events-none" : "opacity-100",
                                     isSelected
                                         ? "bg-primary/5 border-primary/40 shadow-sm"
-                                        : "bg-white dark:bg-zinc-800/20 border-transparent hover:bg-gray-50 dark:hover:bg-zinc-800"
+                                        : holiday
+                                            ? holiday.type === 'national'
+                                                ? "bg-amber-50/50 border-amber-200/50"
+                                                : "bg-emerald-50/50 border-emerald-200/50"
+                                            : "bg-white dark:bg-zinc-800/20 border-transparent hover:bg-gray-50 dark:hover:bg-zinc-800"
                                 )}
                             >
                                 <span className={cn(
                                     "text-sm font-black w-7 h-7 flex items-center justify-center rounded-full transition-all",
                                     isTodayDate
                                         ? "bg-red-600 text-white shadow-lg shadow-red-200 dark:shadow-none"
-                                        : (isSelected ? "text-primary scale-110" : "text-gray-700 dark:text-gray-300")
+                                        : holiday
+                                            ? holiday.type === 'national'
+                                                ? "text-amber-600 font-black scale-110"
+                                                : "text-emerald-600 font-black scale-110"
+                                            : (isSelected ? "text-primary scale-110" : "text-gray-700 dark:text-gray-300")
                                 )}>
                                     {format(day, 'd')}
                                 </span>
@@ -222,6 +231,21 @@ export default function AttendanceCalendarView() {
                 </div>
 
                 <div className="space-y-4 max-h-[50vh] xl:max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                    {/* Holiday Info */}
+                    {selectedDate && isHoliday(selectedDate) && (
+                        <div className="flex items-center gap-4 p-5 rounded-[1.8rem] bg-amber-50 border border-amber-100 mb-2 animate-in fade-in slide-in-from-left-4 duration-300">
+                            <div className="w-10 h-10 rounded-xl bg-amber-400 text-white flex items-center justify-center shrink-0 shadow-lg shadow-amber-200">
+                                <Globe size={20} strokeWidth={2.5} />
+                            </div>
+                            <div>
+                                <h5 className="font-black text-amber-900 leading-tight">Día Festivo</h5>
+                                <p className="text-xs font-bold text-amber-700 uppercase tracking-widest mt-0.5">
+                                    {isHoliday(selectedDate)?.name}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     {loadingFichajes ? (
                         <div className="flex flex-col items-center justify-center py-12 text-gray-400">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>

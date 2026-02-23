@@ -149,7 +149,7 @@ export default function AdminPage() {
                 />
 
                 <div className="grid grid-cols-1 gap-4">
-                    {adminNavItems.filter(item => item.name !== 'Configuración').map((c) => (
+                    {adminNavItems.filter(item => item.name !== 'Dashboard').map((c) => (
                         <Link
                             key={c.href}
                             href={c.href}

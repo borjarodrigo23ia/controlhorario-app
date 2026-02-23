@@ -133,30 +133,27 @@ export const TodayFichajes: React.FC<TodayFichajesProps> = ({ cycles, loading, o
     if (!effectiveCycles.length) return null;
 
     return (
-        <div className={`bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 border border-white/20 transition-opacity duration-500 ${isShowingExample ? 'opacity-80 select-none pointer-events-none' : ''}`}>
-            <div className="flex justify-between items-center mb-8">
+        <div className={`bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 border border-white/20 transition-opacity duration-500 ${isShowingExample ? 'opacity-80 select-none pointer-events-none' : ''}`}>
+            <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">
                         {isShowingExample ? 'Fichajes de ejemplo' : 'Fichajes de hoy'}
                     </h2>
-                    <p className="text-gray-400 mt-1 font-medium text-lg">
+                    <p className="text-gray-400 mt-0.5 font-medium text-base">
                         {format(new Date(), "EEEE, d 'de' MMMM", { locale: es }).charAt(0).toUpperCase() + format(new Date(), "EEEE, d 'de' MMMM", { locale: es }).slice(1)}
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center">
                     {!isShowingExample && onManualEntry && (
                         <button
                             onClick={onManualEntry}
-                            className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl bg-gray-50 text-gray-500 hover:bg-black hover:text-white transition-all shadow-sm group"
+                            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 text-gray-500 hover:bg-black hover:text-white transition-all shadow-sm group whitespace-nowrap"
                             title="Fichaje manual"
                         >
-                            <SquarePen size={18} className="transition-transform group-hover:scale-110" />
-                            <span className="text-xs font-bold hidden md:inline">Fichaje manual</span>
+                            <SquarePen size={16} className="transition-transform group-hover:scale-110" />
+                            <span className="text-xs font-bold">Fichaje manual</span>
                         </button>
                     )}
-                    <div className="bg-black text-white px-4 py-1.5 rounded-full text-sm font-bold tracking-wide">
-                        {isShowingExample ? 'Vista previa' : (cycles.length > 0 ? 'Activo' : 'Inactivo')}
-                    </div>
                 </div>
             </div>
 

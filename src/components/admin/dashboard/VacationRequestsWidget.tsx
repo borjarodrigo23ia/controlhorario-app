@@ -72,7 +72,7 @@ export default function VacationRequestsWidget() {
             <div className="relative z-10">
                 <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
+                        <div className="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center text-black">
                             <Palmtree size={18} strokeWidth={2.2} />
                         </div>
                         <div>

@@ -17,7 +17,8 @@ import {
     isSameMonth
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, User, Filter, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, User, Filter, X, Globe } from 'lucide-react';
+import { useHolidays } from '@/hooks/useHolidays';
 
 export default function VacationCalendarView({ leftPanel }: { leftPanel?: React.ReactNode }) {
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -28,6 +29,7 @@ export default function VacationCalendarView({ leftPanel }: { leftPanel?: React.
     const { fetchVacations } = useVacations();
     const [vacations, setVacations] = useState<VacationRequest[]>([]);
     const [loadingVacations, setLoadingVacations] = useState(true);
+    const { holidays, isHoliday } = useHolidays(currentDate.getFullYear());
 
     const userOptions = useMemo(() => [
         { id: 'all', label: 'Todos los empleados' },
@@ -79,6 +81,8 @@ export default function VacationCalendarView({ leftPanel }: { leftPanel?: React.
         });
     };
 
+    const holidayOnDate = (date: Date) => isHoliday(date);
+
     const getTypeColor = (tipo: string) => {
         switch (tipo) {
             case 'vacaciones': return '#9EE8FF';
@@ -118,29 +122,32 @@ export default function VacationCalendarView({ leftPanel }: { leftPanel?: React.
                 <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-gray-100 dark:border-zinc-800 shadow-sm flex flex-col">
                     {/* Header & Controls */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 md:w-10 md:h-10 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center text-red-600 dark:text-red-400">
-                                    <CalendarIcon size={18} className="md:w-5 md:h-5" />
-                                </div>
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white capitalize">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-white shadow-sm rounded-xl flex items-center justify-center text-black">
+                                <CalendarIcon size={20} />
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <button
+                                    onClick={handlePrevMonth}
+                                    className="p-1.5 text-gray-400 hover:text-black transition-colors"
+                                    title="Mes anterior"
+                                >
+                                    <ChevronLeft size={20} />
+                                </button>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white capitalize min-w-[140px] text-center">
                                     {format(currentDate, 'MMMM yyyy', { locale: es })}
                                 </h3>
-                            </div>
-                            {/* Mobile Nav Arrows */}
-                            <div className="flex md:hidden items-center bg-gray-100 dark:bg-zinc-800 rounded-lg p-1">
-                                <button onClick={handlePrevMonth} className="p-1.5 hover:bg-white dark:hover:bg-black rounded-md"><ChevronLeft size={16} /></button>
-                                <button onClick={handleNextMonth} className="p-1.5 hover:bg-white dark:hover:bg-black rounded-md"><ChevronRight size={16} /></button>
+                                <button
+                                    onClick={handleNextMonth}
+                                    className="p-1.5 text-gray-400 hover:text-black transition-colors"
+                                    title="Mes siguiente"
+                                >
+                                    <ChevronRight size={20} />
+                                </button>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-3">
-                            {/* Desktop Nav Arrows */}
-                            <div className="hidden md:flex items-center bg-gray-100 dark:bg-zinc-800 rounded-lg p-1 mr-2">
-                                <button onClick={handlePrevMonth} className="p-1.5 hover:bg-white dark:hover:bg-black rounded-md transition-all"><ChevronLeft size={16} /></button>
-                                <button onClick={handleNextMonth} className="p-1.5 hover:bg-white dark:hover:bg-black rounded-md transition-all"><ChevronRight size={16} /></button>
-                            </div>
-
                             {/* User Filter */}
                             <div className="w-full md:w-72">
                                 <CustomSelect
@@ -170,7 +177,9 @@ export default function VacationCalendarView({ leftPanel }: { leftPanel?: React.
                             const isCurrentMonth = isSameMonth(day, currentDate);
                             const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
                             const absences = getAbsencesForDate(day);
+                            const holiday = holidayOnDate(day);
                             const isTodayDate = isToday(day);
+                            const isWeekendDay = isWeekend(day);
 
                             return (
                                 <div
@@ -188,12 +197,18 @@ export default function VacationCalendarView({ leftPanel }: { leftPanel?: React.
                                     <span
                                         className={`
                                         text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full mb-1 transition-all
-                                        ${isTodayDate ? 'bg-red-600 text-white shadow-lg shadow-red-200 dark:shadow-none' : (absences.length > 0 ? 'text-zinc-900' : 'text-zinc-700 dark:text-zinc-300')}
+                                        ${isTodayDate ? 'bg-red-600 text-white shadow-lg shadow-red-200 dark:shadow-none' : (absences.length > 0 || holiday ? 'text-zinc-900' : 'text-zinc-700 dark:text-zinc-300')}
+                                        ${!isTodayDate && isWeekendDay && !holiday && absences.length === 0 ? 'text-gray-300' : ''}
                                     `}
-                                        style={!isTodayDate && absences.length > 0 ? {
-                                            backgroundColor: getTypeColor(absences[0].tipo),
-                                            boxShadow: `0 4px 14px ${getTypeColor(absences[0].tipo)}80`
-                                        } : {}}
+                                        style={!isTodayDate ? (
+                                            absences.length > 0
+                                                ? { backgroundColor: getTypeColor(absences[0].tipo), boxShadow: `0 4px 14px ${getTypeColor(absences[0].tipo)}80` }
+                                                : holiday
+                                                    ? holiday.type === 'national'
+                                                        ? { backgroundColor: '#FFD700', boxShadow: '0 4px 14px rgba(255, 215, 0, 0.4)' }
+                                                        : { backgroundColor: '#10b981', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)' }
+                                                    : {}
+                                        ) : {}}
                                     >
                                         {format(day, 'd')}
                                     </span>
@@ -217,6 +232,14 @@ export default function VacationCalendarView({ leftPanel }: { leftPanel?: React.
                         <div className="flex items-center gap-2 text-xs">
                             <div className="w-2.5 h-2.5 rounded-full shadow-xs" style={{ backgroundColor: '#EA9EFF' }}></div>
                             <span className="text-gray-500 dark:text-gray-400">Enfermedad</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                            <div className="w-2.5 h-2.5 rounded-full shadow-xs border border-amber-200" style={{ backgroundColor: '#FFD700' }}></div>
+                            <span className="text-amber-600 font-bold">Festivo Nacional</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                            <div className="w-2.5 h-2.5 rounded-full shadow-xs border border-emerald-200" style={{ backgroundColor: '#10b981' }}></div>
+                            <span className="text-emerald-600 font-bold">Festivo Local</span>
                         </div>
                     </div>
                 </div>
@@ -243,7 +266,22 @@ export default function VacationCalendarView({ leftPanel }: { leftPanel?: React.
                     </div>
 
                     <div className="w-full flex-1 max-h-[40vh] xl:max-h-[300px] overflow-y-auto pr-1 min-h-0">
-                        {selectedDayAbsences.length === 0 ? (
+                        {/* Holiday Info */}
+                        {selectedDate && holidayOnDate(selectedDate) && (
+                            <div className="flex items-center gap-4 p-4 rounded-2xl bg-amber-50 border border-amber-100 mb-3 animate-in fade-in slide-in-from-left-4 duration-300">
+                                <div className="w-10 h-10 rounded-xl bg-amber-400 text-white flex items-center justify-center shrink-0 shadow-lg shadow-amber-200">
+                                    <Globe size={20} strokeWidth={2.5} />
+                                </div>
+                                <div>
+                                    <h5 className="font-black text-amber-900 leading-tight">Día Festivo</h5>
+                                    <p className="text-xs font-bold text-amber-700 uppercase tracking-widest mt-0.5">
+                                        {holidayOnDate(selectedDate)?.name}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {selectedDayAbsences.length === 0 && (!selectedDate || !holidayOnDate(selectedDate)) ? (
                             <div className="text-center py-10 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-zinc-700">
                                 <p className="text-gray-400 text-sm">No hay ausencias registradas</p>
                             </div>

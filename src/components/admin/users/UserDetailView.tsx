@@ -499,6 +499,42 @@ export default function UserDetailView({ userId, onClose, onSuccess }: UserDetai
                             </button>
                         </div>
 
+                        {/* Kiosk PIN Section */}
+                        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-4">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="p-2 rounded-xl bg-black/5 text-black">
+                                    <Fingerprint size={18} />
+                                </div>
+                                <h3 className="text-sm font-black text-gray-900 uppercase tracking-wide">
+                                    PIN Modo Quiosco
+                                </h3>
+                            </div>
+                            <div>
+                                <input
+                                    type="text"
+                                    value={config.kiosk_pin || ''}
+                                    onChange={e => handleChange('kiosk_pin', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                                    placeholder="4 dígitos (ej. 1234)"
+                                    maxLength={4}
+                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-2xl font-black text-gray-900 tracking-[0.5em] focus:outline-none focus:ring-4 focus:ring-black/5 transition-all placeholder:text-gray-200 placeholder:tracking-normal placeholder:font-normal placeholder:text-sm"
+                                />
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-3 leading-relaxed">
+                                    Código personal para fichar en la pantalla compartida. Debe ser único para cada empleado.
+                                </p>
+                            </div>
+
+                            {(config.kiosk_pin || '') !== (userData?.array_options?.options_kiosk_pin || '') && (
+                                <button
+                                    onClick={handleSave}
+                                    disabled={isSaving}
+                                    className="w-full bg-black text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-black/10 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                    {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                    <span>Guardar PIN</span>
+                                </button>
+                            )}
+                        </div>
+
                         {/* Work Centers Section */}
                         <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-6">
                             <div className="flex items-center justify-between mb-2">

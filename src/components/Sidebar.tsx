@@ -88,7 +88,7 @@ export default function Sidebar({ adminBadges }: SidebarProps) {
             </div>
 
             {/* Navigation Groups */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 pt-2 space-y-8">
+            <div className="flex-1 overflow-y-auto no-scrollbar p-6 pt-2 space-y-8">
                 {navGroups.map((group, groupIdx) => (
                     <div key={groupIdx} className="space-y-2">
                         <h4 className="px-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] mb-4">

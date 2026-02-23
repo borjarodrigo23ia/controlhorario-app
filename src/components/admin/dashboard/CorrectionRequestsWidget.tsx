@@ -47,7 +47,7 @@ export default function CorrectionRequestsWidget() {
             <div className="relative z-10">
                 <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-xl bg-primary/5 flex items-center justify-center text-primary">
+                        <div className="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center text-black">
                             <BadgeCheck size={18} strokeWidth={2.2} />
                         </div>
                         <div>
