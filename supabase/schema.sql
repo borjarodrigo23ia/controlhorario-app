@@ -255,22 +255,24 @@ ALTER TABLE fichajes_originales_modificados ENABLE ROW LEVEL SECURITY;
 ALTER TABLE holidays ENABLE ROW LEVEL SECURITY;
 
 -- Helper function: get current user's company_id
-CREATE OR REPLACE FUNCTION auth.company_id()
+CREATE OR REPLACE FUNCTION public.get_my_company_id()
 RETURNS UUID
 LANGUAGE SQL
 STABLE
+SECURITY DEFINER
 AS $$
-  SELECT company_id FROM profiles WHERE id = auth.uid()
+  SELECT company_id FROM public.profiles WHERE id = auth.uid()
 $$;
 
 -- Helper function: check if current user is admin
-CREATE OR REPLACE FUNCTION auth.is_admin()
+CREATE OR REPLACE FUNCTION public.get_my_is_admin()
 RETURNS BOOLEAN
 LANGUAGE SQL
 STABLE
+SECURITY DEFINER
 AS $$
   SELECT COALESCE(
-    (SELECT is_admin FROM profiles WHERE id = auth.uid()),
+    (SELECT is_admin FROM public.profiles WHERE id = auth.uid()),
     FALSE
   )
 $$;
@@ -282,7 +284,7 @@ CREATE POLICY "Users can view own profile"
 
 CREATE POLICY "Admins can view all company profiles"
     ON profiles FOR SELECT
-    USING (company_id = auth.company_id() AND auth.is_admin());
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 CREATE POLICY "Users can update own profile"
     ON profiles FOR UPDATE
@@ -290,7 +292,7 @@ CREATE POLICY "Users can update own profile"
 
 CREATE POLICY "Admins can manage company profiles"
     ON profiles FOR ALL
-    USING (company_id = auth.company_id() AND auth.is_admin());
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 -- ── FICHAJES ──
 CREATE POLICY "Users can view own fichajes"
@@ -299,27 +301,27 @@ CREATE POLICY "Users can view own fichajes"
 
 CREATE POLICY "Admins can view all company fichajes"
     ON fichajes FOR SELECT
-    USING (company_id = auth.company_id() AND auth.is_admin());
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 CREATE POLICY "Users can insert own fichajes"
     ON fichajes FOR INSERT
     WITH CHECK (
         user_id = auth.uid()
-        AND company_id = auth.company_id()
+        AND company_id = public.get_my_company_id()
     );
 
 CREATE POLICY "Admins can manage company fichajes"
     ON fichajes FOR ALL
-    USING (company_id = auth.company_id() AND auth.is_admin());
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 -- ── CENTERS ──
 CREATE POLICY "Company members can view centers"
     ON centers FOR SELECT
-    USING (company_id = auth.company_id());
+    USING (company_id = public.get_my_company_id());
 
 CREATE POLICY "Admins can manage centers"
     ON centers FOR ALL
-    USING (company_id = auth.company_id() AND auth.is_admin());
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 -- ── CORRECTIONS ──
 CREATE POLICY "Users can view own corrections"
@@ -328,20 +330,20 @@ CREATE POLICY "Users can view own corrections"
 
 CREATE POLICY "Users can create own corrections"
     ON corrections FOR INSERT
-    WITH CHECK (user_id = auth.uid() AND company_id = auth.company_id());
+    WITH CHECK (user_id = auth.uid() AND company_id = public.get_my_company_id());
 
 CREATE POLICY "Admins can manage company corrections"
     ON corrections FOR ALL
-    USING (company_id = auth.company_id() AND auth.is_admin());
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 -- ── CONFIG ──
 CREATE POLICY "Company members can view config"
     ON config FOR SELECT
-    USING (company_id = auth.company_id());
+    USING (company_id = public.get_my_company_id());
 
 CREATE POLICY "Admins can manage config"
     ON config FOR ALL
-    USING (company_id = auth.company_id() AND auth.is_admin());
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 -- ── USER CONFIG ──
 CREATE POLICY "Users can view own config"
@@ -350,7 +352,7 @@ CREATE POLICY "Users can view own config"
 
 CREATE POLICY "Admins can manage user config"
     ON user_config FOR ALL
-    USING (company_id = auth.company_id() AND auth.is_admin());
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 -- ── VACACIONES ──
 CREATE POLICY "Users can view own vacaciones"
@@ -359,11 +361,11 @@ CREATE POLICY "Users can view own vacaciones"
 
 CREATE POLICY "Users can create own vacaciones"
     ON vacaciones FOR INSERT
-    WITH CHECK (user_id = auth.uid() AND company_id = auth.company_id());
+    WITH CHECK (user_id = auth.uid() AND company_id = public.get_my_company_id());
 
 CREATE POLICY "Admins can manage company vacaciones"
     ON vacaciones FOR ALL
-    USING (company_id = auth.company_id() AND auth.is_admin());
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 -- ── VACACIONES DIAS ──
 CREATE POLICY "Users can view own quota"
@@ -372,7 +374,7 @@ CREATE POLICY "Users can view own quota"
 
 CREATE POLICY "Admins can manage vacation quotas"
     ON vacaciones_dias FOR ALL
-    USING (company_id = auth.company_id() AND auth.is_admin());
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 -- ── JORNADAS LABORALES ──
 CREATE POLICY "Users can view own jornadas"
@@ -381,7 +383,7 @@ CREATE POLICY "Users can view own jornadas"
 
 CREATE POLICY "Admins can manage company jornadas"
     ON jornadas_laborales FOR ALL
-    USING (company_id = auth.company_id() AND auth.is_admin());
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 -- ── JORNADAS PAUSAS ──
 CREATE POLICY "Users can view pausas of own jornadas"
@@ -397,9 +399,9 @@ CREATE POLICY "Admins can manage jornadas pausas"
     USING (
         jornada_id IN (
             SELECT id FROM jornadas_laborales
-            WHERE company_id = auth.company_id()
+            WHERE company_id = public.get_my_company_id()
         )
-        AND auth.is_admin()
+        AND public.get_my_is_admin()
     );
 
 -- ── JORNADAS COMPLETAS ──
@@ -409,43 +411,43 @@ CREATE POLICY "Users can view own jornadas completas"
 
 CREATE POLICY "Admins can manage jornadas completas"
     ON jornadas_completas FOR ALL
-    USING (company_id = auth.company_id() AND auth.is_admin());
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 -- ── FICHAJES LOG ──
 CREATE POLICY "Admins can view company audit log"
     ON fichajes_log FOR SELECT
-    USING (company_id = auth.company_id() AND auth.is_admin());
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 CREATE POLICY "Admins can insert audit log"
     ON fichajes_log FOR INSERT
-    WITH CHECK (company_id = auth.company_id());
+    WITH CHECK (company_id = public.get_my_company_id());
 
 -- ── FICHAJES ORIGINALES MODIFICADOS ──
 CREATE POLICY "Admins can view modified originals"
     ON fichajes_originales_modificados FOR SELECT
-    USING (company_id = auth.company_id() AND auth.is_admin());
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 CREATE POLICY "Admins can insert modified originals"
     ON fichajes_originales_modificados FOR INSERT
-    WITH CHECK (company_id = auth.company_id() AND auth.is_admin());
+    WITH CHECK (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 -- ── HOLIDAYS ──
 CREATE POLICY "Company members can view holidays"
     ON holidays FOR SELECT
-    USING (company_id = auth.company_id());
+    USING (company_id = public.get_my_company_id());
 
 CREATE POLICY "Admins can manage holidays"
     ON holidays FOR ALL
-    USING (company_id = auth.company_id() AND auth.is_admin());
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
 
 -- ── COMPANIES ──
 CREATE POLICY "Members can view own company"
     ON companies FOR SELECT
-    USING (id = auth.company_id());
+    USING (id = public.get_my_company_id());
 
 CREATE POLICY "Admins can update own company"
     ON companies FOR UPDATE
-    USING (id = auth.company_id() AND auth.is_admin());
+    USING (id = public.get_my_company_id() AND public.get_my_is_admin());
 
 -- ============================================
 -- AUTO-UPDATE updated_at TRIGGER
