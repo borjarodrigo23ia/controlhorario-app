@@ -1,49 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
+// GET /api/fichajes/history — Audit log for a fichaje
 export async function GET(request: NextRequest) {
     try {
-        const apiKey = request.headers.get('DOLAPIKEY');
-        if (!apiKey) {
-            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-        }
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         const { searchParams } = new URL(request.url);
-        const id_user = searchParams.get('id_user') || '';
+        const fichajeId = searchParams.get('id_fichaje') || '';
+        const targetUserId = searchParams.get('id_user') || '';
 
-        // Construir la URL base
-        let url = `/fichajestrabajadoresapi/fichajes/history`;
-        if (id_user) {
-            url += `?id_user=${id_user}`;
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin, company_id')
+            .eq('id', user.id)
+            .single();
+
+        if (!profile?.is_admin) {
+            return NextResponse.json({ error: 'Acceso restringido a administradores' }, { status: 403 });
         }
 
-        const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
-        if (!apiUrl) throw new Error('Dolibarr API URL not configured');
+        let query = supabaseAdmin
+            .from('fichajes_log')
+            .select(`
+                id, campo_modificado, valor_anterior, valor_nuevo,
+                comentario, ip_address, created_at, fichaje_id, jornada_id,
+                profiles!editor_id(username, firstname, lastname)
+            `)
+            .eq('company_id', profile.company_id)
+            .order('created_at', { ascending: false });
 
-        const response = await fetch(`${apiUrl}${url}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'DOLAPIKEY': apiKey
-            }
-        });
+        if (fichajeId) query = query.eq('fichaje_id', fichajeId);
 
-        if (!response.ok) {
-            return NextResponse.json(
-                { error: 'Error al obtener auditoría de Dolibarr' },
-                { status: response.status }
-            );
-        }
+        const { data: logs, error } = await query;
+        if (error) throw error;
 
-        const data = await response.json();
-        return NextResponse.json(data);
+        return NextResponse.json(logs || []);
 
     } catch (error: any) {
-        console.error('API Audit Error:', error);
-        return NextResponse.json(
-            { error: 'Error interno del servidor', details: error.message },
-            { status: 500 }
-        );
+        console.error('[api/fichajes/history] Error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

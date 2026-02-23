@@ -1,63 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
-    return NextResponse.json({ message: 'Manual API is alive' });
-}
-
+// POST /api/fichajes/manual — Admin inserts a full work day manually
 export async function POST(request: NextRequest) {
-    console.log('[API] POST /api/fichajes/manual - Request received');
     try {
-        const apiKey = request.headers.get('DOLAPIKEY');
-        if (!apiKey) {
-            console.error('[API] POST /api/fichajes/manual - No authorized (missing API Key)');
-            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin, company_id')
+            .eq('id', user.id)
+            .single();
+
+        if (!profile?.is_admin) {
+            return NextResponse.json({ error: 'Solo los administradores pueden insertar jornadas manuales' }, { status: 403 });
         }
 
         const body = await request.json();
-        console.log('[API] POST /api/fichajes/manual - Body:', JSON.stringify(body));
+        const { target_user_id, hora_entrada, hora_salida, pausas, observaciones } = body;
 
-        const usuario = body.usuario;
-        const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
-        if (!apiUrl) throw new Error('Dolibarr API URL not configured');
-
-        const dolibarrUrl = `${apiUrl}/fichajestrabajadoresapi/insertarJornadaManual`;
-        console.log('[API] POST /api/fichajes/manual - Calling Dolibarr:', dolibarrUrl);
-
-        const response = await fetch(dolibarrUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'DOLAPIKEY': apiKey
-            },
-            body: JSON.stringify({
-                ...body,
-                usuario: usuario
-            })
-        });
-
-        const status = response.status;
-        console.log('[API] POST /api/fichajes/manual - Dolibarr status:', status);
-
-        const data = await response.json();
-        console.log('[API] POST /api/fichajes/manual - Dolibarr data:', JSON.stringify(data));
-
-        if (!response.ok) {
-            return NextResponse.json(data, { status: status });
+        if (!target_user_id || !hora_entrada || !hora_salida) {
+            return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
         }
 
-        return NextResponse.json({
-            success: true,
-            id_jornada: data.id_jornada,
-            ids_fichajes: data.ids_fichajes
-        });
+        // Insert entrada
+        const toInsert = [
+            { company_id: profile.company_id, user_id: target_user_id, tipo: 'entrar', created_at: hora_entrada, observaciones: observaciones || null, estado_aceptacion: 'aceptado' },
+            ...(pausas || []).flatMap((p: { inicio: string; fin: string }) => [
+                { company_id: profile.company_id, user_id: target_user_id, tipo: 'iniciar_pausa', created_at: p.inicio, estado_aceptacion: 'aceptado' },
+                { company_id: profile.company_id, user_id: target_user_id, tipo: 'terminar_pausa', created_at: p.fin, estado_aceptacion: 'aceptado' },
+            ]),
+            { company_id: profile.company_id, user_id: target_user_id, tipo: 'salir', created_at: hora_salida, estado_aceptacion: 'aceptado' },
+        ];
+
+        const { data: inserted, error } = await supabaseAdmin
+            .from('fichajes')
+            .insert(toInsert)
+            .select('id, tipo, created_at');
+
+        if (error) throw error;
+
+        return NextResponse.json({ success: true, data: inserted });
 
     } catch (error: any) {
-        console.error('[API] POST /api/fichajes/manual - Error:', error);
-        return NextResponse.json(
-            { error: 'Error interno', details: error.message },
-            { status: 500 }
-        );
+        console.error('[api/fichajes/manual] Error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

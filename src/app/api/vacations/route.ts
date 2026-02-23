@@ -1,110 +1,125 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
+// GET /api/vacations — List vacations
 export async function GET(request: NextRequest) {
     try {
-        const apiKey = request.headers.get('DOLAPIKEY');
-        if (!apiKey) {
-            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-        }
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         const { searchParams } = new URL(request.url);
         const estado = searchParams.get('estado') || '';
-        const usuario = searchParams.get('usuario') || '';
+        const targetUserId = searchParams.get('usuario') || '';
 
-        // Build backend URL
-        // Endpoint expected by Next.js proxy to Dolibarr: /fichajestrabajadoresapi/vacaciones
-        const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
-        if (!apiUrl) throw new Error('Dolibarr API URL not configured');
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin, company_id')
+            .eq('id', user.id)
+            .single();
 
-        let url = `${apiUrl}/fichajestrabajadoresapi/vacaciones?`;
-        if (estado) url += `estado=${encodeURIComponent(estado)}&`;
-        if (usuario) url += `usuario=${encodeURIComponent(usuario)}`;
+        if (!profile) return NextResponse.json({ error: 'Perfil no encontrado' }, { status: 404 });
 
-        console.log('Fetching Vacations from:', url);
+        let query = supabaseAdmin
+            .from('vacaciones')
+            .select(`
+                id, fecha_inicio, fecha_fin, estado, comentarios,
+                created_at, fecha_aprobacion, user_id, aprobado_por,
+                profiles!user_id(username, firstname, lastname)
+            `)
+            .eq('company_id', profile.company_id)
+            .order('created_at', { ascending: false });
 
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'DOLAPIKEY': apiKey
-            }
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Backend Error:', response.status, errorText);
-
-            let errorMessage = 'Error al obtener vacaciones de Dolibarr';
-            try {
-                const errorJson = JSON.parse(errorText);
-                if (errorJson.error && errorJson.error.message) {
-                    errorMessage = errorJson.error.message;
-                }
-            } catch (e) { }
-
-            return NextResponse.json(
-                { error: errorMessage },
-                { status: response.status }
-            );
+        // If not admin, only see own vacations
+        if (!profile.is_admin) {
+            query = query.eq('user_id', user.id);
+        } else if (targetUserId) {
+            query = query.eq('user_id', targetUserId);
         }
 
-        const data = await response.json();
-        return NextResponse.json(data);
+        if (estado) query = query.eq('estado', estado);
+
+        const { data: rows, error } = await query;
+        if (error) throw error;
+
+        const vacaciones = (rows || []).map((v: any) => ({
+            id: String(v.id),
+            usuario: v.profiles?.username ?? v.user_id,
+            usuario_nombre: v.profiles ? `${v.profiles.firstname ?? ''} ${v.profiles.lastname ?? ''}`.trim() : '',
+            fk_user: v.user_id,
+            fecha_inicio: v.fecha_inicio,
+            fecha_fin: v.fecha_fin,
+            estado: v.estado,
+            comentarios: v.comentarios,
+            aprobado_por: v.aprobado_por,
+            fecha_aprobacion: v.fecha_aprobacion,
+            fecha_creacion: v.created_at,
+        }));
+
+        return NextResponse.json(vacaciones);
 
     } catch (error: any) {
-        console.error('API Vacations Error:', error);
-        return NextResponse.json(
-            { error: 'Error interno del servidor', details: error.message },
-            { status: 500 }
-        );
+        console.error('[api/vacations GET] Error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+
+// POST /api/vacations — Create a vacation request
 export async function POST(request: NextRequest) {
     try {
-        const apiKey = request.headers.get('DOLAPIKEY');
-        if (!apiKey) {
-            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-        }
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         const body = await request.json();
-        const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
+        const { fecha_inicio, fecha_fin, comentarios } = body;
 
-        const response = await fetch(`${apiUrl}/fichajestrabajadoresapi/vacaciones`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'DOLAPIKEY': apiKey
-            },
-            body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            return NextResponse.json({ error: errorText }, { status: response.status });
+        if (!fecha_inicio || !fecha_fin) {
+            return NextResponse.json({ error: 'Fecha inicio y fin son obligatorias' }, { status: 400 });
         }
 
-        const data = await response.json();
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('company_id')
+            .eq('id', user.id)
+            .single();
 
-        // --- Notify Admin ---
-        let notificationDebug = null;
+        if (!profile) return NextResponse.json({ error: 'Perfil no encontrado' }, { status: 404 });
+
+        const { data: vacacion, error } = await supabase
+            .from('vacaciones')
+            .insert({
+                company_id: profile.company_id,
+                user_id: user.id,
+                fecha_inicio,
+                fecha_fin,
+                estado: 'pendiente',
+                comentarios: comentarios || null,
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Notify admin via push
         try {
             const { sendPushNotificationToAdmin } = await import('@/lib/push-sender');
-            notificationDebug = await sendPushNotificationToAdmin({
+            await sendPushNotificationToAdmin({
                 title: 'Nueva solicitud de vacaciones',
-                body: `Un usuario ha solicitado vacaciones.`,
-                url: '/admin/vacaciones'
+                body: 'Un usuario ha solicitado vacaciones.',
+                url: '/admin/vacaciones',
             });
-        } catch (err: any) {
-            console.error('Error sending admin notification for vacation:', err);
-            notificationDebug = { error: err.message };
+        } catch (pushErr) {
+            console.error('[api/vacations POST] Push notification error:', pushErr);
         }
 
-        return NextResponse.json({ ...data, notificationDebug });
+        return NextResponse.json({ success: true, id: String(vacacion.id) });
 
     } catch (error: any) {
-        console.error('API Vacations POST Error:', error);
+        console.error('[api/vacations POST] Error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

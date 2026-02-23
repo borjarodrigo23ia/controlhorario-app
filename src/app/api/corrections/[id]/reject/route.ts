@@ -1,61 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
-export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
-    const params = await props.params;
-    const apiKey = request.headers.get('DOLAPIKEY');
-    if (!apiKey) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+export const dynamic = 'force-dynamic';
 
-    const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
-
-    // 1. Fetch correction details to get the user ID
-    let userId = '';
+// POST /api/corrections/[id]/reject
+export async function POST(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
     try {
-        const detailsRes = await fetch(`${apiUrl}/fichajestrabajadoresapi/corrections?id=${params.id}`, {
-            headers: { 'DOLAPIKEY': apiKey }
-        });
-        if (detailsRes.ok) {
-            const details = await detailsRes.json();
-            if (Array.isArray(details) && details.length > 0) userId = details[0].fk_user;
-            else if (details.fk_user) userId = details.fk_user;
+        const { id } = await params;
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin, company_id')
+            .eq('id', user.id)
+            .single();
+
+        if (!profile?.is_admin) {
+            return NextResponse.json({ error: 'Solo administradores' }, { status: 403 });
         }
-    } catch (e) {
-        console.error('Error fetching correction details for notification:', e);
+
+        const body = await request.json().catch(() => ({}));
+
+        const { data, error } = await supabaseAdmin
+            .from('corrections')
+            .update({
+                estado: 'rechazado',
+                approver_id: user.id,
+                date_approval: new Date().toISOString(),
+                admin_note: body.admin_note || null,
+            })
+            .eq('id', id)
+            .eq('company_id', profile.company_id)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        return NextResponse.json({ success: true, data });
+
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
-    // 2. Read admin note from request body
-    const body = await request.json().catch(() => ({}));
-    const adminNote = body.note || '';
-
-    // 3. Perform Rejection (with admin_note)
-    const res = await fetch(`${apiUrl}/fichajestrabajadoresapi/corrections/${params.id}/reject`, {
-        method: 'POST',
-        headers: { 'DOLAPIKEY': apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ admin_note: adminNote })
-    });
-
-    const data = await res.json().catch(() => ({ error: 'Invalid JSON response' }));
-    console.log('[Reject] Dolibarr response:', res.status, data);
-
-    if (!res.ok) return NextResponse.json(data, { status: res.status });
-
-    // 4. Send Notification (non-blocking)
-    if (userId) {
-        try {
-            const { sendPushNotification } = await import('@/lib/push-sender');
-            const { getUserPreferences } = await import('@/lib/push-db');
-
-            const prefs = await getUserPreferences(userId);
-            if (prefs.cambios) {
-                await sendPushNotification(userId, {
-                    title: 'Solicitud Rechazada',
-                    body: 'Tu solicitud de corrección de fichaje ha sido rechazada.',
-                    url: '/gestion/solicitudes'
-                });
-            }
-        } catch (e) {
-            console.warn('[Reject] Push notification failed (non-blocking):', e);
-        }
-    }
-
-    return NextResponse.json(data);
 }

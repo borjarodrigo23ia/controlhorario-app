@@ -1,80 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
+const VALID_TIPOS = ['entrar', 'salir', 'iniciar_pausa', 'terminar_pausa'] as const;
+
 export async function POST(request: NextRequest) {
     try {
-        const apiKey = request.headers.get('DOLAPIKEY');
-        if (!apiKey) {
-            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-        }
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         const body = await request.json();
-        /* 
-           Support 'usuario' (standard) or 'username' (fallback).
-           The client (ManualFichajeModal / useFichajes) should send 'usuario'.
-        */
-        const usuario = body.usuario || body.username;
-        const { tipo, observaciones, latitud, longitud } = body;
+        const { tipo, observaciones, latitud, longitud, justification, location_warning, early_entry_warning } = body;
 
-        const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
-        if (!apiUrl) throw new Error('Dolibarr API URL not configured');
+        if (!tipo || !VALID_TIPOS.includes(tipo)) {
+            return NextResponse.json({ error: 'Tipo de fichaje inválido' }, { status: 400 });
+        }
 
-        let endpoint = '';
+        // Get company_id from profile
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('company_id')
+            .eq('id', user.id)
+            .single();
 
-        // Build request body - Note: Dolibarr expects latitud/longitud at TOP level,
-        // NOT inside request_data. Only usuario and observaciones go inside request_data.
-        const requestData: any = {
-            request_data: {
-                usuario: usuario,
-                observaciones: observaciones || ''
+        if (!profile) return NextResponse.json({ error: 'Perfil no encontrado' }, { status: 404 });
+
+        // Insert the fichaje
+        const { data: fichaje, error } = await supabase
+            .from('fichajes')
+            .insert({
+                company_id: profile.company_id,
+                user_id: user.id,
+                tipo,
+                observaciones: observaciones || null,
+                latitud: latitud ? parseFloat(latitud) : null,
+                longitud: longitud ? parseFloat(longitud) : null,
+                location_warning: location_warning ? 1 : 0,
+                early_entry_warning: early_entry_warning ? 1 : 0,
+                justification: justification || null,
+                estado_aceptacion: 'aceptado',
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[api/fichajes/registrar] Insert error:', error);
+            throw error;
+        }
+
+        return NextResponse.json({
+            success: true,
+            data: {
+                id: String(fichaje.id),
+                tipo: fichaje.tipo,
+                fecha_creacion: fichaje.created_at,
             }
-        };
-
-        // Add coordinates at TOP LEVEL (Dolibarr ignores them if nested in request_data)
-        if (latitud && longitud) {
-            requestData.latitud = latitud;
-            requestData.longitud = longitud;
-        }
-
-        // Add justification and location_warning at TOP LEVEL
-        if (body.justification) {
-            requestData.justification = body.justification;
-        }
-        if (body.location_warning !== undefined) {
-            requestData.location_warning = body.location_warning ? 1 : 0;
-        }
-
-        switch (tipo) {
-            case 'entrar': endpoint = '/fichajestrabajadoresapi/registrarEntrada'; break;
-            case 'salir': endpoint = '/fichajestrabajadoresapi/registrarSalida'; break;
-            case 'iniciar_pausa': endpoint = '/fichajestrabajadoresapi/iniciarPausa'; break;
-            case 'terminar_pausa': endpoint = '/fichajestrabajadoresapi/terminarPausa'; break;
-            default: return NextResponse.json({ error: 'Tipo inválido' }, { status: 400 });
-        }
-
-        const response = await fetch(`${apiUrl}${endpoint}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'DOLAPIKEY': apiKey
-            },
-            body: JSON.stringify(requestData)
         });
 
-        const data = await response.json();
-
-        if (!response.ok) {
-            return NextResponse.json(data, { status: response.status });
-        }
-
-        return NextResponse.json({ success: true, data });
-
     } catch (error: any) {
-        console.error('API Registrar Fichaje Error:', error);
-        return NextResponse.json(
-            { error: 'Error interno', details: error.message },
-            { status: 500 }
-        );
+        console.error('[api/fichajes/registrar] Error:', error);
+        return NextResponse.json({ error: 'Error interno', details: error.message }, { status: 500 });
     }
 }

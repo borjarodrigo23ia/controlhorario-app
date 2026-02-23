@@ -1,50 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
+// GET /api/fichajes/pending — Fichajes pending admin approval
 export async function GET(request: NextRequest) {
     try {
-        const apiKey = request.headers.get('DOLAPIKEY');
-        if (!apiKey) {
-            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin, company_id')
+            .eq('id', user.id)
+            .single();
+
+        if (!profile?.is_admin) {
+            return NextResponse.json({ error: 'Acceso restringido a administradores' }, { status: 403 });
         }
 
-        const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
+        const { data: rows, error } = await supabaseAdmin
+            .from('fichajes')
+            .select(`
+                id, tipo, observaciones, latitud, longitud, estado_aceptacion,
+                location_warning, early_entry_warning, justification,
+                fecha_original, created_at, user_id,
+                profiles!inner(username, firstname, lastname)
+            `)
+            .eq('company_id', profile.company_id)
+            .eq('estado_aceptacion', 'pendiente')
+            .order('created_at', { ascending: false });
 
-        // Fetch fichajes with estado_aceptacion = 'pendiente' for the current user.
-        // These are ADMIN-made changes that need employee validation.
-        // NOT correction requests (those live in the corrections table).
-        const response = await fetch(`${apiUrl}/fichajestrabajadoresapi/fichajes/pending`, {
-            headers: { 'DOLAPIKEY': apiKey },
-            cache: 'no-store'
-        });
+        if (error) throw error;
 
-        if (!response.ok) {
-            // If 404 or similar, just return empty array (no pending changes)
-            if (response.status === 404) {
-                return NextResponse.json([]);
-            }
-            return NextResponse.json({ error: 'Error al obtener cambios pendientes' }, { status: response.status });
-        }
+        const fichajes = (rows || []).map((f: any) => ({
+            id: String(f.id),
+            usuario: f.profiles?.username ?? f.user_id,
+            usuario_nombre: f.profiles ? `${f.profiles.firstname ?? ''} ${f.profiles.lastname ?? ''}`.trim() : '',
+            fk_user: f.user_id,
+            tipo: f.tipo,
+            observaciones: f.observaciones ?? '',
+            latitud: f.latitud ? String(f.latitud) : null,
+            longitud: f.longitud ? String(f.longitud) : null,
+            estado_aceptacion: f.estado_aceptacion,
+            location_warning: f.location_warning ?? 0,
+            early_entry_warning: f.early_entry_warning ?? 0,
+            justification: f.justification ?? '',
+            fecha_original: f.fecha_original,
+            fecha_creacion: f.created_at,
+        }));
 
-        const data = await response.json();
+        return NextResponse.json({ success: true, fichajes });
 
-        // Map to the format expected by AdminChangeRequestModal
-        // Each item is a fichaje record from fichajestrabajadores table
-        const pending = Array.isArray(data) ? data.map((item: any) => ({
-            id: item.rowid,
-            tipo: item.tipo === 'entrar' ? 'entrada' : item.tipo === 'salir' ? 'salida' : item.tipo,
-            // fecha_creacion is the actual timestamp of the fichaje (the proposed time by admin)
-            fecha_creacion_iso: item.fecha_creacion,
-            // We don't have the "previous" time easily — the soft-deleted record has it
-            // but for now show what was set
-            fecha_anterior_iso: null,
-            observaciones: item.observaciones || 'Modificación por administrador',
-            usuario_nombre: item.usuario
-        })) : [];
-
-        return NextResponse.json(pending);
     } catch (error: any) {
+        console.error('[api/fichajes/pending] Error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

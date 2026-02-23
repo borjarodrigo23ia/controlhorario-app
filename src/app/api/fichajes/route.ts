@@ -1,68 +1,82 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
     try {
-        const apiKey = request.headers.get('DOLAPIKEY');
-        if (!apiKey) {
-            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-        }
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         const { searchParams } = new URL(request.url);
-        const sortfield = searchParams.get('sortfield') || 'f.rowid';
-        const sortorder = searchParams.get('sortorder') || 'DESC';
-        const limit = searchParams.get('limit') || '1000';
-        const page = searchParams.get('page') || '';
+        const limit = parseInt(searchParams.get('limit') || '1000');
         const fkUser = searchParams.get('fk_user') || '';
         const dateStart = searchParams.get('date_start') || '';
         const dateEnd = searchParams.get('date_end') || '';
+        const sortorder = searchParams.get('sortorder') || 'DESC';
 
-        // Construir la URL base
-        let url = `/fichajestrabajadoresapi/fichajes?sortfield=${sortfield}&sortorder=${sortorder}&limit=${limit}`;
-        if (page) url += `&page=${page}`;
-        if (fkUser) url += `&fk_user=${fkUser}`;
-        if (dateStart) url += `&date_start=${dateStart}`;
-        if (dateEnd) url += `&date_end=${dateEnd}`;
+        // Get user's profile to check if admin
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin, company_id')
+            .eq('id', user.id)
+            .single();
 
-        const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
-        if (!apiUrl) throw new Error('Dolibarr API URL not configured');
+        if (!profile) return NextResponse.json({ error: 'Perfil no encontrado' }, { status: 404 });
 
-        const response = await fetch(`${apiUrl}${url}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'DOLAPIKEY': apiKey
-            },
-            cache: 'no-store'
-        });
+        // Use admin client so we can join profiles freely
+        let query = supabaseAdmin
+            .from('fichajes')
+            .select(`
+                id, tipo, observaciones, latitud, longitud, hash_integridad,
+                estado_aceptacion, location_warning, early_entry_warning,
+                justification, fecha_original, created_at, user_id, company_id,
+                profiles!inner(username, firstname, lastname)
+            `)
+            .eq('company_id', profile.company_id)
+            .order('created_at', { ascending: sortorder === 'ASC' })
+            .limit(limit);
 
-        if (!response.ok) {
-            return NextResponse.json(
-                { error: 'Error al obtener fichajes de Dolibarr' },
-                { status: response.status }
-            );
+        // Filter by user (admins can see all, employees see own)
+        if (fkUser) {
+            query = query.eq('user_id', fkUser);
+        } else if (!profile.is_admin) {
+            query = query.eq('user_id', user.id);
         }
 
-        const data = await response.json();
+        if (dateStart) query = query.gte('created_at', dateStart);
+        if (dateEnd) query = query.lte('created_at', dateEnd);
 
-        // El frontend espera { success: true, fichajes: [...] } pero Dolibarr devuelve array directo a veces
-        // El hook de frontend ya maneja si devuelve array o objeto.
-        // Sin embargo, el route original en frontend hacía mapping.
-        // Vamos a replicar el mapping básico para ser compatibles.
+        const { data: rows, error } = await query;
+        if (error) throw error;
 
-        const fichajes = Array.isArray(data) ? data.map((fichaje: any) => ({
-            ...fichaje,
-            tiene_ubicacion: !!(fichaje.latitud && fichaje.longitud)
-        })) : [];
+        // Map to frontend-compatible shape (matches Dolibarr response format)
+        const fichajes = (rows || []).map((f: any) => ({
+            id: String(f.id),
+            usuario: f.profiles?.username ?? f.user_id,
+            usuario_nombre: f.profiles ? `${f.profiles.firstname ?? ''} ${f.profiles.lastname ?? ''}`.trim() : '',
+            fk_user: f.user_id,
+            tipo: f.tipo,
+            observaciones: f.observaciones ?? '',
+            comentario: f.observaciones ?? '',
+            latitud: f.latitud ? String(f.latitud) : null,
+            longitud: f.longitud ? String(f.longitud) : null,
+            tiene_ubicacion: !!(f.latitud && f.longitud),
+            hash_integridad: f.hash_integridad,
+            estado_aceptacion: f.estado_aceptacion ?? 'aceptado',
+            location_warning: f.location_warning ?? 0,
+            early_entry_warning: f.early_entry_warning ?? 0,
+            justification: f.justification ?? '',
+            fecha_original: f.fecha_original,
+            fecha_creacion: f.created_at,
+        }));
 
         return NextResponse.json({ success: true, fichajes });
 
     } catch (error: any) {
-        console.error('API Fichajes Error:', error);
-        return NextResponse.json(
-            { error: 'Error interno del servidor', details: error.message },
-            { status: 500 }
-        );
+        console.error('[api/fichajes GET] Error:', error);
+        return NextResponse.json({ error: 'Error interno', details: error.message }, { status: 500 });
     }
 }
