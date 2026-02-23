@@ -1,122 +1,147 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
-export async function POST(request: Request) {
+// POST /api/register — Create a new user with Supabase Auth + profile
+export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { firstname, lastname, email, login, password, dni, user_mobile, naf } = body;
+        const { firstname, lastname, email, login: username, password, dni, user_mobile, naf, center_ids } = body;
 
-        // Validation - DNI and user_mobile are mandatory for this app
-        if (!firstname || !lastname || !login || !password || !dni || !user_mobile) {
+        // Validation
+        if (!firstname || !lastname || !username || !password || !dni || !user_mobile || !email) {
             return NextResponse.json(
-                { success: false, message: 'Faltan campos obligatorios' },
+                { success: false, message: 'Faltan campos obligatorios (nombre, apellidos, usuario, email, contraseña, DNI, móvil)' },
                 { status: 400 }
             );
         }
 
-        const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
-        const apiKey = process.env.DOLAPIKEY;
+        // Check if username already exists
+        const { data: existingProfile } = await supabaseAdmin
+            .from('profiles')
+            .select('id')
+            .eq('username', username)
+            .single();
 
-        if (!apiUrl || !apiKey) {
-            console.error("Configuration error: Missing API URL or Key");
+        if (existingProfile) {
             return NextResponse.json(
-                { success: false, message: 'Error de configuración del servidor' },
+                { success: false, message: 'Este nombre de usuario ya está en uso' },
+                { status: 409 }
+            );
+        }
+
+        // Step 1: Create auth user in Supabase Auth
+        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true, // Auto-confirm email for admin-created users
+            user_metadata: {
+                firstname,
+                lastname,
+                username,
+            }
+        });
+
+        if (authError) {
+            console.error('[register] Auth error:', authError);
+
+            let message = 'No se pudo crear el usuario.';
+            if (authError.message.includes('already been registered')) {
+                message = 'Este email ya está registrado.';
+            }
+
+            return NextResponse.json(
+                { success: false, message, details: authError.message },
+                { status: 400 }
+            );
+        }
+
+        const newUserId = authData.user.id;
+
+        // Step 2: Get or create a default company
+        // For now, get the first company or create a default one
+        let companyId: string;
+
+        const { data: companies } = await supabaseAdmin
+            .from('companies')
+            .select('id')
+            .limit(1)
+            .single();
+
+        if (companies) {
+            companyId = companies.id;
+        } else {
+            // Create default company if none exists
+            const { data: newCompany, error: companyError } = await supabaseAdmin
+                .from('companies')
+                .insert({
+                    name: 'Mi Empresa',
+                    slug: 'default',
+                })
+                .select('id')
+                .single();
+
+            if (companyError || !newCompany) {
+                console.error('[register] Company creation error:', companyError);
+                // Clean up the auth user since we can't complete registration
+                await supabaseAdmin.auth.admin.deleteUser(newUserId);
+                return NextResponse.json(
+                    { success: false, message: 'Error al configurar la empresa' },
+                    { status: 500 }
+                );
+            }
+            companyId = newCompany.id;
+        }
+
+        // Step 3: Create profile in our profiles table
+        const { error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .insert({
+                id: newUserId,
+                company_id: companyId,
+                username,
+                firstname,
+                lastname,
+                email,
+                user_mobile,
+                dni,
+                naf: naf || null,
+                is_admin: false,
+                is_active: true,
+            });
+
+        if (profileError) {
+            console.error('[register] Profile creation error:', profileError);
+            await supabaseAdmin.auth.admin.deleteUser(newUserId);
+            return NextResponse.json(
+                { success: false, message: 'Error al crear el perfil', details: profileError.message },
                 { status: 500 }
             );
         }
 
-        // Construct Dolibarr API URL
-        const endpoint = `${apiUrl}/setupusuariosapi/crearUsuario`;
-
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'DOLAPIKEY': apiKey
-            },
-            body: JSON.stringify({
-                firstname,
-                lastname,
-                login,
-                email,
-                password,
-                employee: 1, // Default to employee
-                admin: 0,     // Default to non-admin
-                note_private: dni ? `DNI: ${dni}` : '',
-                mobile: user_mobile,
-                user_mobile: user_mobile,
-                array_options: {
-                    options_dni: dni,
-                    options_naf: naf || ''
-                }
-            })
-        });
-
-        // Handle potential non-JSON responses (HTML errors)
-        const contentType = response.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-            const textText = await response.text();
-            console.error("Dolibarr returned non-JSON:", textText);
-            return NextResponse.json(
-                { success: false, message: `Error del servidor Dolibarr (${response.status})` },
-                { status: response.status === 200 ? 500 : response.status }
-            );
-        }
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            const rawError = data.error?.message || data.message || 'Error desconocido';
-            console.error("Dolibarr API Error:", rawError);
-
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'No se pudo crear el usuario. Por favor, verifique los datos e intente de nuevo.',
-                    details: rawError
-                },
-                { status: response.status }
-            );
-        }
-
-        // Check if there are centers to assign
-        if (body.center_ids && Array.isArray(body.center_ids) && body.center_ids.length > 0) {
+        // Step 4: Assign work centers if provided
+        if (center_ids && Array.isArray(center_ids) && center_ids.length > 0) {
             try {
-                // The API usually returns the ID of the created object as a number or string
-                // If it returns an object { id: ... }, we handle that too.
-                const newUserId = typeof data === 'object' && data.id ? data.id : data;
-
-                if (newUserId) {
-                    const centerIdsString = body.center_ids.join(',');
-                    console.log(`Assigning centers [${centerIdsString}] to new user ${newUserId}`);
-
-                    // Create the user config for work centers
-                    await fetch(`${apiUrl}/fichajestrabajadoresapi/users/${newUserId}/config`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'DOLAPIKEY': apiKey // Using the admin API key from env
-                        },
-                        body: JSON.stringify({
-                            param_name: 'work_centers_ids',
-                            value: centerIdsString
-                        })
+                await supabaseAdmin
+                    .from('user_config')
+                    .upsert({
+                        company_id: companyId,
+                        user_id: newUserId,
+                        param_name: 'work_centers_ids',
+                        param_value: center_ids.join(','),
                     });
-                }
             } catch (configError) {
-                console.error("Error assigning centers to new user:", configError);
-                // We don't fail the whole request since the user was created, 
-                // but we might want to log it or warn.
+                console.error('[register] Error assigning centers:', configError);
+                // Non-fatal — user was still created
             }
         }
 
         return NextResponse.json({
             success: true,
-            data
+            data: { id: newUserId }
         });
 
     } catch (error: any) {
-        console.error("Register API Error:", error);
+        console.error('[register] Error:', error);
         return NextResponse.json(
             {
                 success: false,

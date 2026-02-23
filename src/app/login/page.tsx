@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { authService } from '@/services/auth';
 import { Loader2, Eye, EyeOff, Info, X } from 'lucide-react';
 import LoginInstallPrompt from '@/components/pwa/LoginInstallPrompt';
 import CompanyLogo from '@/components/ui/CompanyLogo';
@@ -252,7 +251,7 @@ export default function LoginPage() {
 
                         {state === "register" && (
                             <div className="space-y-2">
-                                <label className="text-xs font-medium text-gray-500 uppercase tracking-wider ml-1">Email (Opcional)</label>
+                                <label className="text-xs font-medium text-gray-500 uppercase tracking-wider ml-1">Email *</label>
                                 <input
                                     type="email"
                                     name="email"
@@ -261,6 +260,7 @@ export default function LoginPage() {
                                     value={formData.email}
                                     onChange={handleChange}
                                     onFocus={handleFocus}
+                                    required
                                 />
                             </div>
                         )}

@@ -2,13 +2,15 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { authService } from '@/services/auth';
+import { createClient } from '@/lib/supabase/client';
 import { User } from '@/lib/types';
+import type { Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
     user: User | null;
     isLoading: boolean;
     login: (username: string, password: string) => Promise<{ success: boolean; message?: string }>;
+    loginWithGoogle: () => Promise<{ success: boolean; message?: string }>;
     logout: () => void;
     refreshUser: () => Promise<void>;
     hasPermission: (permission: string) => boolean;
@@ -20,126 +22,158 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
+    const supabase = createClient();
 
     const hasPermission = (permission: string) => {
         return true;
     };
 
+    // Fetch the profile from our `profiles` table and map to User type
+    const fetchProfile = async (userId: string): Promise<User | null> => {
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        if (error || !profile) {
+            console.error('[AuthContext] Error fetching profile:', error);
+            return null;
+        }
+
+        return {
+            id: profile.id,
+            login: profile.username,
+            entity: profile.company_id,
+            firstname: profile.firstname,
+            lastname: profile.lastname,
+            email: profile.email,
+            user_mobile: profile.user_mobile,
+            admin: profile.is_admin === true,
+            workplace_center_id: undefined,
+            work_centers_ids: undefined,
+            array_options: {
+                options_dni: profile.dni,
+                options_naf: profile.naf,
+            }
+        };
+    };
+
     const refreshUser = async () => {
-        const token = localStorage.getItem('dolibarr_token');
-        const storedUser = localStorage.getItem('dolibarr_user');
-        const loginTime = localStorage.getItem('dolibarr_login_time');
+        try {
+            const { data: { user: authUser } } = await supabase.auth.getUser();
 
-        // Check for 24h expiration (86400000 ms)
-        if (loginTime) {
-            const now = Date.now();
-            const timeDiff = now - parseInt(loginTime, 10);
-            if (timeDiff > 24 * 60 * 60 * 1000) {
-                logout();
-                setIsLoading(false);
-                return;
+            if (authUser) {
+                const profile = await fetchProfile(authUser.id);
+                setUser(profile);
+            } else {
+                setUser(null);
             }
+        } catch (e) {
+            console.error('[AuthContext] Error refreshing user:', e);
+            setUser(null);
+        } finally {
+            setIsLoading(false);
         }
-
-        if (token && storedUser) {
-            try {
-                // Fetch real user info to get admin status and ID
-                const res = await fetch('/api/auth/me', {
-                    headers: {
-                        'DOLAPIKEY': token,
-                        'X-Dolibarr-Login': storedUser
-                    }
-                });
-
-                if (res.ok) {
-                    const userData = await res.json();
-                    console.log('[AuthContext] User data refreshed (FULL):', JSON.stringify(userData, null, 2));
-
-                    setUser({
-                        id: userData.id,
-                        login: userData.login,
-                        entity: userData.entity || '1',
-                        firstname: userData.firstname,
-                        lastname: userData.lastname,
-                        email: userData.email,
-                        user_mobile: userData.user_mobile,
-                        admin: userData.admin === '1' || userData.admin === true,
-                        workplace_center_id: userData.workplace_center_id,
-                        work_centers_ids: userData.work_centers_ids,
-                        array_options: userData.array_options
-                    });
-
-                    // Extend session by updating login time on successful refresh
-                    localStorage.setItem('dolibarr_login_time', Date.now().toString());
-                } else {
-                    if (res.status === 401) {
-                        console.log('Session expired or invalid (401), logging out.');
-                        logout();
-                        return; // Stop here to avoid setting invalid user state
-                    }
-
-                    const errDetail = await res.text();
-                    console.error('Failed to fetch user profile:', res.status, errDetail);
-                    // Do not set a dummy user if we failed to authenticate
-                    setUser(null);
-                }
-            } catch (e) {
-                console.error(e);
-                setUser({
-                    id: '0',
-                    login: storedUser,
-                    entity: '1',
-                    firstname: storedUser,
-                    admin: false
-                });
-            }
-        }
-        setIsLoading(false);
     };
 
     useEffect(() => {
+        // Initial load
         refreshUser();
+
+        // Listen for auth state changes (login, logout, token refresh)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+                if (event === 'SIGNED_IN' && session?.user) {
+                    const profile = await fetchProfile(session.user.id);
+                    setUser(profile);
+                    setIsLoading(false);
+                } else if (event === 'SIGNED_OUT') {
+                    setUser(null);
+                    setIsLoading(false);
+                } else if (event === 'TOKEN_REFRESHED') {
+                    // Session refreshed automatically by Supabase
+                }
+            }
+        );
+
+        return () => {
+            subscription.unsubscribe();
+        };
     }, []);
 
+    // Login by username: look up the email for that username, then sign in
     const login = async (username: string, password: string) => {
         try {
-            const response = await authService.login(username, password);
-            if (response.success && response.success.code === 200) {
-                localStorage.setItem('dolibarr_token', response.success.token);
-                localStorage.setItem('dolibarr_user', username);
-                localStorage.setItem('dolibarr_login_time', Date.now().toString());
-                await refreshUser(); // Update state immediately
-                return { success: true };
+            // Step 1: Look up email by username using our API route
+            const lookupRes = await fetch('/api/auth/lookup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username }),
+            });
+
+            if (!lookupRes.ok) {
+                return { success: false, message: 'Usuario no encontrado' };
             }
-            return { success: false, message: 'Credenciales inválidas' };
-            return { success: false, message: 'Credenciales inválidas' };
+
+            const { email } = await lookupRes.json();
+
+            if (!email) {
+                return { success: false, message: 'Usuario no encontrado' };
+            }
+
+            // Step 2: Sign in with email + password
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (error) {
+                console.error('[AuthContext] Login error:', error.message);
+                let message = 'Credenciales inválidas';
+
+                if (error.message.includes('Invalid login credentials')) {
+                    message = 'Usuario o contraseña incorrectos. Inténtelo de nuevo';
+                } else if (error.message.includes('Email not confirmed')) {
+                    message = 'Email no confirmado. Revisa tu correo.';
+                }
+
+                return { success: false, message };
+            }
+
+            // Profile will be loaded by onAuthStateChange
+            return { success: true };
         } catch (e: any) {
-            console.error('Login error:', e);
-            // Return the actual error message if available
-            let message = e.message || 'Error de conexión';
-
-            // Catch specific Dolibarr/API errors and translate them
-            if (message && (
-                message.toLowerCase().includes('forbidden') ||
-                message.toLowerCase().includes('forbiden') ||
-                message.toLowerCase().includes('access denied') ||
-                message.toLowerCase().includes('acces denied')
-            )) {
-                message = 'Usuario o contraseña incorrectos. Inténtelo de nuevo';
-            }
-
+            console.error('[AuthContext] Login error:', e);
             return {
                 success: false,
-                message
+                message: e.message || 'Error de conexión'
             };
         }
     };
 
-    const logout = () => {
-        authService.logout();
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('dolibarr_login_time');
+    // Login with Google OAuth
+    const loginWithGoogle = async () => {
+        try {
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                },
+            });
+
+            if (error) {
+                return { success: false, message: error.message };
+            }
+
+            return { success: true };
+        } catch (e: any) {
+            return { success: false, message: e.message || 'Error de conexión' };
         }
+    };
+
+    const logout = async () => {
+        await supabase.auth.signOut();
         setUser(null);
 
         // Force complete cleanup by dispatching a custom event
@@ -151,7 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, logout, hasPermission, login, refreshUser }}>
+        <AuthContext.Provider value={{ user, isLoading, logout, hasPermission, login, loginWithGoogle, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );

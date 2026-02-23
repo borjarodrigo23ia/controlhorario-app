@@ -1,48 +1,52 @@
-
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
-export const dynamic = 'force-dynamic';
-
+// GET /api/auth/me — Get current user profile
 export async function GET(request: NextRequest) {
     try {
-        const apiKey = request.headers.get('DOLAPIKEY');
+        const supabase = await createServerSupabaseClient();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        if (!apiKey) {
-            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        if (authError || !user) {
+            return NextResponse.json(
+                { error: 'No autorizado' },
+                { status: 401 }
+            );
         }
 
-        const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
+        // Fetch profile from our profiles table
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
 
-        // Use custom endpoint that doesn't require special permissions
-        const url = `${apiUrl}/fichajestrabajadoresapi/info`;
+        if (profileError || !profile) {
+            return NextResponse.json(
+                { error: 'Profile not found' },
+                { status: 404 }
+            );
+        }
 
-        console.log(`[API/ME] Fetching: ${url}`);
-
-        const headers: HeadersInit = {
-            'Content-Type': 'application/json',
-            'DOLAPIKEY': apiKey
-        };
-
-        const response = await fetch(url, {
-            method: 'GET',
-            headers
+        return NextResponse.json({
+            id: profile.id,
+            login: profile.username,
+            entity: profile.company_id,
+            firstname: profile.firstname,
+            lastname: profile.lastname,
+            email: profile.email,
+            user_mobile: profile.user_mobile,
+            admin: profile.is_admin,
+            array_options: {
+                options_dni: profile.dni,
+                options_naf: profile.naf,
+            }
         });
-
-        if (!response.ok) {
-            const text = await response.text();
-            console.error(`[API/ME] Error ${response.status}: ${text}`);
-            return NextResponse.json({ error: 'Error fetching user info', details: text, status: response.status }, { status: response.status });
-        }
-
-        const data = await response.json();
-
-        console.log('[API/ME] User Data received:', JSON.stringify(data, null, 2));
-
-        // The custom endpoint returns the object directly
-        return NextResponse.json(data);
-
     } catch (error: any) {
-        console.error('[API/ME] Exception:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('[auth/me] Error:', error);
+        return NextResponse.json(
+            { error: error.message },
+            { status: 500 }
+        );
     }
 }
