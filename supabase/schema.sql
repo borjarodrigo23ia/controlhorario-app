@@ -476,3 +476,59 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON jornadas_laborales
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON jornadas_completas
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================
+-- PUSH NOTIFICATIONS
+-- ============================================
+
+-- Browser push subscriptions (one per device/endpoint)
+CREATE TABLE push_subscriptions (
+    id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    company_id  UUID REFERENCES companies(id) ON DELETE CASCADE,
+    user_id     UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    endpoint    TEXT NOT NULL UNIQUE,
+    p256dh      TEXT NOT NULL,
+    auth        TEXT NOT NULL,
+    user_agent  TEXT,
+    is_admin    BOOLEAN DEFAULT false,
+    created_at  TIMESTAMPTZ DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage their own subscriptions"
+    ON push_subscriptions FOR ALL
+    USING (user_id = auth.uid());
+
+CREATE POLICY "Admins can view all company subscriptions"
+    ON push_subscriptions FOR SELECT
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
+
+-- Per-user notification preferences
+CREATE TABLE notification_preferences (
+    id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    company_id  UUID REFERENCES companies(id) ON DELETE CASCADE,
+    user_id     UUID REFERENCES profiles(id) ON DELETE CASCADE UNIQUE,
+    fichajes    BOOLEAN DEFAULT true,
+    vacaciones  BOOLEAN DEFAULT true,
+    cambios     BOOLEAN DEFAULT true,
+    created_at  TIMESTAMPTZ DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE notification_preferences ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage their own preferences"
+    ON notification_preferences FOR ALL
+    USING (user_id = auth.uid());
+
+CREATE POLICY "Admins can view all company preferences"
+    ON notification_preferences FOR SELECT
+    USING (company_id = public.get_my_company_id() AND public.get_my_is_admin());
+
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON push_subscriptions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON notification_preferences
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+

@@ -1,41 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getUserPreferences, saveUserPreferences } from '@/lib/push-db';
 
+export const dynamic = 'force-dynamic';
+
+// GET /api/web-push/preferences — Get current user's push notification preferences
 export async function GET(request: NextRequest) {
-    const userId = request.nextUrl.searchParams.get('userId');
-    const apiKey = request.headers.get('DOLAPIKEY');
+    try {
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
-    if (!apiKey || !userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        // Allow querying another user's preferences (admin use case)
+        const targetUserId = request.nextUrl.searchParams.get('userId') || user.id;
+
+        if (targetUserId !== user.id) {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('is_admin')
+                .eq('id', user.id)
+                .single();
+            if (!profile?.is_admin) {
+                return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 });
+            }
+        }
+
+        const prefs = await getUserPreferences(targetUserId);
+        return NextResponse.json(prefs);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
-    const prefs = await getUserPreferences(userId);
-    return NextResponse.json(prefs);
 }
 
+// POST /api/web-push/preferences — Save push notification preferences
 export async function POST(request: NextRequest) {
-    const apiKey = request.headers.get('DOLAPIKEY');
+    try {
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
-    // Simplification: We expect userId in body or header. 
-    // To match GET, let's look for it in searchParams or Body.
-    // Ideally auth middleware does this.
+        const body = await request.json();
+        const targetUserId = body.userId || user.id;
 
-    const body = await request.json();
-    const userId = body.userId;
+        // Only allow setting own preferences (or admin)
+        if (targetUserId !== user.id) {
+            const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
+            if (!profile?.is_admin) return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 });
+        }
 
-    if (!apiKey || !userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const { fichajes, vacaciones, cambios } = body;
+        const update = {
+            ...(typeof fichajes === 'boolean' ? { fichajes } : {}),
+            ...(typeof vacaciones === 'boolean' ? { vacaciones } : {}),
+            ...(typeof cambios === 'boolean' ? { cambios } : {}),
+        };
+
+        await saveUserPreferences(targetUserId, update);
+
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
-    // Filter valid keys
-    const { fichajes, vacaciones, cambios } = body;
-    const update = {
-        ...(typeof fichajes === 'boolean' ? { fichajes } : {}),
-        ...(typeof vacaciones === 'boolean' ? { vacaciones } : {}),
-        ...(typeof cambios === 'boolean' ? { cambios } : {})
-    };
-
-    await saveUserPreferences(userId, update);
-
-    return NextResponse.json({ success: true });
 }
