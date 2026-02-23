@@ -1,59 +1,107 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
+// GET /api/centers — List all centers for the company (accessible during registration too)
 export async function GET(request: NextRequest) {
     try {
-        // For registration form, we might not have a user token yet.
-        // Fallback to server admin key for listing centers.
-        const apiKey = request.headers.get('DOLAPIKEY') || process.env.DOLAPIKEY;
-        if (!apiKey) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        // During registration, user may not be logged in yet
+        // So we check for auth but don't require it — we use admin client
+        let companyId: string | null = null;
 
-        const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
-        // Dolibarr custom module API path: /fichajestrabajadoresapi/centers
-        const response = await fetch(`${apiUrl}/fichajestrabajadoresapi/centers`, {
-            headers: { 'DOLAPIKEY': apiKey }
-        });
+        try {
+            const supabase = await createServerSupabaseClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('company_id')
+                    .eq('id', user.id)
+                    .single();
+                companyId = profile?.company_id ?? null;
+            }
+        } catch { /* unauthenticated — OK for registration */ }
 
-        if (!response.ok) {
-            console.error(`Error fetching centers: ${response.status} ${response.statusText}`);
-            return NextResponse.json({ error: 'Error al obtener centros' }, { status: response.status });
+        // If no company from user, get first company (single-tenant for now)
+        if (!companyId) {
+            const { data: company } = await supabaseAdmin
+                .from('companies')
+                .select('id')
+                .limit(1)
+                .single();
+            companyId = company?.id ?? null;
         }
 
-        const data = await response.json();
-        return NextResponse.json(data);
+        if (!companyId) return NextResponse.json([]);
+
+        const { data: centers, error } = await supabaseAdmin
+            .from('centers')
+            .select('id, label, latitude, longitude, radius')
+            .eq('company_id', companyId)
+            .order('label', { ascending: true });
+
+        if (error) throw error;
+
+        // Map to frontend-compatible shape (old Dolibarr used rowid)
+        const mapped = (centers || []).map((c: any) => ({
+            rowid: c.id,
+            id: c.id,
+            label: c.label,
+            latitude: c.latitude,
+            longitude: c.longitude,
+            radius: c.radius,
+        }));
+
+        return NextResponse.json(mapped);
 
     } catch (error: any) {
+        console.error('[api/centers GET] Error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 
+// POST /api/centers — Create a new center (admin only)
 export async function POST(request: NextRequest) {
     try {
-        const apiKey = request.headers.get('DOLAPIKEY');
-        if (!apiKey) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin, company_id')
+            .eq('id', user.id)
+            .single();
+
+        if (!profile?.is_admin) return NextResponse.json({ error: 'Solo administradores' }, { status: 403 });
 
         const body = await request.json();
-        const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
+        const { label, latitude, longitude, radius } = body;
 
-        const response = await fetch(`${apiUrl}/fichajestrabajadoresapi/centers`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'DOLAPIKEY': apiKey
-            },
-            body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-            console.error(`Error creating center: ${response.status}`);
-            return NextResponse.json({ error: 'Error al crear centro' }, { status: response.status });
+        if (!label || latitude === undefined || longitude === undefined) {
+            return NextResponse.json({ error: 'Faltan campos: label, latitude, longitude' }, { status: 400 });
         }
 
-        const data = await response.json();
-        return NextResponse.json(data);
+        const { data: center, error } = await supabaseAdmin
+            .from('centers')
+            .insert({
+                company_id: profile.company_id,
+                label,
+                latitude: parseFloat(latitude),
+                longitude: parseFloat(longitude),
+                radius: radius ? parseInt(radius) : 100,
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        return NextResponse.json({ success: true, data: { ...center, rowid: center.id } });
 
     } catch (error: any) {
+        console.error('[api/centers POST] Error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

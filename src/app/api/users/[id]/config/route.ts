@@ -1,47 +1,102 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    const apiKey = request.headers.get('DOLAPIKEY');
-    if (!apiKey) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+// GET /api/users/[id]/config
+export async function GET(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
-    const { id } = await params;
-    const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
-    const res = await fetch(`${apiUrl}/fichajestrabajadoresapi/userconfig/${id}`, {
-        headers: { 'DOLAPIKEY': apiKey },
-        cache: 'no-store'
-    });
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin, company_id')
+            .eq('id', user.id)
+            .single();
 
-    if (!res.ok) return NextResponse.json({ error: 'Error' }, { status: res.status });
-    return NextResponse.json(await res.json());
+        if (!profile) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        if (!profile.is_admin && user.id !== id) {
+            return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 });
+        }
+
+        const { data: configs, error } = await supabaseAdmin
+            .from('user_config')
+            .select('param_name, param_value')
+            .eq('user_id', id);
+
+        if (error) throw error;
+
+        // Return as a key-value object
+        const result: Record<string, string> = {};
+        for (const c of configs || []) {
+            result[c.param_name] = c.param_value;
+        }
+
+        return NextResponse.json(result);
+
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 }
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    const apiKey = request.headers.get('DOLAPIKEY');
-    if (!apiKey) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+// POST /api/users/[id]/config — Upsert a config value
+export async function POST(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
-    const { id } = await params;
-    const body = await request.json(); // { param_name, value }
-    const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin, company_id')
+            .eq('id', user.id)
+            .single();
 
-    // We send individual updates as the API currently supports one by one, or update the API to support bulk? 
-    // The API `setUserConfig` takes param_name and value.
-    // If we want to save multiple, we'll do it in parallel or loop in the frontend/proxy.
-    // Let's assume the frontend sends one by one or we proxy one by one.
-    // But usually forms submit all. 
-    // Ideally update backend to accept array. But for now let's support single update or loop.
-    // Let's implement the proxy as single update pass-through for now.
+        if (!profile) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        if (!profile.is_admin && user.id !== id) {
+            return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 });
+        }
 
-    const res = await fetch(`${apiUrl}/fichajestrabajadoresapi/users/${id}/config`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'DOLAPIKEY': apiKey
-        },
-        body: JSON.stringify(body)
-    });
+        const body = await request.json();
+        // Accept { param_name, value } or a key-value object to bulk upsert
+        const entries: Array<{ param_name: string; param_value: string }> = [];
 
-    if (!res.ok) return NextResponse.json({ error: 'Error' }, { status: res.status });
-    return NextResponse.json(await res.json());
+        if (body.param_name !== undefined) {
+            entries.push({ param_name: body.param_name, param_value: String(body.value ?? '') });
+        } else {
+            // Bulk: { key1: value1, key2: value2, ... }
+            for (const [key, val] of Object.entries(body)) {
+                entries.push({ param_name: key, param_value: String(val) });
+            }
+        }
+
+        const toUpsert = entries.map(e => ({
+            company_id: profile.company_id,
+            user_id: id,
+            param_name: e.param_name,
+            param_value: e.param_value,
+        }));
+
+        const { error } = await supabaseAdmin
+            .from('user_config')
+            .upsert(toUpsert, { onConflict: 'user_id,param_name' });
+
+        if (error) throw error;
+
+        return NextResponse.json({ success: true });
+
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 }

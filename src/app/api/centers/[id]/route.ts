@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,26 +10,37 @@ export async function PUT(
 ) {
     try {
         const { id } = await params;
-        const apiKey = request.headers.get('DOLAPIKEY');
-        if (!apiKey) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin, company_id')
+            .eq('id', user.id)
+            .single();
+
+        if (!profile?.is_admin) return NextResponse.json({ error: 'Solo administradores' }, { status: 403 });
 
         const body = await request.json();
-        const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
+        const { label, latitude, longitude, radius } = body;
 
-        const response = await fetch(`${apiUrl}/fichajestrabajadoresapi/centers/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'DOLAPIKEY': apiKey
-            },
-            body: JSON.stringify(body)
-        });
+        const updateData: any = {};
+        if (label !== undefined) updateData.label = label;
+        if (latitude !== undefined) updateData.latitude = parseFloat(latitude);
+        if (longitude !== undefined) updateData.longitude = parseFloat(longitude);
+        if (radius !== undefined) updateData.radius = parseInt(radius);
 
-        if (!response.ok) {
-            return NextResponse.json({ error: 'Error al actualizar centro' }, { status: response.status });
-        }
+        const { data, error } = await supabaseAdmin
+            .from('centers')
+            .update(updateData)
+            .eq('id', id)
+            .eq('company_id', profile.company_id)
+            .select()
+            .single();
 
-        const data = await response.json();
+        if (error) throw error;
+
         return NextResponse.json(data);
 
     } catch (error: any) {
@@ -41,22 +54,27 @@ export async function DELETE(
 ) {
     try {
         const { id } = await params;
-        const apiKey = request.headers.get('DOLAPIKEY');
-        if (!apiKey) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
-        const apiUrl = process.env.NEXT_PUBLIC_DOLIBARR_API_URL;
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin, company_id')
+            .eq('id', user.id)
+            .single();
 
-        const response = await fetch(`${apiUrl}/fichajestrabajadoresapi/centers/${id}`, {
-            method: 'DELETE',
-            headers: { 'DOLAPIKEY': apiKey }
-        });
+        if (!profile?.is_admin) return NextResponse.json({ error: 'Solo administradores' }, { status: 403 });
 
-        if (!response.ok) {
-            return NextResponse.json({ error: 'Error al eliminar centro' }, { status: response.status });
-        }
+        const { error } = await supabaseAdmin
+            .from('centers')
+            .delete()
+            .eq('id', id)
+            .eq('company_id', profile.company_id);
 
-        const data = await response.json();
-        return NextResponse.json(data);
+        if (error) throw error;
+
+        return NextResponse.json({ success: true });
 
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
